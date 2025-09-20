@@ -21,22 +21,18 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: |
-          crm-backend/package-lock.json
-          crm-frontend-only/package-lock.json
 
     # 3. Install Backend Dependencies
     - name: 📦 Install Backend Dependencies
       run: |
         cd crm-backend
-        npm ci --omit=dev
+        npm install --omit=dev
 
     # 4. Install Frontend Dependencies & Build
     - name: 📦 Install Frontend Dependencies
       run: |
         cd crm-frontend-only
-        npm ci
+        npm install
 
     - name: 🏗️ Build Frontend
       run: |
@@ -79,12 +75,12 @@ jobs:
           # Install backend dependencies
           echo "📦 Installing backend dependencies..."
           cd crm-backend
-          npm ci --omit=dev
+          npm install --omit=dev
           
           # Build frontend
           echo "🏗️ Building frontend..."
           cd ../crm-frontend-only
-          npm ci
+          npm install
           npm run build
           
           # Copy frontend files to Nginx
