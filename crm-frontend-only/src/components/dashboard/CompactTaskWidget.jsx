@@ -20,30 +20,8 @@ export default function CompactTaskWidget({ tasksData = [], onAddTask, onComplet
   const [filter, setFilter] = useState('today')
   const [animationKey, setAnimationKey] = useState(0)
 
-  // Use real tasks data from backend
-  const tasks = tasksData && tasksData.length > 0 ? tasksData : [
-    {
-      id: 'demo-1',
-      title: 'اتصال بالعميل أحمد محمد',
-      type: 'call',
-      priority: 'high',
-      status: 'pending',
-      dueDate: new Date(),
-      client: 'أحمد محمد',
-      phone: '01234567890',
-      estimatedTime: 30
-    },
-    {
-      id: 'demo-2',
-      title: 'زيارة موقع مشروع النخيل',
-      type: 'visit',
-      priority: 'medium',
-      status: 'pending',
-      dueDate: new Date(Date.now() + 2 * 60 * 60 * 1000),
-      client: 'فاطمة علي',
-      estimatedTime: 120
-    }
-  ]
+  // Use only real tasks data from backend - no fake data
+  const tasks = tasksData || []
 
   useEffect(() => {
     setAnimationKey(prev => prev + 1)
@@ -117,9 +95,27 @@ export default function CompactTaskWidget({ tasksData = [], onAddTask, onComplet
 
   if (loading) {
     return (
-      <Card className="p-6 animate-pulse">
-        <div className="h-96 bg-gray-200 rounded-lg"></div>
-      </Card>
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 h-full flex flex-col">
+        <div className="relative bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white bg-opacity-20 rounded-xl backdrop-blur-lg">
+                <CheckSquare className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">إدارة المهام</h3>
+                <p className="text-purple-100 text-xs">جاري التحميل...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
+            <p className="text-gray-500 text-sm">جاري تحميل المهام...</p>
+          </div>
+        </div>
+      </div>
     )
   }
 
@@ -222,7 +218,22 @@ export default function CompactTaskWidget({ tasksData = [], onAddTask, onComplet
               {filter === 'overdue' && 'لا توجد مهام متأخرة'}
               {filter === 'all' && 'لا توجد مهام'}
             </h4>
-            <p className="text-gray-500 text-sm">استمتع بيومك! 🎉</p>
+            <p className="text-gray-500 text-sm">
+              {filter === 'all' 
+                ? 'ابدأ بإضافة مهامك الأولى!' 
+                : 'رائع! إنجازك ممتاز 🎉'
+              }
+            </p>
+            {filter === 'all' && (
+              <Button 
+                onClick={() => onAddTask?.()}
+                className="mt-3 bg-purple-600 hover:bg-purple-700 text-white text-sm px-4 py-2"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 ml-1" />
+                إضافة مهمة جديدة
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
