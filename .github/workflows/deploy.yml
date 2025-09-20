@@ -58,17 +58,18 @@ jobs:
           echo "🚀 Starting deployment..."
           
           # Navigate to app directory
-          cd /home/ubuntu/crm || { echo "❌ App directory not found"; exit 1; }
+          cd /var/www/netaq-crm || { echo "❌ App directory not found"; exit 1; }
           
           # Stop services gracefully
           echo "⏹️ Stopping services..."
-          pm2 stop crm-backend || true
+          pm2 stop netaq-backend || true
+          pm2 stop netaq-frontend || true
           
           # Create backup
           echo "💾 Creating backup..."
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           mkdir -p ~/backups
-          tar -czf ~/backups/backup_$TIMESTAMP.tar.gz crm/ || true
+          tar -czf ~/backups/backup_$TIMESTAMP.tar.gz /var/www/netaq-crm/ || true
           
           # Pull latest changes
           echo "📥 Pulling latest changes..."
@@ -86,6 +87,10 @@ jobs:
           npm ci
           npm run build
           
+          # Copy frontend files to Nginx
+          echo "📋 Copying frontend files to Nginx..."
+          sudo cp -r dist/* /var/www/html/
+          
           # Run database migrations
           echo "🗄️ Running database migrations..."
           cd ../crm-backend
@@ -93,12 +98,12 @@ jobs:
           
           # Update permissions
           echo "🔐 Setting permissions..."
-          sudo chown -R ubuntu:ubuntu /home/ubuntu/crm
-          chmod +x /home/ubuntu/crm/scripts/*.sh
+          sudo chown -R ubuntu:ubuntu /var/www/netaq-crm
+          chmod +x /var/www/netaq-crm/scripts/*.sh
           
           # Start services
           echo "▶️ Starting services..."
-          pm2 start ecosystem.config.js --env production || pm2 reload crm-backend
+          pm2 start "npm start" --name "netaq-backend" --cwd "/var/www/netaq-crm/crm-backend" || pm2 restart netaq-backend
           pm2 save
           
           # Restart nginx
