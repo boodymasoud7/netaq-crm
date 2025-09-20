@@ -1,0 +1,175 @@
+/* تحسين الحركات والانتقالات */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+/* أنيميشن صفحة المنع - حلو جداً! 😄 */
+.animate-fadeIn {
+  animation: fadeInScale 0.6s ease-out;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.8s ease-out;
+}
+
+.animate-delay-1000 {
+  animation-delay: 1s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* أنيميشن صفحة المنع الحلوة 🎭 */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* تحسين الجداول للعربية */
+.data-table {
+  direction: rtl;
+}
+
+.data-table th {
+  text-align: right;
+}
+
+.data-table td {
+  text-align: right;
+}
+
+/* تحسين النماذج للعربية */
+.form-rtl input,
+.form-rtl textarea,
+.form-rtl select {
+  text-align: right;
+  direction: rtl;
+}
+
+.form-rtl label {
+  text-align: right;
+}
+
+/* تحسين البطاقات */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين الأزرار */
+.btn-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 100%);
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  transform: translateY(-1px);
+}
+
+/* تحسين الشريط الجانبي */
+.sidebar-item {
+  transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+  background: hsl(var(--accent));
+  padding-right: 1rem;
+}
+
+.sidebar-item.active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-left: 3px solid hsl(var(--primary-foreground));
+}
+
+/* تحسين الإحصائيات */
+.stat-card {
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+  border: 1px solid hsl(var(--border));
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين الرسوم البيانية */
+.chart-container {
+  direction: ltr;
+}
+
+.chart-container .recharts-text {
+  font-family: 'Cairo', sans-serif;
+}
+
+/* تحسين الحوارات */
+.dialog-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-content {
+  direction: rtl;
+  font-family: 'Cairo', sans-serif;
+}
+
+

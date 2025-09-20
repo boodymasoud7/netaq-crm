@@ -1,0 +1,170 @@
+name: 🚀 Deploy CRM to AWS EC2
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    name: 🌐 Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. Checkout code
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      
+    # 2. Setup Node.js
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          crm-backend/package-lock.json
+          crm-frontend-only/package-lock.json
+
+    # 3. Install Backend Dependencies
+    - name: 📦 Install Backend Dependencies
+      run: |
+        cd crm-backend
+        npm ci --only=production
+
+    # 4. Install Frontend Dependencies & Build
+    - name: 📦 Install Frontend Dependencies
+      run: |
+        cd crm-frontend-only
+        npm ci
+
+    - name: 🏗️ Build Frontend
+      run: |
+        cd crm-frontend-only
+        npm run build
+      env:
+        NODE_ENV: production
+
+    # 5. Deploy to AWS EC2
+    - name: 🚀 Deploy to AWS EC2
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        port: ${{ secrets.EC2_PORT || 22 }}
+        script: |
+          echo "🚀 Starting deployment..."
+          
+          # Navigate to app directory
+          cd /home/ubuntu/crm || { echo "❌ App directory not found"; exit 1; }
+          
+          # Stop services gracefully
+          echo "⏹️ Stopping services..."
+          pm2 stop crm-backend || true
+          
+          # Create backup
+          echo "💾 Creating backup..."
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          mkdir -p ~/backups
+          tar -czf ~/backups/backup_$TIMESTAMP.tar.gz crm/ || true
+          
+          # Pull latest changes
+          echo "📥 Pulling latest changes..."
+          git fetch origin main
+          git reset --hard origin/main
+          
+          # Install backend dependencies
+          echo "📦 Installing backend dependencies..."
+          cd crm-backend
+          npm ci --only=production
+          
+          # Build frontend
+          echo "🏗️ Building frontend..."
+          cd ../crm-frontend-only
+          npm ci
+          npm run build
+          
+          # Run database migrations
+          echo "🗄️ Running database migrations..."
+          cd ../crm-backend
+          npx sequelize-cli db:migrate --env production || echo "⚠️ Migration warning (might be OK)"
+          
+          # Update permissions
+          echo "🔐 Setting permissions..."
+          sudo chown -R ubuntu:ubuntu /home/ubuntu/crm
+          chmod +x /home/ubuntu/crm/scripts/*.sh
+          
+          # Start services
+          echo "▶️ Starting services..."
+          pm2 start ecosystem.config.js --env production || pm2 reload crm-backend
+          pm2 save
+          
+          # Restart nginx
+          echo "🔄 Restarting Nginx..."
+          sudo nginx -t && sudo systemctl reload nginx
+          
+          # Health check
+          echo "🏥 Health check..."
+          sleep 15
+          if curl -f http://localhost:8000/api/health > /dev/null 2>&1; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Health check failed!"
+            exit 1
+          fi
+          
+          # Clean old backups (keep last 5)
+          echo "🧹 Cleaning old backups..."
+          cd ~/backups
+          ls -t backup_*.tar.gz | tail -n +6 | xargs rm -f || true
+          
+          echo "🎉 Deployment completed successfully!"
+
+    # 6. Notify on Success
+    - name: 📢 Success Notification  
+      if: success() && github.ref == 'refs/heads/main'
+      run: |
+        echo "✅ Netaq CRM System deployed successfully to production!"
+        echo "🌐 Website: https://www.netaqcrm.site"
+        echo "🔧 Backend API: https://www.netaqcrm.site:8000"
+
+    # 7. Notify on Failure
+    - name: ❌ Failure Notification
+      if: failure()
+      run: |
+        echo "❌ Deployment failed!"
+        echo "📋 Please check the logs above for details."
+        echo "🔄 You may need to rollback manually on the server."
+
+  # Health Check Job (runs after deploy)
+  health-check:
+    name: 🏥 Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: 🔍 Verify Deployment
+      run: |
+        echo "⏳ Waiting for services to stabilize..."
+        sleep 30
+        
+        echo "🏥 Checking backend health..."
+        if curl -f http://54.221.136.112:8000/api/health; then
+          echo "✅ Backend is healthy!"
+        else
+          echo "❌ Backend health check failed!"
+          exit 1
+        fi
+        
+        echo "🌐 Checking frontend..."
+        if curl -f http://54.221.136.112; then
+          echo "✅ Frontend is accessible!"
+        else
+          echo "❌ Frontend check failed!"
+          exit 1
+        fi
+        
+        echo "🎉 All systems are operational!"

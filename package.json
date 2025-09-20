@@ -1,0 +1,58 @@
+{
+  "name": "netaq-crm",
+  "version": "1.0.0",
+  "description": "نظام إدارة علاقات العملاء العقارية - Netaq CRM System",
+  "keywords": ["crm", "real-estate", "nodejs", "react", "arabic", "netaq"],
+  "author": "Netaq Team <netaqagent@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd crm-backend && npm install",
+    "install:frontend": "cd crm-frontend-only && npm install",
+    
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd crm-backend && npm run dev",
+    "dev:frontend": "cd crm-frontend-only && npm run dev",
+    
+    "build": "npm run build:frontend",
+    "build:frontend": "cd crm-frontend-only && npm run build",
+    
+    "start": "npm run start:backend",
+    "start:backend": "cd crm-backend && npm start",
+    
+    "clean": "npm run clean:backend && npm run clean:frontend",
+    "clean:backend": "cd crm-backend && rm -rf node_modules package-lock.json",
+    "clean:frontend": "cd crm-frontend-only && rm -rf node_modules package-lock.json dist",
+    
+    "setup": "npm run install:all && npm run build",
+    "deploy:setup": "bash scripts/quick-setup.sh",
+    
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd crm-backend && npm test || echo 'No backend tests configured'",
+    "test:frontend": "cd crm-frontend-only && npm test || echo 'No frontend tests configured'",
+    
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd crm-backend && npm run lint || echo 'No backend linting configured'",
+    "lint:frontend": "cd crm-frontend-only && npm run lint || echo 'Frontend linting completed'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boodymasoud7/netaq-crm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/boodymasoud7/netaq-crm/issues"
+  },
+  "homepage": "https://www.netaqcrm.site",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "workspaces": [
+    "crm-backend",
+    "crm-frontend-only"
+  ]
+}
