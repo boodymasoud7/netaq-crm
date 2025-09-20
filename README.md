@@ -7,6 +7,7 @@
 ![React](https://img.shields.io/badge/React-18+-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue)
 ![AWS](https://img.shields.io/badge/AWS-EC2-orange)
+![Build Status](https://github.com/boodymasoud7/netaq-crm/workflows/Deploy%20to%20AWS%20EC2/badge.svg)
 
 **نظام نطاق المتكامل لإدارة العقارات والعملاء مع نشر تلقائي على AWS**
 
