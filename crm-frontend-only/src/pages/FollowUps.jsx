@@ -731,20 +731,26 @@ export default function FollowUps() {
   // الحذف المتعدد للمتابعات (أرشفة ثم حذف نهائي)
   const handleBulkDelete = async () => {
     if (selectedFollowUps.length === 0) return
-    
+
     try {
       toast.loading('جاري أرشفة المتابعات...', { id: 'bulk-delete' })
-      
-      // المرحلة الأولى: أرشفة المتابعات (soft delete)
-      const archivePromises = selectedFollowUps.map(followUpId => api.deleteFollowUp(followUpId))
-      await Promise.all(archivePromises)
-      
+
+      // المرحلة الأولى: أرشفة المتابعات (soft delete) - تنفيذ تدريجي لتجنب Rate Limiting
+      for (const followUpId of selectedFollowUps) {
+        await api.deleteFollowUp(followUpId)
+        // توقف قصير لتجنب Rate Limiting
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
       toast.loading('جاري الحذف النهائي...', { id: 'bulk-delete' })
-      
-      // المرحلة الثانية: الحذف النهائي (permanent delete)
-      const permanentDeletePromises = selectedFollowUps.map(followUpId => api.permanentDeleteFollowUp(followUpId))
-      await Promise.all(permanentDeletePromises)
-      
+
+      // المرحلة الثانية: الحذف النهائي (permanent delete) - تنفيذ تدريجي
+      for (const followUpId of selectedFollowUps) {
+        await api.permanentDeleteFollowUp(followUpId)
+        // توقف قصير لتجنب Rate Limiting
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
       toast.success(`تم حذف ${selectedFollowUps.length} متابعة نهائياً`, { id: 'bulk-delete' })
       setSelectedFollowUps([])
       setShowBulkDeleteConfirm(false)
