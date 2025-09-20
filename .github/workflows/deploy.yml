@@ -1,10 +1,8 @@
-name: 🚀 Deploy CRM to AWS EC2
+name: 🚀 Deploy CRM to AWS EC2 - DISABLED
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  # Disabled to prevent breaking production
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   deploy:
