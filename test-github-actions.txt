@@ -1,0 +1,3 @@
+Test GitHub Actions - تم إنشاء هذا الملف لاختبار الـ Auto-deployment
+
+الوقت: ${new Date().toLocaleString('ar-EG')}
