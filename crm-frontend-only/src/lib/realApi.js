@@ -6,7 +6,7 @@ console.log('🚀 Loading Real Backend API Integration!')
 // Configuration
 const API_CONFIG = {
   mode: 'full-stack',
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: 'http://54.221.136.112/api',
   enableMockData: false, // Using real backend only
   hasBackend: true // Real backend is available
 }
