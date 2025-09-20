@@ -32,6 +32,8 @@ jobs:
     - name: 📦 Install Frontend Dependencies
       run: |
         cd crm-frontend-only
+        # Fix npm optional dependencies bug
+        rm -rf package-lock.json node_modules
         npm install
 
     - name: 🏗️ Build Frontend
@@ -82,6 +84,8 @@ jobs:
           # Build frontend
           echo "🏗️ Building frontend..."
           cd ../crm-frontend-only
+          # Fix npm optional dependencies bug
+          rm -rf package-lock.json node_modules
           npm install
           VITE_API_URL=http://54.221.136.112/api VITE_ENVIRONMENT=production npm run build
           
