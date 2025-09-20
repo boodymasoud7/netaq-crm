@@ -30,7 +30,7 @@ jobs:
     - name: 📦 Install Backend Dependencies
       run: |
         cd crm-backend
-        npm ci --only=production
+        npm ci --omit=dev
 
     # 4. Install Frontend Dependencies & Build
     - name: 📦 Install Frontend Dependencies
@@ -79,7 +79,7 @@ jobs:
           # Install backend dependencies
           echo "📦 Installing backend dependencies..."
           cd crm-backend
-          npm ci --only=production
+          npm ci --omit=dev
           
           # Build frontend
           echo "🏗️ Building frontend..."
