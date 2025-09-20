@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon --config nodemon.json",
+    "dev": "nodemon dev-start.js",
+    "setup-local": "node setup-local-db.js && node create-local-admin.js",
+    "local": "npm run setup-local && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

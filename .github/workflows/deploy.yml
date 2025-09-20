@@ -40,6 +40,8 @@ jobs:
         npm run build
       env:
         NODE_ENV: production
+        VITE_API_URL: http://54.221.136.112/api
+        VITE_ENVIRONMENT: production
 
     # 5. Deploy to AWS EC2
     - name: 🚀 Deploy to AWS EC2
@@ -81,7 +83,7 @@ jobs:
           echo "🏗️ Building frontend..."
           cd ../crm-frontend-only
           npm install
-          npm run build
+          VITE_API_URL=http://54.221.136.112/api VITE_ENVIRONMENT=production npm run build
           
           # Copy frontend files to Nginx
           echo "📋 Copying frontend files to Nginx..."

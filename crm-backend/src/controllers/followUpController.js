@@ -227,7 +227,7 @@ exports.getAllFollowUps = async (req, res) => {
     // فلترة المتأخرة
     if (overdue === 'true') {
       where.scheduledDate = { [Op.lt]: new Date() };
-      where.status = { [Op.not]: 'completed' };
+      where.status = { [Op.not]: 'done' };
     }
 
     // إضافة فلترة دور المستخدم
@@ -764,7 +764,7 @@ exports.getFollowUpStats = async (req, res) => {
         where: {
           assignedTo: req.user.id,
           scheduledDate: { [Op.between]: [startOfDay, endOfDay] },
-          status: 'completed'
+          status: 'done'
         }
       }),
       // متابعات الأسبوع
@@ -779,7 +779,7 @@ exports.getFollowUpStats = async (req, res) => {
         where: {
           assignedTo: req.user.id,
           scheduledDate: { [Op.gte]: startOfWeek },
-          status: 'completed'
+          status: 'done'
         }
       }),
       // متأخرة
@@ -787,7 +787,7 @@ exports.getFollowUpStats = async (req, res) => {
         where: {
           assignedTo: req.user.id,
           scheduledDate: { [Op.lt]: new Date() },
-          status: { [Op.not]: 'completed' }
+          status: { [Op.not]: 'done' }
         }
       }),
       // حسب الحالة
@@ -1002,9 +1002,9 @@ exports.completeFollowUp = async (req, res) => {
 
     console.log(`✅ Completing follow-up ${id} with outcome: ${outcome}`);
 
-    // Update follow-up status to completed
+    // Update follow-up status to done
     await followUp.update({
-      status: 'completed',
+      status: 'done',
       completedDate: new Date(),
       notes: notes || followUp.notes,
       actualOutcome: outcome || followUp.actualOutcome,
