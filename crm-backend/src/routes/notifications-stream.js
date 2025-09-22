@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const notificationEmitter = require('../utils/notificationEmitter');
-const { saveNotification } = require('../controllers/notificationController');
+// Removed saveNotification import to avoid circular dependency
 const { Op } = require('sequelize');
 
 // Helper function to get all managers
@@ -27,8 +27,9 @@ const getAllManagerEmails = async () => {
 // Helper function to save and send notification
 const saveAndSendNotification = async (data, targetUserEmail, sseConnected = false) => {
   try {
-    // Save to database first
-    await saveNotification({
+    // Save to database first (direct create to avoid circular dependency)
+    const { Notification } = require('../../models');
+    await Notification.create({
       title: data.title,
       message: data.message,
       type: data.type,
@@ -38,7 +39,9 @@ const saveAndSendNotification = async (data, targetUserEmail, sseConnected = fal
       senderEmail: data.managerEmail || data.senderEmail,
       senderName: data.managerName || data.senderName,
       data: data,
-      sentViaSSE: sseConnected
+      sentViaSSE: sseConnected,
+      sentAt: sseConnected ? new Date() : null,
+      isRead: false
     });
     
     console.log(`💾 Notification saved to database for: ${targetUserEmail}`);

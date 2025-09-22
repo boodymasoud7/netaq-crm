@@ -1,7 +1,7 @@
 const { Notification } = require('../../models');
 const { body, validationResult, query } = require('express-validator');
 const { Op } = require('sequelize');
-const notificationStream = require('../routes/notifications-stream');
+const notificationEmitter = require('../utils/notificationEmitter');
 
 // Get user notifications with pagination
 exports.getUserNotifications = [
@@ -405,33 +405,29 @@ exports.createNotification = async (notificationData) => {
     console.log('✅ Notification created successfully:', notification.id);
 
     // إرسال الإشعار عبر SSE إذا كان متاحاً
-    if (notificationStream && typeof notificationStream.broadcastToUser === 'function') {
-      try {
-        const sseData = {
-          id: notification.id,
-          type: 'reminder',
-          title: notificationData.title,
-          message: notificationData.message,
-          timestamp: notification.createdAt.toISOString(),
-          priority: notificationData.priority || 'high',
-          icon: '🔔'
-        };
+    try {
+      const sseData = {
+        id: notification.id,
+        type: 'reminder',
+        title: notificationData.title,
+        message: notificationData.message,
+        timestamp: notification.createdAt.toISOString(),
+        priority: notificationData.priority || 'high',
+        icon: '🔔'
+      };
 
-        // إرسال للمستخدم المحدد إذا توفر بريده الإلكتروني
-        if (targetUserEmail) {
-          await notificationStream.broadcastToUser(targetUserEmail, sseData);
-          console.log('📡 SSE notification sent to user:', targetUserEmail);
-        } else {
-          // إرسال لجميع المديرين
-          await notificationStream.broadcastToManagers(sseData);
-          console.log('📡 SSE notification broadcast to managers');
-        }
-      } catch (sseError) {
-        console.error('❌ Error sending SSE notification:', sseError.message);
-        // لا نرمي خطأ هنا لأن الإشعار تم حفظه بنجاح
+      // إرسال للمستخدم المحدد إذا توفر بريده الإلكتروني
+      if (targetUserEmail) {
+        notificationEmitter.emit('newClient', sseData); // Use generic event
+        console.log('📡 SSE notification sent to user:', targetUserEmail);
+      } else {
+        // إرسال لجميع المديرين
+        notificationEmitter.emit('newClient', sseData); // Use generic event for managers
+        console.log('📡 SSE notification broadcast to managers');
       }
-    } else {
-      console.warn('⚠️ SSE notification system not available');
+    } catch (sseError) {
+      console.error('❌ Error sending SSE notification:', sseError.message);
+      // لا نرمي خطأ هنا لأن الإشعار تم حفظه بنجاح
     }
 
     return notification;
