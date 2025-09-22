@@ -93,11 +93,9 @@ export default function Projects() {
     location: '',
     status: 'planning',
     developer: '',
-    amenities: [],
-    totalUnits: '',
-    availableUnits: '',
-    priceRange: '',
-    completion: ''
+    deliveryTime: '',
+    deliveryUnit: 'months',
+    type: 'residential'
   })
 
   // Active projects (non-archived)
@@ -155,17 +153,12 @@ export default function Projects() {
       }
 
       // إضافة الحقول الاختيارية فقط إذا كان لها قيمة
-      if (newProject.totalUnits && parseInt(newProject.totalUnits) > 0) {
-        projectData.totalUnits = parseInt(newProject.totalUnits)
+      if (newProject.deliveryTime && parseInt(newProject.deliveryTime) > 0) {
+        projectData.deliveryTime = parseInt(newProject.deliveryTime)
+        projectData.deliveryUnit = newProject.deliveryUnit || 'months'
       }
-      if (newProject.availableUnits && parseInt(newProject.availableUnits) >= 0) {
-        projectData.availableUnits = parseInt(newProject.availableUnits)
-      }
-      if (newProject.priceRange && newProject.priceRange.trim()) {
-        projectData.priceRange = newProject.priceRange.trim()
-      }
-      if (newProject.completion && parseInt(newProject.completion) >= 0) {
-        projectData.completion = parseInt(newProject.completion)
+      if (newProject.type && newProject.type.trim()) {
+        projectData.type = newProject.type.trim()
       }
 
       const result = await api.addProject(projectData)
@@ -175,11 +168,9 @@ export default function Projects() {
         location: '',
         status: 'planning',
         developer: '',
-        amenities: [],
-        totalUnits: '',
-        availableUnits: '',
-        priceRange: '',
-        completion: ''
+        deliveryTime: '',
+        deliveryUnit: 'months',
+        type: 'residential'
       })
       setShowAddModal(false)
       
@@ -1062,93 +1053,67 @@ export default function Projects() {
                 </div>
               </div>
 
-              {/* الصف الثالث - حقول إضافية */}
+              {/* الصف الثالث - حقل الاستلام */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-1">
-                    إجمالي الوحدات
+                    فترة الاستلام
                   </label>
-                  <Input
-                    type="number"
-                    placeholder="عدد الوحدات الكلي (اختياري)"
-                    value={newProject.totalUnits}
-                    onChange={(e) => setNewProject({...newProject, totalUnits: e.target.value})}
-                    className="h-9"
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    الوحدات المتاحة
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="عدد الوحدات المتاحة (اختياري)"
-                    value={newProject.availableUnits}
-                    onChange={(e) => setNewProject({...newProject, availableUnits: e.target.value})}
-                    className="h-9"
-                    min="0"
-                    max={newProject.totalUnits}
-                  />
-                </div>
-              </div>
-
-              {/* الصف الرابع - النطاق السعري والتقدم */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    النطاق السعري
-                  </label>
-                  <Input
-                    placeholder="مثال: 500,000 - 1,000,000 جنيه (اختياري)"
-                    value={newProject.priceRange}
-                    onChange={(e) => setNewProject({...newProject, priceRange: e.target.value})}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    نسبة الإنجاز (%)
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0-100 (اختياري)"
-                    value={newProject.completion}
-                    onChange={(e) => setNewProject({...newProject, completion: e.target.value})}
-                    className="h-9"
-                    min="0"
-                    max="100"
-                  />
-                </div>
-              </div>
-
-              {/* الوصف والصور */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    وصف المشروع
-                  </label>
-                  <textarea
-                    className="bizmax-input h-20 resize-none"
-                    placeholder="وصف مختصر"
-                    value={newProject.description}
-                    onChange={(e) => setNewProject({...newProject, description: e.target.value})}
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    صور المشروع
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center h-20">
-                    <div className="space-y-1">
-                      <svg className="mx-auto h-6 w-6 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      <p className="text-xs text-gray-500">اختر الصور</p>
-                    </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="اتركه فارغ للاستلام الفوري"
+                      value={newProject.deliveryTime}
+                      onChange={(e) => setNewProject({...newProject, deliveryTime: e.target.value})}
+                      className="h-9 flex-1"
+                      min="1"
+                    />
+                    <select
+                      value={newProject.deliveryUnit || 'months'}
+                      onChange={(e) => setNewProject({...newProject, deliveryUnit: e.target.value})}
+                      className="bizmax-input h-9 w-20"
+                      disabled={!newProject.deliveryTime}
+                    >
+                      <option value="months">شهر</option>
+                      <option value="years">سنة</option>
+                    </select>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {newProject.deliveryTime 
+                      ? `استلام خلال ${newProject.deliveryTime} ${newProject.deliveryUnit === 'months' ? 'شهر' : 'سنة'}`
+                      : 'استلام فوري'
+                    }
+                  </p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">
+                    نوع المشروع
+                  </label>
+                  <select
+                    value={newProject.type || 'residential'}
+                    onChange={(e) => setNewProject({...newProject, type: e.target.value})}
+                    className="bizmax-input h-9"
+                  >
+                    <option value="residential">سكني</option>
+                    <option value="commercial">تجاري</option>
+                    <option value="mixed">مختلط</option>
+                    <option value="administrative">إداري</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* الوصف */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  وصف المشروع
+                </label>
+                <textarea
+                  className="bizmax-input h-20 resize-none"
+                  placeholder="وصف مختصر"
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+                  rows={3}
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t bg-gray-50 -mx-6 -mb-6 px-6 py-4">
