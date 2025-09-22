@@ -1062,7 +1062,7 @@ exports.getTodayFollowUps = async (req, res) => {
         [Op.between]: [startOfDay, endOfDay]
       },
       status: {
-        [Op.in]: ['scheduled', 'rescheduled']
+        [Op.in]: ['pending']
       }
     };
 
