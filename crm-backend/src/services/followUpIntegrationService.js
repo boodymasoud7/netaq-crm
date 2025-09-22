@@ -187,7 +187,7 @@ class FollowUpIntegrationService {
       // المتابعات المستحقة الآن (في آخر 15 دقيقة)
       const dueFollowUps = await FollowUp.findAll({
         where: {
-          status: 'scheduled',
+          status: 'pending',
           scheduledDate: {
             [require('sequelize').Op.between]: [fifteenMinutesAgo, now]
           }
@@ -197,7 +197,7 @@ class FollowUpIntegrationService {
       // المتابعات المتأخرة (أكثر من ساعة)
       const overdueFollowUps = await FollowUp.findAll({
         where: {
-          status: 'scheduled',
+          status: 'pending',
           scheduledDate: {
             [require('sequelize').Op.lt]: oneHourAgo
           }

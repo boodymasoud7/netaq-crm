@@ -62,7 +62,7 @@ const createReminder = async (req, res) => {
 const getUserReminders = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const { status, search, from, to, page = 1, limit = 10 } = req.query;
+    const { status, search, from, to, page = 1, limit = 100 } = req.query;
 
     let whereClause = 'WHERE user_id = $1';
     let binds = [user_id];

@@ -8,7 +8,7 @@ exports.getAllLeads = [
   // Validation rules for query parameters
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 10000 }).withMessage('Limit must be between 1 and 10000'),
-  query('status').optional().isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost']).withMessage('Invalid status'),
+  query('status').optional().isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost', 'not_interested']).withMessage('Invalid status'),
   query('priority').optional().isIn(['low', 'medium', 'high', 'urgent']).withMessage('Invalid priority'),
   
   async (req, res) => {
@@ -216,7 +216,7 @@ exports.createLead = [
     .isFloat({ min: 0 })
     .withMessage('Budget must be a positive number'),
   body('status')
-    .isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost'])
+    .isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost', 'not_interested'])
     .withMessage('Invalid status'),
   body('priority')
     .isIn(['low', 'medium', 'high', 'urgent'])
@@ -351,7 +351,7 @@ exports.updateLead = [
     .withMessage('Budget must be a positive number'),
   body('status')
     .optional()
-    .isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost'])
+    .isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost', 'not_interested'])
     .withMessage('Invalid status'),
   body('priority')
     .optional()
@@ -406,7 +406,7 @@ exports.updateLead = [
               {
                 where: {
                   leadId: lead.id,
-                  status: { [Op.in]: ['scheduled', 'pending', 'rescheduled'] }
+                  status: { [Op.in]: ['pending'] }
                 }
               }
             );

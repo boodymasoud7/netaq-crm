@@ -10,8 +10,6 @@ exports.getAllProjects = [
   query('status').optional().isIn(['planning', 'under_construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived']).withMessage('Invalid status'),
   
   async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -95,8 +93,6 @@ exports.getAllProjects = [
 
 // Get single project by ID
 exports.getProjectById = async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
   try {
     const { id } = req.params;
 
@@ -160,8 +156,6 @@ exports.createProject = [
     .withMessage('Completion must be between 0 and 100'),
 
   async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -269,8 +263,6 @@ exports.updateProject = [
     .withMessage('Completion must be between 0 and 100'),
 
   async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -324,8 +316,6 @@ exports.updateProject = [
 
 // Delete project
 exports.deleteProject = async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
   try {
     const { id } = req.params;
 
@@ -359,8 +349,6 @@ exports.deleteProject = async (req, res) => {
 
 // Get project statistics
 exports.getProjectStats = async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
   try {
     const statusStats = await Project.findAll({
       attributes: [
@@ -458,8 +446,6 @@ exports.getArchivedProjects = [
   query('limit').optional().isInt({ min: 1, max: 10000 }).withMessage('Limit must be between 1 and 10000'),
   
   async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -540,8 +526,6 @@ exports.getArchivedProjects = [
 
 // Restore archived project (undo soft delete)
 exports.restoreProject = async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
   try {
     const { id } = req.params;
 
@@ -591,8 +575,6 @@ exports.restoreProject = async (req, res) => {
 
 // Permanently delete project (hard delete)
 exports.permanentDeleteProject = async (req, res) => {
-    // Accept any additional fields from frontend
-    req.body = req.body || {};
   try {
     const { id } = req.params;
 

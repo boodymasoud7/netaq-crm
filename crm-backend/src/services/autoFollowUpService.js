@@ -425,7 +425,7 @@ class AutoFollowUpService {
         const existingFollowUp = await FollowUp.findOne({
           where: {
             leadId: lead.id,
-            status: 'scheduled',
+            status: 'pending',
             scheduledDate: {
               [Op.gte]: today
             }
