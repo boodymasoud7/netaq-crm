@@ -72,7 +72,7 @@ export function CallButton({ phone }) {
 }
 
 // زر التفاعلات - البديل للملاحظات
-export function InteractionsButton({ onAddInteraction, itemId, itemName, itemType = 'client' }) {
+export function InteractionsButton({ onAddInteraction, itemId, itemName, itemType = 'client', interactionsCount = 0 }) {
   const [showModal, setShowModal] = useState(false)
   const [interactionData, setInteractionData] = useState({
     type: 'call',
@@ -116,10 +116,15 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
         variant="ghost"
         size="sm"
         onClick={() => setShowModal(true)}
-        className="text-purple-600 hover:text-white hover:bg-purple-600 transition-all duration-200 hover:scale-110 rounded-lg p-2 shadow-sm hover:shadow-md"
-        title="إضافة تفاعل"
+        className="relative text-purple-600 hover:text-white hover:bg-purple-600 transition-all duration-200 hover:scale-110 rounded-lg p-2 shadow-sm hover:shadow-md"
+        title={`إضافة تفاعل ${interactionsCount > 0 ? `(${interactionsCount} تفاعل)` : ''}`}
       >
         <UserCheck className="h-4 w-4" />
+        {interactionsCount > 0 && (
+          <div className="absolute -top-0.5 -right-0.5 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px] leading-none">
+            {interactionsCount > 9 ? '9+' : interactionsCount}
+          </div>
+        )}
       </Button>
 
             {showModal && (

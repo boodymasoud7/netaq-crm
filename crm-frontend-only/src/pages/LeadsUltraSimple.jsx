@@ -53,6 +53,7 @@ import LeadAssignmentModal from '../components/modals/LeadAssignmentModal'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
 import { useSSENotificationSender } from '../hooks/useSSENotificationSender'
+import { useAllLeadNotes, useAllLeadInteractions } from '../hooks/useNotes'
 import toast from 'react-hot-toast'
 
 function LeadsUltraSimple() {
@@ -81,6 +82,11 @@ function LeadsUltraSimple() {
     updateParams({ page: 1, limit: newSize }) // العودة للصفحة الأولى مع الحجم الجديد
   }
   const [quickSearchTerm, setQuickSearchTerm] = useState('')
+  
+  // جلب الملاحظات والتفاعلات للعدادات
+  const leadIds = leads?.map(lead => lead.id) || []
+  const { allNotes: leadNotes = {}, loading: notesLoading } = useAllLeadNotes(leadIds)
+  const { allInteractions: leadInteractions = {}, loading: interactionsLoading } = useAllLeadInteractions(leadIds)
   
   // استيراد نظام الصلاحيات
   const { 
@@ -1598,6 +1604,8 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           selectedLeads={selectedLeads}
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
+          leadNotes={leadNotes} // تمرير ملاحظات العملاء المحتملين الحقيقية
+          leadInteractions={leadInteractions} // تمرير تفاعلات العملاء المحتملين الحقيقية
         />
 
       {/* منطقة الترقيم */}

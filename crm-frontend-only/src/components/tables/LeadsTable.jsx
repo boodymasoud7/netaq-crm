@@ -62,7 +62,9 @@ export default function LeadsTable({
   onSelectedLeadsChange,
   selectedLeads: propSelectedLeads,
   pageSize,
-  onPageSizeChange
+  onPageSizeChange,
+  leadNotes = {}, // إضافة prop للملاحظات
+  leadInteractions = {} // إضافة prop للتفاعلات
 }) {
   // LeadsTable rendered successfully
   const { currentUser, userProfile } = useAuth()
@@ -77,6 +79,19 @@ export default function LeadsTable({
   const [editingAssignee, setEditingAssignee] = useState(null)
   const [salesStaff, setSalesStaff] = useState([])
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+
+  // Helper functions للملاحظات والتفاعلات
+  const getNotesCount = (leadId) => {
+    if (!leadNotes || typeof leadNotes !== 'object') return 0
+    const leadNotesArray = leadNotes[leadId] || []
+    return Array.isArray(leadNotesArray) ? leadNotesArray.length : 0
+  }
+
+  const getInteractionsCount = (leadId) => {
+    if (!leadInteractions || typeof leadInteractions !== 'object') return 0
+    const leadInteractionsArray = leadInteractions[leadId] || []
+    return Array.isArray(leadInteractionsArray) ? leadInteractionsArray.length : 0
+  }
 
   // نظام الصلاحيات المحدث مع النظام الديناميكي
   const hasAdminPermissions = useMemo(() => isAdmin() || isSalesManager(), [isAdmin, isSalesManager])
@@ -676,11 +691,13 @@ export default function LeadsTable({
                       itemId={lead.id}
                       itemName={lead.name}
                       itemType="lead"
+                      interactionsCount={getInteractionsCount(lead.id)}
                     />
                     <NotesButton 
                       onAddNote={onAddNote}
                       itemId={lead.id}
                       itemName={lead.name}
+                      notesCount={getNotesCount(lead.id)}
                     />
                   </div>
                 </td>

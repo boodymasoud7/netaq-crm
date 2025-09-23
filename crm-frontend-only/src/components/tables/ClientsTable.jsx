@@ -57,7 +57,8 @@ export default function ClientsTable({
   onSelectedClientsChange,
   pageSize,
   onPageSizeChange,
-  clientNotes = [] // إضافة prop افتراضي فارغ للملاحظات
+  clientNotes = {}, // إضافة prop افتراضي فارغ للملاحظات
+  clientInteractions = {} // إضافة prop للتفاعلات
 }) {
   const { currentUser, userProfile } = useAuth()
   const { canEdit, canDelete, checkPermission, isAdmin, isSalesManager } = usePermissions()
@@ -77,6 +78,13 @@ export default function ClientsTable({
     if (!clientNotes || typeof clientNotes !== 'object') return 0
     const clientNotesArray = clientNotes[clientId] || []
     return Array.isArray(clientNotesArray) ? clientNotesArray.length : 0
+  }
+
+  // Helper function to get interactions count
+  const getInteractionsCount = (clientId) => {
+    if (!clientInteractions || typeof clientInteractions !== 'object') return 0
+    const clientInteractionsArray = clientInteractions[clientId] || []
+    return Array.isArray(clientInteractionsArray) ? clientInteractionsArray.length : 0
   }
 
   // نسخ رقم الهاتف
@@ -481,6 +489,7 @@ export default function ClientsTable({
                       itemId={client.id}
                       itemName={client.name}
                       itemType="client"
+                      interactionsCount={getInteractionsCount(client.id)}
                     />
                     <NotesButton 
                       onAddNote={onAddNote}
