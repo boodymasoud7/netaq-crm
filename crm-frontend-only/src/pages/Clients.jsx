@@ -78,7 +78,7 @@ export default function Clients() {
   const loadUsers = async () => {
     try {
       // جلب المستخدمين الحقيقيين من قاعدة البيانات
-      const usersResponse = await api.getUsers()
+      const usersResponse = await api.getUsers({ limit: 1000 })
       
       if (usersResponse?.success && usersResponse?.data) {
         // فلترة المستخدمين النشطين فقط وتنسيق البيانات

@@ -83,7 +83,7 @@ const ManagerDashboard = () => {
   const { data: clientsData, loading: clientsLoading } = useApiData(() => api.getClients({ limit: 1000 }));
   const { data: salesData, loading: salesLoading } = useApiData(() => api.getSales({ limit: 1000 }));
   const { data: leadsData, loading: leadsLoading } = useApiData(() => api.getLeads({ limit: 1000 }));
-  const { data: usersData, loading: usersLoading } = useApiData(() => api.getUsers());
+  const { data: usersData, loading: usersLoading } = useApiData(() => api.getUsers({ limit: 1000 }));
   const { data: followUpsData, loading: followUpsLoading } = useApiData(() => api.getFollowUps({ limit: 1000 }));
   const { data: interactionsData, loading: interactionsLoading } = useApiData(() => api.getInteractions({ limit: 1000 }));
   const { data: activityData, loading: activityLoading } = useApiData(() => api.getActivityFeed({ limit: 50 }));

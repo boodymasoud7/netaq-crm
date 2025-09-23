@@ -164,7 +164,7 @@ export default function LeadsTable({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await api.getUsers()
+        const response = await api.getUsers({ limit: 1000 })
         if (response.success && response.data) {
           setUsers(response.data)
         }

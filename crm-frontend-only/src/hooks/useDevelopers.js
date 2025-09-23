@@ -13,7 +13,7 @@ const useDevelopers = () => {
       setError(null)
       
       console.log('🔄 Fetching developers...')
-      const response = await api.getDevelopers()
+      const response = await api.getDevelopers({ limit: 1000 })
       console.log('📦 Developers API response:', response)
       const developersData = response.data || []
       console.log('👥 Setting developers:', developersData.length, 'developers')

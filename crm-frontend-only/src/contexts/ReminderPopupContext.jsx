@@ -149,7 +149,7 @@ export function ReminderPopupProvider({ children }) {
           const reminderId = latestNotification.relatedId || latestNotification.id
           
           // جلب حالة التذكير الفعلية من الخادم
-          const response = await api.getReminders()
+          const response = await api.getReminders({ limit: 1000 })
           const reminders = response?.data || response || []
           const actualReminder = reminders.find(r => r.id == reminderId)
           
@@ -208,7 +208,7 @@ export function ReminderPopupProvider({ children }) {
       isCheckingReminders = true
       
       try {
-        const response = await api.getReminders()
+        const response = await api.getReminders({ limit: 1000 })
         const reminders = response?.data || response || []
         
         // البحث عن التذكيرات المستحقة

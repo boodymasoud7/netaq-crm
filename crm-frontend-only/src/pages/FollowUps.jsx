@@ -271,7 +271,7 @@ export default function FollowUps() {
       let leadsMap = {}
       if (leadIds.length > 0) {
         try {
-          const leadsResponse = await api.getLeads()
+          const leadsResponse = await api.getLeads({ limit: 1000 })
           if (leadsResponse.success) {
             const leadsData = leadsResponse.data || []
             leadsMap = leadsData.reduce((map, lead) => {
@@ -294,7 +294,7 @@ export default function FollowUps() {
       let clientsMap = {}
       if (clientIds.length > 0) {
         try {
-          const clientsResponse = await api.getClients()
+          const clientsResponse = await api.getClients({ limit: 1000 })
           if (clientsResponse.success) {
             const clientsData = clientsResponse.data || []
             clientsMap = clientsData.reduce((map, client) => {
@@ -317,7 +317,7 @@ export default function FollowUps() {
       let usersMap = {}
       if (userIds.length > 0) {
         try {
-          const usersResponse = await api.getUsers()
+          const usersResponse = await api.getUsers({ limit: 1000 })
           if (usersResponse.success) {
             const usersData = usersResponse.data || []
             usersMap = usersData.reduce((map, user) => {
