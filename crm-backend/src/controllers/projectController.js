@@ -148,7 +148,7 @@ exports.createProject = [
     .isLength({ min: 2 })
     .withMessage('Price range must be at least 2 characters long'),
   body('status')
-    .isIn(['planning', 'under_construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
+    .isIn(['planning', 'under_construction', 'construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
     .withMessage('Invalid status'),
   body('completion')
     .optional()
@@ -255,7 +255,7 @@ exports.updateProject = [
     .withMessage('Available units must be a non-negative integer'),
   body('status')
     .optional()
-    .isIn(['planning', 'under_construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
+    .isIn(['planning', 'under_construction', 'construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
     .withMessage('Invalid status'),
   body('completion')
     .optional()
