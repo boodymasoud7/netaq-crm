@@ -15,7 +15,7 @@ export const useManagerDashboard = () => {
       console.log('📊 Fetching manager dashboard data...');
       
       // Try the new optimized dashboard API first
-      const response = await fetch('http://localhost:8000/api/dashboard/manager', {
+      const response = await fetch('http://54.221.136.112/api/dashboard/manager', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
