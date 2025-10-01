@@ -135,11 +135,11 @@ exports.createProject = [
     .isLength({ min: 2 })
     .withMessage('Developer name must be at least 2 characters long'),
   body('totalUnits')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isInt({ min: 1 })
     .withMessage('Total units must be a positive integer'),
   body('availableUnits')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isInt({ min: 0 })
     .withMessage('Available units must be a non-negative integer'),
   body('priceRange')
@@ -246,11 +246,11 @@ exports.updateProject = [
     .isLength({ min: 2 })
     .withMessage('Developer name must be at least 2 characters long'),
   body('totalUnits')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isInt({ min: 1 })
     .withMessage('Total units must be a positive integer'),
   body('availableUnits')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isInt({ min: 0 })
     .withMessage('Available units must be a non-negative integer'),
   body('status')
