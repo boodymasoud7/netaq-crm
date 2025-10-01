@@ -406,7 +406,7 @@ exports.updateLead = [
               {
                 where: {
                   leadId: lead.id,
-                  status: { [Op.in]: ['scheduled', 'pending', 'rescheduled'] }
+                  status: { [Op.in]: ['pending'] }
                 }
               }
             );
