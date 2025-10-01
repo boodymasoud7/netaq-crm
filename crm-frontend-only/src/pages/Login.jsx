@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, Building2 } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -71,10 +71,10 @@ export default function Login() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo and Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-2xl mb-4 shadow-lg">
-            <Building2 className="h-8 w-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 rounded-2xl mb-4 shadow-lg">
+            <span className="text-white font-bold text-2xl">N</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">نطاق CRM</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Netaq CRM</h1>
           <p className="text-gray-600">صُنع بكل حب خصيصاً لشركة نطاق</p>
         </div>
 
@@ -127,13 +127,13 @@ export default function Login() {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                   />
                   <span className="mr-2 text-sm text-gray-600">تذكرني</span>
                 </label>
                 <a
                   href="#"
-                  className="text-sm text-primary-600 hover:text-primary-500 transition-colors"
+                  className="text-sm text-blue-600 hover:text-purple-600 transition-colors"
                 >
                   نسيت كلمة المرور؟
                 </a>
@@ -144,7 +144,7 @@ export default function Login() {
                 type="submit"
                 loading={isLoading}
                 loadingText="جاري تسجيل الدخول..."
-                className="w-full bizmax-button-primary h-12 text-base font-semibold"
+                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 تسجيل الدخول
               </LoadingButton>
@@ -157,7 +157,7 @@ export default function Login() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            © 2025 نطاق CRM. جميع الحقوق محفوظة.
+            © 2025 Netaq CRM. جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center justify-center gap-4 mt-2">
             <a href="#" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
@@ -192,8 +192,8 @@ export default function Login() {
       </div>
 
       {/* Floating Elements */}
-      <div className="absolute top-20 right-20 w-32 h-32 bg-primary-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse hidden lg:block"></div>
-      <div className="absolute bottom-20 left-20 w-24 h-24 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse hidden lg:block" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-20 right-20 w-32 h-32 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse hidden lg:block"></div>
+      <div className="absolute bottom-20 left-20 w-24 h-24 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse hidden lg:block" style={{ animationDelay: '2s' }}></div>
     </div>
     </ErrorBoundary>
   )
