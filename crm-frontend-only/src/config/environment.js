@@ -6,7 +6,7 @@ export const ENV_CONFIG = {
   USE_REAL_API: true, // Using Real Backend with simple test server
   
   // Backend URL
-  BACKEND_URL: 'http://54.221.136.112/api',
+  BACKEND_URL: 'https://netaqcrm.site/api',
   
   // App Configuration
   APP_NAME: 'CRM Real Estate System',

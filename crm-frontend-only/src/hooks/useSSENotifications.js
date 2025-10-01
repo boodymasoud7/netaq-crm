@@ -87,7 +87,7 @@ export function useSSENotifications() {
     console.log('🔑 Using token:', token.substring(0, 20) + '...')
 
     // إنشاء اتصال SSE مع token كـ query parameter
-    const eventSource = new EventSource(`http://54.221.136.112/api/notifications-stream/stream?token=${encodeURIComponent(token)}`)
+    const eventSource = new EventSource(`https://netaqcrm.site/api/notifications-stream/stream?token=${encodeURIComponent(token)}`)
 
     eventSource.onopen = () => {
       console.log('✅ SSE connection established')
@@ -157,7 +157,7 @@ export function useSSENotifications() {
       setConnectionError(`Connection error (state: ${eventSource.readyState})`)
       
       // Check if backend is available before attempting reconnection
-      fetch(`${import.meta.env.VITE_API_URL || 'http://54.221.136.112'}/api/health`)
+      fetch(`${import.meta.env.VITE_API_URL || 'https://netaqcrm.site'}/api/health`)
         .then(response => {
           if (response.ok) {
             // Backend is available, try to reconnect after 10 seconds
