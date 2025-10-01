@@ -174,21 +174,23 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Developer Tools - Hidden */}
-        <div className="mt-8 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('هل تريد مسح جميع البيانات المحفوظة؟ (للتطوير فقط)')) {
-                clearAllSessions()
-              }
-            }}
-            className="text-xs text-gray-300 hover:text-gray-500 transition-colors opacity-30 hover:opacity-100"
-            title="مسح البيانات المحفوظة (للتطوير)"
-          >
-            🧹 مسح البيانات
-          </button>
-        </div>
+        {/* Developer Tools - Only in Development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('هل تريد مسح جميع البيانات المحفوظة؟ (للتطوير فقط)')) {
+                  clearAllSessions()
+                }
+              }}
+              className="text-xs text-gray-300 hover:text-gray-500 transition-colors opacity-30 hover:opacity-100"
+              title="مسح البيانات المحفوظة (للتطوير)"
+            >
+              🧹 مسح البيانات
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Floating Elements */}
