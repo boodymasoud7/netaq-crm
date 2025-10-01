@@ -182,6 +182,20 @@ const ManagerDashboard = () => {
     }
   ];
 
+  // Debug: Log data counts
+  console.log('📊 Team Performance Data:', {
+    totalUsers: users.length,
+    regularEmployees: users.filter(isRegularEmployee).length,
+    totalClients: clients.length,
+    totalFollowUps: followUps.length,
+    totalInteractions: interactions.length,
+    totalTasks: tasks.length,
+    followUpStatuses: followUps.map(f => f.status),
+    sampleUser: users[0],
+    sampleClient: clients[0],
+    sampleFollowUp: followUps[0]
+  });
+
   // Team performance focused on customer interactions
   const teamPerformance = users
     .filter(isRegularEmployee)
@@ -191,7 +205,15 @@ const ManagerDashboard = () => {
       const userInteractions = interactions.filter(i => i.createdBy === user.id || i.assignedTo === user.id);
       const userTasks = tasks.filter(task => task.assignedTo === user.id || task.createdBy === user.id);
       const userCompletedTasks = userTasks.filter(task => task.status === 'completed');
-      const userCompletedFollowUps = userFollowUps.filter(f => f.status === 'completed');
+      const userCompletedFollowUps = userFollowUps.filter(f => f.status === 'done' || f.status === 'completed' || f.status === 'مكتمل');
+      
+      console.log(`👤 User ${user.name} (ID: ${user.id}):`, {
+        clients: userClients.length,
+        followUps: userFollowUps.length,
+        completedFollowUps: userCompletedFollowUps.length,
+        interactions: userInteractions.length,
+        tasks: userTasks.length
+      });
       
       // Calculate interaction score
       const interactionScore = (userInteractions.length * 2) + (userCompletedFollowUps.length * 3) + userClients.length;
