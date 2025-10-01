@@ -12,7 +12,7 @@ router.use(authMiddleware);
 // @access  Private (view_developers permission)
 router.get('/', requirePermission('view_developers'), async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', status = '', specialization = '' } = req.query;
+    const { page = 1, limit = 1000000, search = '', status = '', specialization = '' } = req.query;
     
     // Build where conditions
     const whereConditions = {};
