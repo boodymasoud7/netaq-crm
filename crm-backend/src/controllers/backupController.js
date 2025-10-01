@@ -85,7 +85,7 @@ class BackupController {
   // List all backups
   async listBackups(req, res) {
     try {
-      const { page = 1, limit = 10, status, type } = req.query;
+      const { page = 1, limit = 100, status, type } = req.query;
       
       const where = {};
       if (status) where.status = status;

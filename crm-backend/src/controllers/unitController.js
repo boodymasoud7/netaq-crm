@@ -8,7 +8,7 @@ exports.getAllUnits = async (req, res) => {
   try {
     const { 
       page = 1, 
-      limit = 10, 
+      limit = 100, 
       search = '', 
       status = '', 
       type = '',
