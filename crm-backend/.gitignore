@@ -1,0 +1,67 @@
+# ================================
+# CRM Backend - Specific .gitignore
+# ================================
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+
+# Database
+config/config.json
+*.sqlite
+*.db
+
+# Uploads and temporary files
+uploads/
+temp/
+backups/
+*.tmp
+
+# Logs
+logs/
+*.log
+server-*.log
+server-*.txt
+
+# Node modules
+node_modules/
+
+# PM2
+ecosystem.config.json
+
+# Development/testing files
+test-*.js
+debug-*.js
+check-*.js
+create-*.js
+clean-*.js
+simple-*.js
+fix-*.js
+quick-*.js
+*.sql
+
+# Archive files
+*.rar
+*.zip
+
+# Batch files
+*.bat
+
+# SSH keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+
+# Cache
+.cache/
+.npm/
+
+# Coverage reports
+coverage/
+
+# Build files
+dist/
+build/
