@@ -450,6 +450,57 @@ router.delete('/archive/all', requirePermission('manage_developers'), async (req
   }
 });
 
+// @route   POST /api/developers/sync-projects-count
+// @desc    Update projects_count for all developers based on Projects table
+// @access  Private (manage_developers permission)
+router.post('/sync-projects-count', requirePermission('manage_developers'), async (req, res) => {
+  try {
+    const { Project } = require('../../models');
+    
+    console.log('🔄 Starting projects_count sync for all developers...');
+    
+    // Get all active developers
+    const developers = await Developer.findAll({
+      where: { deleted_at: null }
+    });
+    
+    let updatedCount = 0;
+    
+    // Update projects_count for each developer
+    for (const dev of developers) {
+      // Count projects by developer name
+      const projectCount = await Project.count({
+        where: {
+          developer: dev.name,
+          deleted_at: null
+        }
+      });
+      
+      // Update developer's projects_count
+      await dev.update({ projects_count: projectCount });
+      
+      console.log(`✅ Updated ${dev.name}: ${projectCount} projects`);
+      updatedCount++;
+    }
+    
+    console.log(`🎉 Successfully synced projects_count for ${updatedCount} developers`);
+    
+    res.json({
+      success: true,
+      message: `تم تحديث عدد المشاريع لـ ${updatedCount} مطور بنجاح`,
+      updatedCount
+    });
+    
+  } catch (error) {
+    console.error('Error syncing projects count:', error);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء تحديث عدد المشاريع',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
 
 
