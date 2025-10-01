@@ -47,12 +47,6 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     
     const { count, rows: developers } = await Developer.findAndCountAll({
       where: whereConditions,
-      include: [{
-        model: User,
-        as: 'assignedUser',
-        attributes: ['id', 'name', 'username', 'email'],
-        required: false
-      }],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset: parseInt(offset)
@@ -66,7 +60,7 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     const mappedDevelopers = developers.map(dev => ({
       ...dev.toJSON(),
       address: dev.location, // Map location to address for frontend
-      contactPerson: dev.assignedUser?.name || 'غير محدد', // Show assigned user name or 'غير محدد'
+      contactPerson: dev.specialization || 'غير محدد', // Show contact person from specialization field
       projectsCount: dev.projects_count || 0
     }));
     

@@ -74,11 +74,6 @@ module.exports = (sequelize) => {
       allowNull: true,
       comment: 'رقم الترخيص'
     },
-    assigned_to: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'الموظف المسؤول عن المطور'
-    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
@@ -100,13 +95,6 @@ module.exports = (sequelize) => {
     Developer.belongsTo(models.User, {
       foreignKey: 'deleted_by',
       as: 'deletedByUser',
-      constraints: false
-    });
-    
-    // Association for the user responsible for this developer
-    Developer.belongsTo(models.User, {
-      foreignKey: 'assigned_to',
-      as: 'assignedUser',
       constraints: false
     });
   };
