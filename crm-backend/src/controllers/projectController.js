@@ -266,6 +266,8 @@ exports.updateProject = [
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.error('❌ Project update validation failed:', JSON.stringify(errors.array(), null, 2));
+        console.error('📦 Request body:', JSON.stringify(req.body, null, 2));
         return res.status(400).json({
           message: 'Validation failed',
           errors: errors.array()
@@ -274,6 +276,8 @@ exports.updateProject = [
 
       const { id } = req.params;
       const updateData = req.body;
+      
+      console.log(`🔄 Updating project ${id} with data:`, JSON.stringify(updateData, null, 2));
 
       // Check if project exists
       const project = await Project.findByPk(id);
