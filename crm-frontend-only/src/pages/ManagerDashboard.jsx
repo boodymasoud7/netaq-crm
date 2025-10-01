@@ -212,6 +212,13 @@ const ManagerDashboard = () => {
       const userInteractions = interactions.filter(i => 
         parseInt(i.createdBy) === user.id || parseInt(i.assignedTo) === user.id
       );
+      // Separate lead interactions from client interactions
+      const userLeadInteractions = userInteractions.filter(i => 
+        i.itemType === 'lead' || i.itemType === 'Lead'
+      );
+      const userClientInteractions = userInteractions.filter(i => 
+        i.itemType === 'client' || i.itemType === 'Client'
+      );
       const userTasks = tasks.filter(task => 
         parseInt(task.assignedTo) === user.id || parseInt(task.createdBy) === user.id
       );
@@ -223,12 +230,14 @@ const ManagerDashboard = () => {
         leads: userLeads.length,
         followUps: userFollowUps.length,
         completedFollowUps: userCompletedFollowUps.length,
-        interactions: userInteractions.length,
+        totalInteractions: userInteractions.length,
+        leadInteractions: userLeadInteractions.length,
+        clientInteractions: userClientInteractions.length,
         tasks: userTasks.length
       });
       
-      // Calculate interaction score (including leads with higher weight)
-      const interactionScore = (userInteractions.length * 2) + (userCompletedFollowUps.length * 3) + userClients.length + (userLeads.length * 2);
+      // Calculate interaction score (including leads and their interactions with higher weight)
+      const interactionScore = (userClientInteractions.length * 2) + (userLeadInteractions.length * 3) + (userCompletedFollowUps.length * 3) + userClients.length + (userLeads.length * 2);
       const responseRate = userFollowUps.length > 0 ? (userCompletedFollowUps.length / userFollowUps.length) * 100 : 0;
 
       return {
@@ -237,6 +246,8 @@ const ManagerDashboard = () => {
         clients: userClients.length,
         leads: userLeads.length,
         interactions: userInteractions.length,
+        leadInteractions: userLeadInteractions.length,
+        clientInteractions: userClientInteractions.length,
         followUps: userCompletedFollowUps.length,
         pendingFollowUps: userFollowUps.length - userCompletedFollowUps.length,
         tasks: userTasks.length,
@@ -845,7 +856,8 @@ const ManagerDashboard = () => {
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">الموظف</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">العملاء</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">عملاء محتملين</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">التفاعلات</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-700">تفاعلات العملاء</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-700">تفاعلات محتملين</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">متابعات مكتملة</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">متابعات معلقة</th>
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">معدل الاستجابة</th>
@@ -871,7 +883,10 @@ const ManagerDashboard = () => {
                           <span className="text-indigo-600 font-semibold">{member.leads}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="text-green-600 font-semibold">{member.interactions}</span>
+                          <span className="text-green-600 font-semibold">{member.clientInteractions}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-teal-600 font-semibold">{member.leadInteractions}</span>
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-purple-600 font-semibold">{member.followUps}</span>
@@ -1407,7 +1422,7 @@ const ManagerDashboard = () => {
                         <div className="text-lg">{member.avatar}</div>
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{member.name}</p>
-                          <p className="text-sm text-gray-600">{member.leads} عميل محتمل - {member.interactions} تفاعل - {member.followUps} متابعة</p>
+                          <p className="text-sm text-gray-600">{member.leads} محتمل - {member.leadInteractions} تفاعل محتمل - {member.clientInteractions} تفاعل عميل</p>
                         </div>
                         <Badge className={
                           index === 0 ? 'bg-yellow-100 text-yellow-700' :
