@@ -53,6 +53,8 @@ import LeadAssignmentModal from '../components/modals/LeadAssignmentModal'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
 import { useSSENotificationSender } from '../hooks/useSSENotificationSender'
+import { useAllLeadNotes } from '../hooks/useNotes'
+import { useAllLeadInteractions } from '../hooks/useInteractions'
 import toast from 'react-hot-toast'
 
 function LeadsUltraSimple() {
@@ -74,6 +76,11 @@ function LeadsUltraSimple() {
   const [searchTerm, setSearchTerm] = useState('')
   const [pageSize, setPageSize] = useState(100) // عدد العملاء في الصفحة
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
+
+  // جلب الملاحظات والتفاعلات لجميع العملاء المحتملين
+  const leadIds = leads?.map(lead => lead.id) || []
+  const { allNotes: leadNotes, loading: notesLoading } = useAllLeadNotes(leadIds)
+  const { allInteractions: leadInteractions, loading: interactionsLoading } = useAllLeadInteractions(leadIds)
 
   // دالة تغيير حجم الصفحة
   const handlePageSizeChange = (newSize) => {
@@ -1598,6 +1605,8 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           selectedLeads={selectedLeads}
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
+          leadNotes={leadNotes} // تمرير ملاحظات العملاء المحتملين
+          leadInteractions={leadInteractions} // تمرير تفاعلات العملاء المحتملين
         />
 
       {/* منطقة الترقيم */}

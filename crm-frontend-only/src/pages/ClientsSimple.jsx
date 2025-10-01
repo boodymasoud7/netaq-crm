@@ -50,6 +50,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
 import { useSSENotificationSender } from '../hooks/useSSENotificationSender'
 import { useAllClientNotes } from '../hooks/useNotes'
+import { useAllClientInteractions } from '../hooks/useInteractions'
 import WhatsAppSender from '../components/whatsapp/WhatsAppSender'
 // تم حذف خدمات الإشعارات مؤقتاً
 import toast from 'react-hot-toast'
@@ -121,11 +122,10 @@ export default function ClientsSimple() {
     return hasPermission
   }
 
-  // تعطيل جلب الملاحظات مؤقتاً لتقليل الضغط على الخادم
-  // const clientIds = clients?.map(client => client.id) || []
-  // const { allNotes: clientNotes, loading: notesLoading } = useAllClientNotes(clientIds)
-  const clientNotes = {} // بيانات فارغة مؤقتاً
-  const notesLoading = false
+  // جلب الملاحظات والتفاعلات لجميع العملاء
+  const clientIds = clients?.map(client => client.id) || []
+  const { allNotes: clientNotes, loading: notesLoading } = useAllClientNotes(clientIds)
+  const { allInteractions: clientInteractions, loading: interactionsLoading } = useAllClientInteractions(clientIds)
 
   // دوال التحقق من الصلاحيات
   const canEditClient = (client) => {
@@ -847,6 +847,7 @@ export default function ClientsSimple() {
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
           clientNotes={clientNotes} // تمرير ملاحظات العملاء الحقيقية
+          clientInteractions={clientInteractions} // تمرير تفاعلات العملاء الحقيقية
         />
 
       {/* منطقة الترقيم المدمجة */}
