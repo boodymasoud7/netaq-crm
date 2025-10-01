@@ -1,4 +1,4 @@
-const { User, Client, Lead, Sale, Project, Task, Interaction } = require('../../models/index.js');
+const { User, Client, Lead, Sale, Project, Task, Interaction, FollowUp } = require('../../models/index.js');
 const { Op } = require('sequelize');
 
 // Get optimized Manager Dashboard data
@@ -49,7 +49,14 @@ exports.getManagerDashboard = async (req, res) => {
       recentInteractions,
       topSalesPersons,
       recentClients,
-      recentLeads
+      recentLeads,
+      
+      // Full data arrays for team performance
+      allUsers,
+      allClients,
+      allFollowUps,
+      allInteractions,
+      allTasks
       
     ] = await Promise.all([
       // Basic counts - DIRECT QUERIES  
@@ -140,6 +147,27 @@ exports.getManagerDashboard = async (req, res) => {
         limit: 5,
         order: [['createdAt', 'DESC']],
         attributes: ['id', 'name', 'email', 'phone', 'status', 'priority', 'createdAt']
+      }).catch(() => []),
+      
+      // Full data arrays for team performance calculation
+      User.findAll({
+        attributes: ['id', 'name', 'email', 'role', 'status', 'createdBy', 'assignedTo']
+      }).catch(() => []),
+      
+      Client.findAll({
+        attributes: ['id', 'name', 'email', 'phone', 'assignedTo', 'createdBy', 'createdAt']
+      }).catch(() => []),
+      
+      FollowUp.findAll({
+        attributes: ['id', 'title', 'status', 'assignedTo', 'createdBy', 'createdAt', 'completedAt']
+      }).catch(() => []),
+      
+      Interaction.findAll({
+        attributes: ['id', 'type', 'description', 'createdBy', 'assignedTo', 'createdAt']
+      }).catch(() => []),
+      
+      Task.findAll({
+        attributes: ['id', 'title', 'status', 'assignedTo', 'createdBy', 'createdAt', 'dueDate']
       }).catch(() => [])
     ]);
     
@@ -227,7 +255,14 @@ exports.getManagerDashboard = async (req, res) => {
         recentSales: []
       },
       
-      alerts: []
+      alerts: [],
+      
+      // Full data for team performance calculations
+      users: allUsers || [],
+      clients: allClients || [],
+      followUps: allFollowUps || [],
+      interactions: allInteractions || [],
+      tasks: allTasks || []
     };
     
     // Add CORRECTED intelligent alerts
