@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 // @access  Private (view_developers permission)
 exports.getAllDevelopers = async (req, res) => {
   try {
-    const { page = 1, limit = 100, search = '', status = '', specialization = '' } = req.query;
+    const { page = 1, limit = 1000000, search = '', status = '', specialization = '' } = req.query;
     
     // Build where conditions
     const whereConditions = {};
