@@ -1,4 +1,4 @@
-const { Client, User } = require('../../models');
+const { Client, User, Note, Interaction } = require('../../models');
 const { body, validationResult, query } = require('express-validator');
 const { Op } = require('sequelize');
 
@@ -88,7 +88,46 @@ exports.getAllClients = [
         offset: parseInt(offset)
       });
 
-      // Enrich clients with assigned user names
+      // Get counts for all clients efficiently
+      const clientIds = rawClients.map(client => client.id);
+      
+      // Get notes counts for all clients at once
+      const notesCounts = await Note.count({
+        where: {
+          itemType: 'client',
+          itemId: { [Op.in]: clientIds }
+        },
+        group: ['itemId']
+      });
+      
+      // Get interactions counts for all clients at once
+      const interactionsCounts = await Interaction.count({
+        where: {
+          itemType: 'client',
+          itemId: { [Op.in]: clientIds }
+        },
+        group: ['itemId']
+      });
+      
+      // Create count maps
+      const notesCountMap = {};
+      const interactionsCountMap = {};
+      
+      // Process notes counts (Sequelize returns array of {itemId, count})
+      if (Array.isArray(notesCounts)) {
+        notesCounts.forEach(item => {
+          notesCountMap[item.itemId] = item.count;
+        });
+      }
+      
+      // Process interactions counts
+      if (Array.isArray(interactionsCounts)) {
+        interactionsCounts.forEach(item => {
+          interactionsCountMap[item.itemId] = item.count;
+        });
+      }
+
+      // Enrich clients with assigned user names and counts
       const clients = await Promise.all(rawClients.map(async (client) => {
         const clientData = client.toJSON();
         
@@ -123,6 +162,10 @@ exports.getAllClients = [
             clientData.assignedToName = clientData.assignedTo; // fallback to stored value
           }
         }
+        
+        // Add notes and interactions counts from maps
+        clientData.notesCount = notesCountMap[clientData.id] || 0;
+        clientData.interactionsCount = interactionsCountMap[clientData.id] || 0;
         
         return clientData;
       }));

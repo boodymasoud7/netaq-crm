@@ -56,9 +56,7 @@ export default function ClientsTable({
   selectedClients = [],
   onSelectedClientsChange,
   pageSize,
-  onPageSizeChange,
-  clientNotes = [], // إضافة prop افتراضي فارغ للملاحظات
-  clientInteractions = {} // إضافة prop للتفاعلات
+  onPageSizeChange
 }) {
   const { currentUser, userProfile } = useAuth()
   const { canEdit, canDelete, checkPermission, isAdmin, isSalesManager } = usePermissions()
@@ -66,25 +64,13 @@ export default function ClientsTable({
   
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
 
-  // Helper function to check if client has notes
-  const hasNotes = (clientId) => {
-    if (!clientNotes || typeof clientNotes !== 'object') return false
-    const clientNotesArray = clientNotes[clientId] || []
-    return Array.isArray(clientNotesArray) && clientNotesArray.length > 0
+  // Helper functions to get counts from client data (comes from API)
+  const getNotesCount = (client) => {
+    return client?.notesCount || 0
   }
 
-  // Helper function to get notes count
-  const getNotesCount = (clientId) => {
-    if (!clientNotes || typeof clientNotes !== 'object') return 0
-    const clientNotesArray = clientNotes[clientId] || []
-    return Array.isArray(clientNotesArray) ? clientNotesArray.length : 0
-  }
-
-  // Helper function to get interactions count
-  const getInteractionsCount = (clientId) => {
-    if (!clientInteractions || typeof clientInteractions !== 'object') return 0
-    const clientInteractionsArray = clientInteractions[clientId] || []
-    return Array.isArray(clientInteractionsArray) ? clientInteractionsArray.length : 0
+  const getInteractionsCount = (client) => {
+    return client?.interactionsCount || 0
   }
 
   // نسخ رقم الهاتف
@@ -451,16 +437,16 @@ export default function ClientsTable({
                         <span className="text-sm font-medium text-gray-900">{client.name}</span>
                         {/* Indicators للتفاعلات والملاحظات */}
                         <div className="flex items-center gap-1">
-                          {getInteractionsCount(client.id) > 0 && (
+                          {getInteractionsCount(client) > 0 && (
                             <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
                               <MessageCircle className="h-3 w-3" />
-                              <span>{getInteractionsCount(client.id)}</span>
+                              <span>{getInteractionsCount(client)}</span>
                             </Badge>
                           )}
-                          {getNotesCount(client.id) > 0 && (
+                          {getNotesCount(client) > 0 && (
                             <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
                               <FileText className="h-3 w-3" />
-                              <span>{getNotesCount(client.id)}</span>
+                              <span>{getNotesCount(client)}</span>
                             </Badge>
                           )}
                         </div>

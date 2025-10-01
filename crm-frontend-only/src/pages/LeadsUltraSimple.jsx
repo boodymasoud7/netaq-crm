@@ -75,9 +75,8 @@ function LeadsUltraSimple() {
   const [pageSize, setPageSize] = useState(100) // عدد العملاء في الصفحة
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
 
-  // تعطيل جلب الملاحظات والتفاعلات مؤقتاً (سيتم استخدام حل أفضل لاحقاً)
-  const leadNotes = {}
-  const leadInteractions = {}
+  // Counts now come from the API directly (notesCount, interactionsCount)
+  // No need to fetch them separately
 
   // دالة تغيير حجم الصفحة
   const handlePageSizeChange = (newSize) => {
@@ -1602,8 +1601,6 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           selectedLeads={selectedLeads}
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
-          leadNotes={leadNotes}
-          leadInteractions={leadInteractions}
         />
 
       {/* منطقة الترقيم */}

@@ -63,9 +63,7 @@ export default function LeadsTable({
   onSelectedLeadsChange,
   selectedLeads: propSelectedLeads,
   pageSize,
-  onPageSizeChange,
-  leadNotes = {}, // إضافة prop للملاحظات
-  leadInteractions = {} // إضافة prop للتفاعلات
+  onPageSizeChange
 }) {
   // LeadsTable rendered successfully
   const { currentUser, userProfile } = useAuth()
@@ -81,17 +79,13 @@ export default function LeadsTable({
   const [salesStaff, setSalesStaff] = useState([])
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
 
-  // Helper functions للملاحظات والتفاعلات
-  const getNotesCount = (leadId) => {
-    if (!leadNotes || typeof leadNotes !== 'object') return 0
-    const leadNotesArray = leadNotes[leadId] || []
-    return Array.isArray(leadNotesArray) ? leadNotesArray.length : 0
+  // Helper functions للملاحظات والتفاعلات من بيانات الـ lead نفسه
+  const getNotesCount = (lead) => {
+    return lead?.notesCount || 0
   }
 
-  const getInteractionsCount = (leadId) => {
-    if (!leadInteractions || typeof leadInteractions !== 'object') return 0
-    const leadInteractionsArray = leadInteractions[leadId] || []
-    return Array.isArray(leadInteractionsArray) ? leadInteractionsArray.length : 0
+  const getInteractionsCount = (lead) => {
+    return lead?.interactionsCount || 0
   }
 
   // نظام الصلاحيات المحدث مع النظام الديناميكي
@@ -584,16 +578,16 @@ export default function LeadsTable({
                         <span className="text-sm font-medium text-gray-900">{lead.name}</span>
                         {/* Indicators للتفاعلات والملاحظات */}
                         <div className="flex items-center gap-1">
-                          {getInteractionsCount(lead.id) > 0 && (
+                          {getInteractionsCount(lead) > 0 && (
                             <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
                               <MessageCircle className="h-3 w-3" />
-                              <span>{getInteractionsCount(lead.id)}</span>
+                              <span>{getInteractionsCount(lead)}</span>
                             </Badge>
                           )}
-                          {getNotesCount(lead.id) > 0 && (
+                          {getNotesCount(lead) > 0 && (
                             <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
                               <FileText className="h-3 w-3" />
-                              <span>{getNotesCount(lead.id)}</span>
+                              <span>{getNotesCount(lead)}</span>
                             </Badge>
                           )}
                         </div>

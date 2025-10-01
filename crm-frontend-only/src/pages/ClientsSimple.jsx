@@ -120,12 +120,8 @@ export default function ClientsSimple() {
     return hasPermission
   }
 
-  // تعطيل جلب الملاحظات والتفاعلات مؤقتاً لتقليل الضغط على الخادم
-  // const clientIds = clients?.map(client => client.id) || []
-  // const { allNotes: clientNotes, loading: notesLoading } = useAllClientNotes(clientIds)
-  // const { allInteractions: clientInteractions, loading: interactionsLoading } = useAllClientInteractions(clientIds)
-  const clientNotes = {} // بيانات فارغة مؤقتاً
-  const clientInteractions = {} // بيانات فارغة مؤقتاً
+  // Counts now come from the API directly (notesCount, interactionsCount)
+  // No need to fetch them separately
 
   // دوال التحقق من الصلاحيات
   const canEditClient = (client) => {
@@ -846,8 +842,6 @@ export default function ClientsSimple() {
           onSelectedClientsChange={setSelectedClients}
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
-          clientNotes={clientNotes}
-          clientInteractions={clientInteractions}
         />
 
       {/* منطقة الترقيم المدمجة */}

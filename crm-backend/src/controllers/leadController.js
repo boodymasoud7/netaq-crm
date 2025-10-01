@@ -1,4 +1,4 @@
-const { Lead, User, FollowUp } = require('../../models');
+const { Lead, User, FollowUp, Note, Interaction } = require('../../models');
 const { body, validationResult, query } = require('express-validator');
 const { Op } = require('sequelize');
 const AutoFollowUpService = require('../services/autoFollowUpService');
@@ -116,7 +116,46 @@ exports.getAllLeads = [
         userByNameMap[user.name] = user.name;
       });
 
-      // Enrich leads with user names efficiently
+      // Get counts for all leads efficiently
+      const leadIds = rawLeads.map(lead => lead.id);
+      
+      // Get notes counts
+      const notesCounts = await Note.count({
+        where: {
+          itemType: 'lead',
+          itemId: { [Op.in]: leadIds }
+        },
+        group: ['itemId']
+      });
+      
+      // Get interactions counts
+      const interactionsCounts = await Interaction.count({
+        where: {
+          itemType: 'lead',
+          itemId: { [Op.in]: leadIds }
+        },
+        group: ['itemId']
+      });
+      
+      // Create count maps
+      const notesCountMap = {};
+      const interactionsCountMap = {};
+      
+      // Process notes counts (Sequelize returns array of {itemId, count})
+      if (Array.isArray(notesCounts)) {
+        notesCounts.forEach(item => {
+          notesCountMap[item.itemId] = item.count;
+        });
+      }
+      
+      // Process interactions counts
+      if (Array.isArray(interactionsCounts)) {
+        interactionsCounts.forEach(item => {
+          interactionsCountMap[item.itemId] = item.count;
+        });
+      }
+
+      // Enrich leads with user names and counts efficiently
       const leads = rawLeads.map(lead => {
         const leadData = lead.toJSON();
         
@@ -129,6 +168,10 @@ exports.getAllLeads = [
         if (leadData.createdBy) {
           leadData.createdByName = userByIdMap[leadData.createdBy] || userByNameMap[leadData.createdBy] || leadData.createdBy;
         }
+        
+        // Add notes and interactions counts
+        leadData.notesCount = notesCountMap[leadData.id] || 0;
+        leadData.interactionsCount = interactionsCountMap[leadData.id] || 0;
         
         return leadData;
       });
