@@ -12,7 +12,7 @@ router.use(authMiddleware);
 // @access  Private (view_developers permission)
 router.get('/', requirePermission('view_developers'), async (req, res) => {
   try {
-    const { page = 1, limit = 1000000, search = '', status = '', specialization = '' } = req.query;
+    const { page = 1, limit = 10, search = '', status = '', specialization = '' } = req.query;
     
     // Build where conditions
     const whereConditions = {};
@@ -56,17 +56,9 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     console.log(`📊 Found ${count} developers (excluding soft-deleted)`)
     console.log('👥 Developers data:', developers.map(d => ({ id: d.id, name: d.name, deleted_at: d.deleted_at })))
     
-    // Map database fields to frontend expected fields
-    const mappedDevelopers = developers.map(dev => ({
-      ...dev.toJSON(),
-      address: dev.location, // Map location to address for frontend
-      contactPerson: dev.specialization || 'غير محدد', // Show contact person from specialization field
-      projectsCount: dev.projects_count || 0
-    }));
-    
     res.json({
       success: true,
-      data: mappedDevelopers,
+      data: developers,
       pagination: {
         current_page: parseInt(page),
         per_page: parseInt(limit),
@@ -445,57 +437,6 @@ router.delete('/archive/all', requirePermission('manage_developers'), async (req
     res.status(500).json({
       success: false,
       message: 'Server error while permanently deleting all developers',
-      error: error.message
-    });
-  }
-});
-
-// @route   POST /api/developers/sync-projects-count
-// @desc    Update projects_count for all developers based on Projects table
-// @access  Private (manage_developers permission)
-router.post('/sync-projects-count', requirePermission('manage_developers'), async (req, res) => {
-  try {
-    const { Project } = require('../../models');
-    
-    console.log('🔄 Starting projects_count sync for all developers...');
-    
-    // Get all active developers
-    const developers = await Developer.findAll({
-      where: { deleted_at: null }
-    });
-    
-    let updatedCount = 0;
-    
-    // Update projects_count for each developer
-    for (const dev of developers) {
-      // Count projects by developer name
-      const projectCount = await Project.count({
-        where: {
-          developer: dev.name,
-          deleted_at: null
-        }
-      });
-      
-      // Update developer's projects_count
-      await dev.update({ projects_count: projectCount });
-      
-      console.log(`✅ Updated ${dev.name}: ${projectCount} projects`);
-      updatedCount++;
-    }
-    
-    console.log(`🎉 Successfully synced projects_count for ${updatedCount} developers`);
-    
-    res.json({
-      success: true,
-      message: `تم تحديث عدد المشاريع لـ ${updatedCount} مطور بنجاح`,
-      updatedCount
-    });
-    
-  } catch (error) {
-    console.error('Error syncing projects count:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء تحديث عدد المشاريع',
       error: error.message
     });
   }

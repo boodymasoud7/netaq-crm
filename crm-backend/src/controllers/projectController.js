@@ -135,11 +135,11 @@ exports.createProject = [
     .isLength({ min: 2 })
     .withMessage('Developer name must be at least 2 characters long'),
   body('totalUnits')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .isInt({ min: 1 })
     .withMessage('Total units must be a positive integer'),
   body('availableUnits')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .isInt({ min: 0 })
     .withMessage('Available units must be a non-negative integer'),
   body('priceRange')
@@ -148,7 +148,7 @@ exports.createProject = [
     .isLength({ min: 2 })
     .withMessage('Price range must be at least 2 characters long'),
   body('status')
-    .isIn(['planning', 'under_construction', 'construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
+    .isIn(['planning', 'under_construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
     .withMessage('Invalid status'),
   body('completion')
     .optional()
@@ -246,16 +246,16 @@ exports.updateProject = [
     .isLength({ min: 2 })
     .withMessage('Developer name must be at least 2 characters long'),
   body('totalUnits')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .isInt({ min: 1 })
     .withMessage('Total units must be a positive integer'),
   body('availableUnits')
-    .optional({ nullable: true, checkFalsy: true })
+    .optional()
     .isInt({ min: 0 })
     .withMessage('Available units must be a non-negative integer'),
   body('status')
     .optional()
-    .isIn(['planning', 'under_construction', 'construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
+    .isIn(['planning', 'under_construction', 'completed', 'on_hold', 'cancelled', 'مؤرشف', 'archived'])
     .withMessage('Invalid status'),
   body('completion')
     .optional()
@@ -266,8 +266,6 @@ exports.updateProject = [
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        console.error('❌ Project update validation failed:', JSON.stringify(errors.array(), null, 2));
-        console.error('📦 Request body:', JSON.stringify(req.body, null, 2));
         return res.status(400).json({
           message: 'Validation failed',
           errors: errors.array()
@@ -276,8 +274,6 @@ exports.updateProject = [
 
       const { id } = req.params;
       const updateData = req.body;
-      
-      console.log(`🔄 Updating project ${id} with data:`, JSON.stringify(updateData, null, 2));
 
       // Check if project exists
       const project = await Project.findByPk(id);

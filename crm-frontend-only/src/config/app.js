@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   FRONTEND_ONLY: false, // Backend is ready and connected
   
   // API Configuration
-  API_BASE_URL: 'https://netaqcrm.site/api',
+  API_BASE_URL: 'http://54.221.136.112/api',
   
   // Development flags
   ENABLE_MOCK_DATA: false, // استخدام Backend حقيقي

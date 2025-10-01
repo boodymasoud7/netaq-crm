@@ -10,7 +10,7 @@ export const autoFollowUpService = {
     
     try {
       // استخدام fetch مع token صحيح
-      const response = await fetch('https://netaqcrm.site/api/follow-ups/distribute', {
+      const response = await fetch('http://54.221.136.112/api/follow-ups/distribute', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export const autoFollowUpService = {
     console.log('➕ إنشاء متابعة تلقائية لعميل محتمل جديد:', { leadId, assignedTo })
     
     try {
-      const response = await fetch('https://netaqcrm.site/api/follow-ups/auto-create-lead', {
+      const response = await fetch('http://54.221.136.112/api/follow-ups/auto-create-lead', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
