@@ -155,4 +155,77 @@ export function useAllClientNotes(clientIds = []) {
   }
 }
 
+// Hook for getting all lead notes (for LeadsTable)
+export function useAllLeadNotes(leadIds = []) {
+  const [allNotes, setAllNotes] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const api = useApi()
+
+  // Memoize leadIds to prevent unnecessary re-fetches
+  const memoizedLeadIds = useMemo(() => 
+    Array.isArray(leadIds) ? leadIds.sort() : []
+  , [leadIds])
+
+  const fetchAllLeadNotes = useCallback(async () => {
+    if (!memoizedLeadIds.length) {
+      setAllNotes({})
+      return
+    }
+    
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const notesMap = {}
+      
+      console.log(`📝 Fetching notes for ${memoizedLeadIds.length} leads...`)
+      
+      // Fetch notes for each lead with throttling
+      const batchSize = 5
+      for (let i = 0; i < memoizedLeadIds.length; i += batchSize) {
+        const batch = memoizedLeadIds.slice(i, i + batchSize)
+        
+        await Promise.all(
+          batch.map(async (leadId) => {
+            try {
+              const response = await api.getNotes('lead', leadId, {})
+              notesMap[leadId] = response.data || []
+            } catch (err) {
+              if (err.message !== 'Validation failed') {
+                console.error(`Error fetching notes for lead ${leadId}:`, err)
+              }
+              notesMap[leadId] = []
+            }
+          })
+        )
+        
+        if (i + batchSize < memoizedLeadIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+      }
+      
+      setAllNotes(notesMap)
+      console.log(`✅ Loaded notes for ${Object.keys(notesMap).length} leads`)
+    } catch (err) {
+      console.error('Error fetching all lead notes:', err)
+      setError(err.message || 'Failed to fetch lead notes')
+      setAllNotes({})
+    } finally {
+      setLoading(false)
+    }
+  }, [api, memoizedLeadIds])
+
+  useEffect(() => {
+    fetchAllLeadNotes()
+  }, [fetchAllLeadNotes])
+
+  return {
+    allNotes,
+    loading,
+    error,
+    refetch: fetchAllLeadNotes
+  }
+}
+
 export { useNotes as default }
