@@ -56,9 +56,17 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     console.log(`📊 Found ${count} developers (excluding soft-deleted)`)
     console.log('👥 Developers data:', developers.map(d => ({ id: d.id, name: d.name, deleted_at: d.deleted_at })))
     
+    // Map database fields to frontend expected fields
+    const mappedDevelopers = developers.map(dev => ({
+      ...dev.toJSON(),
+      address: dev.location, // Map location to address for frontend
+      contactPerson: dev.name || 'غير محدد', // Use name as contactPerson for now
+      projectsCount: dev.projects_count || 0
+    }));
+    
     res.json({
       success: true,
-      data: developers,
+      data: mappedDevelopers,
       pagination: {
         current_page: parseInt(page),
         per_page: parseInt(limit),
