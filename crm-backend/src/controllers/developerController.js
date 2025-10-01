@@ -41,9 +41,17 @@ exports.getAllDevelopers = async (req, res) => {
       offset: parseInt(offset)
     });
     
+    // Map database fields to frontend expected fields
+    const mappedDevelopers = developers.map(dev => ({
+      ...dev.toJSON(),
+      address: dev.location, // Map location to address for frontend
+      contactPerson: dev.name || 'غير محدد', // Use name as contactPerson for now
+      projectsCount: dev.projects_count || 0
+    }));
+    
     res.json({
       success: true,
-      data: developers,
+      data: mappedDevelopers,
       pagination: {
         current_page: parseInt(page),
         per_page: parseInt(limit),
@@ -124,9 +132,17 @@ exports.createDeveloper = async (req, res) => {
       status: status || 'active'
     });
     
+    // Map database fields to frontend expected fields
+    const mappedDeveloper = {
+      ...newDeveloper.toJSON(),
+      address: newDeveloper.location, // Map location to address for frontend
+      contactPerson: newDeveloper.name || 'غير محدد', // Use name as contactPerson for now
+      projectsCount: newDeveloper.projects_count || 0
+    };
+    
     res.status(201).json({
       success: true,
-      data: newDeveloper,
+      data: mappedDeveloper,
       message: 'تم إنشاء المطور بنجاح'
     });
     
@@ -173,9 +189,17 @@ exports.getDeveloperById = async (req, res) => {
       });
     }
     
+    // Map database fields to frontend expected fields
+    const mappedDeveloper = {
+      ...developer.toJSON(),
+      address: developer.location, // Map location to address for frontend
+      contactPerson: developer.name || 'غير محدد', // Use name as contactPerson for now
+      projectsCount: developer.projects_count || 0
+    };
+    
     res.json({
       success: true,
-      data: developer
+      data: mappedDeveloper
     });
   } catch (error) {
     console.error('Error fetching developer:', error);
@@ -193,6 +217,22 @@ exports.updateDeveloper = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    
+    // Map frontend fields to backend fields
+    if (updateData.address) {
+      updateData.location = updateData.address;
+      delete updateData.address;
+    }
+    if (updateData.license) {
+      updateData.license_number = updateData.license;
+      delete updateData.license;
+    }
+    if (updateData.projectsCount) {
+      updateData.projects_count = updateData.projectsCount;
+      delete updateData.projectsCount;
+    }
+    // Remove contactPerson if it exists (we don't store it)
+    delete updateData.contactPerson;
     
     const developer = await Developer.findByPk(id);
     if (!developer) {
@@ -221,9 +261,17 @@ exports.updateDeveloper = async (req, res) => {
     // Update developer
     await developer.update(updateData);
     
+    // Map database fields to frontend expected fields
+    const mappedDeveloper = {
+      ...developer.toJSON(),
+      address: developer.location, // Map location to address for frontend
+      contactPerson: developer.name || 'غير محدد', // Use name as contactPerson for now
+      projectsCount: developer.projects_count || 0
+    };
+    
     res.json({
       success: true,
-      data: developer,
+      data: mappedDeveloper,
       message: 'تم تحديث بيانات المطور بنجاح'
     });
   } catch (error) {
