@@ -200,10 +200,18 @@ const ManagerDashboard = () => {
   const teamPerformance = users
     .filter(isRegularEmployee)
     .map(user => {
-      const userClients = clients.filter(client => client.assignedTo === user.id || client.createdBy === user.id);
-      const userFollowUps = followUps.filter(f => f.assignedTo === user.id || f.createdBy === user.id);
-      const userInteractions = interactions.filter(i => i.createdBy === user.id || i.assignedTo === user.id);
-      const userTasks = tasks.filter(task => task.assignedTo === user.id || task.createdBy === user.id);
+      const userClients = clients.filter(client => 
+        parseInt(client.assignedTo) === user.id || parseInt(client.createdBy) === user.id
+      );
+      const userFollowUps = followUps.filter(f => 
+        parseInt(f.assignedTo) === user.id || parseInt(f.createdBy) === user.id
+      );
+      const userInteractions = interactions.filter(i => 
+        parseInt(i.createdBy) === user.id || parseInt(i.assignedTo) === user.id
+      );
+      const userTasks = tasks.filter(task => 
+        parseInt(task.assignedTo) === user.id || parseInt(task.createdBy) === user.id
+      );
       const userCompletedTasks = userTasks.filter(task => task.status === 'completed');
       const userCompletedFollowUps = userFollowUps.filter(f => f.status === 'done' || f.status === 'completed' || f.status === 'مكتمل');
       
