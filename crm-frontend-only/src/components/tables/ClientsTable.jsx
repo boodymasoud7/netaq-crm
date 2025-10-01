@@ -57,7 +57,8 @@ export default function ClientsTable({
   onSelectedClientsChange,
   pageSize,
   onPageSizeChange,
-  clientNotes = [] // إضافة prop افتراضي فارغ للملاحظات
+  clientNotes = [], // إضافة prop افتراضي فارغ للملاحظات
+  clientInteractions = {} // إضافة prop للتفاعلات
 }) {
   const { currentUser, userProfile } = useAuth()
   const { canEdit, canDelete, checkPermission, isAdmin, isSalesManager } = usePermissions()
@@ -77,6 +78,13 @@ export default function ClientsTable({
     if (!clientNotes || typeof clientNotes !== 'object') return 0
     const clientNotesArray = clientNotes[clientId] || []
     return Array.isArray(clientNotesArray) ? clientNotesArray.length : 0
+  }
+
+  // Helper function to get interactions count
+  const getInteractionsCount = (clientId) => {
+    if (!clientInteractions || typeof clientInteractions !== 'object') return 0
+    const clientInteractionsArray = clientInteractions[clientId] || []
+    return Array.isArray(clientInteractionsArray) ? clientInteractionsArray.length : 0
   }
 
   // نسخ رقم الهاتف
@@ -438,8 +446,25 @@ export default function ClientsTable({
                     <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-sm">
                       <User className="h-5 w-5 text-white" />
                     </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{client.name}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">{client.name}</span>
+                        {/* Indicators للتفاعلات والملاحظات */}
+                        <div className="flex items-center gap-1">
+                          {getInteractionsCount(client.id) > 0 && (
+                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" />
+                              <span>{getInteractionsCount(client.id)}</span>
+                            </Badge>
+                          )}
+                          {getNotesCount(client.id) > 0 && (
+                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              <span>{getNotesCount(client.id)}</span>
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                       <div className="text-xs text-gray-500">{client.source && `المصدر: ${client.source}`.substring(0, 30)}...</div>
                     </div>
                   </div>

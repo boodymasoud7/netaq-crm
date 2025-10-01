@@ -32,7 +32,8 @@ import {
   FileText,
   Search,
   Filter,
-  MoreHorizontal
+  MoreHorizontal,
+  MessageCircle
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../contexts/AuthContext'
@@ -62,7 +63,9 @@ export default function LeadsTable({
   onSelectedLeadsChange,
   selectedLeads: propSelectedLeads,
   pageSize,
-  onPageSizeChange
+  onPageSizeChange,
+  leadNotes = {}, // إضافة prop للملاحظات
+  leadInteractions = {} // إضافة prop للتفاعلات
 }) {
   // LeadsTable rendered successfully
   const { currentUser, userProfile } = useAuth()
@@ -77,6 +80,19 @@ export default function LeadsTable({
   const [editingAssignee, setEditingAssignee] = useState(null)
   const [salesStaff, setSalesStaff] = useState([])
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+
+  // Helper functions للملاحظات والتفاعلات
+  const getNotesCount = (leadId) => {
+    if (!leadNotes || typeof leadNotes !== 'object') return 0
+    const leadNotesArray = leadNotes[leadId] || []
+    return Array.isArray(leadNotesArray) ? leadNotesArray.length : 0
+  }
+
+  const getInteractionsCount = (leadId) => {
+    if (!leadInteractions || typeof leadInteractions !== 'object') return 0
+    const leadInteractionsArray = leadInteractions[leadId] || []
+    return Array.isArray(leadInteractionsArray) ? leadInteractionsArray.length : 0
+  }
 
   // نظام الصلاحيات المحدث مع النظام الديناميكي
   const hasAdminPermissions = useMemo(() => isAdmin() || isSalesManager(), [isAdmin, isSalesManager])
@@ -563,10 +579,23 @@ export default function LeadsTable({
                     <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-sm">
                       <Target className="h-5 w-5 text-white" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="text-sm font-medium text-gray-900">
-                          {lead.name}
+                        <span className="text-sm font-medium text-gray-900">{lead.name}</span>
+                        {/* Indicators للتفاعلات والملاحظات */}
+                        <div className="flex items-center gap-1">
+                          {getInteractionsCount(lead.id) > 0 && (
+                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" />
+                              <span>{getInteractionsCount(lead.id)}</span>
+                            </Badge>
+                          )}
+                          {getNotesCount(lead.id) > 0 && (
+                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              <span>{getNotesCount(lead.id)}</span>
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
