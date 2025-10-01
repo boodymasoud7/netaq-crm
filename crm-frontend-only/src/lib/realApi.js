@@ -6,7 +6,7 @@ console.log('🚀 Loading Real Backend API Integration!')
 // Configuration
 const API_CONFIG = {
   mode: 'full-stack',
-  baseURL: 'http://54.221.136.112/api',
+  baseURL: 'https://netaqcrm.site/api',
   enableMockData: false, // Using real backend only
   hasBackend: true // Real backend is available
 }
