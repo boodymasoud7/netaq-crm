@@ -227,24 +227,30 @@ export default function Projects() {
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      // البحث عن بيانات المطور المحدد
-      const selectedDeveloper = developers?.find(dev => dev.name === editingProject.developer)
-      
+      // تنظيف البيانات - إرسال فقط الحقول الصحيحة للـ backend
       const updateData = {
-        ...editingProject,
-        deliveryInfo: editingProject.deliveryTime 
-          ? `${editingProject.deliveryTime} ${editingProject.deliveryUnit === 'months' ? 'شهر' : 'سنة'}` 
-          : 'استلام فوري', // تحويل إلى نص واضح
-        developerId: selectedDeveloper?.id || null, // حفظ معرف المطور
-        developerInfo: selectedDeveloper ? {
-          id: selectedDeveloper.id,
-          name: selectedDeveloper.name,
-          contactPerson: selectedDeveloper.contactPerson,
-          phone: selectedDeveloper.phone,
-          email: selectedDeveloper.email
-        } : null, // حفظ معلومات المطور للسرعة
-        updatedAt: new Date()
+        name: editingProject.name,
+        description: editingProject.description || '',
+        location: editingProject.location,
+        developer: editingProject.developer,
+        status: editingProject.status,
+        amenities: editingProject.amenities || []
       }
+
+      // إضافة الحقول الاختيارية فقط إذا كان لها قيمة صحيحة
+      if (editingProject.totalUnits && parseInt(editingProject.totalUnits) > 0) {
+        updateData.totalUnits = parseInt(editingProject.totalUnits)
+      }
+      if (editingProject.availableUnits && parseInt(editingProject.availableUnits) >= 0) {
+        updateData.availableUnits = parseInt(editingProject.availableUnits)
+      }
+      if (editingProject.priceRange && editingProject.priceRange.trim()) {
+        updateData.priceRange = editingProject.priceRange.trim()
+      }
+      if (editingProject.completion !== undefined && editingProject.completion !== null && editingProject.completion !== '') {
+        updateData.completion = parseInt(editingProject.completion)
+      }
+
       await api.updateProject(editingProject.id, updateData)
       setEditingProject(null)
       
