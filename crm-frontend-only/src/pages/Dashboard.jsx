@@ -663,68 +663,136 @@ export default function Dashboard() {
         </div>
 
         {/* قسم المنافسة والنقاط - في الأول! */}
-        {currentUserPerformance && (
+        {teamPerformance.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* نقاط الموظف الحالي */}
+            {/* نقاط الموظف الحالي أو معلومات المدير */}
             <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden">
               <div className="p-6 relative">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium">نقاطي الحالية</p>
-                    <div className="flex items-end gap-2 mt-2">
-                      <h2 className="text-5xl font-bold">{currentUserPerformance.totalPoints}</h2>
-                      <span className="text-xl text-blue-100 mb-2">نقطة</span>
+                {currentUserPerformance ? (
+                  // عرض نقاط الموظف
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-blue-100 text-sm font-medium">نقاطي الحالية</p>
+                        <div className="flex items-end gap-2 mt-2">
+                          <h2 className="text-5xl font-bold">{currentUserPerformance.totalPoints}</h2>
+                          <span className="text-xl text-blue-100 mb-2">نقطة</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-white bg-opacity-20 rounded-2xl">
+                        <Award className="h-10 w-10" />
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-4 bg-white bg-opacity-20 rounded-2xl">
-                    <Award className="h-10 w-10" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5" />
-                    <span className="font-semibold">الترتيب: #{currentUserRank}</span>
-                  </div>
-                  <div className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    {currentUserRank === 1 ? '🥇 الأول' :
-                     currentUserRank === 2 ? '🥈 الثاني' :
-                     currentUserRank === 3 ? '🥉 الثالث' :
-                     `من ${teamPerformance.length}`}
-                  </div>
-                </div>
+                    <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5" />
+                        <span className="font-semibold">الترتيب: #{currentUserRank}</span>
+                      </div>
+                      <div className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        {currentUserRank === 1 ? '🥇 الأول' :
+                         currentUserRank === 2 ? '🥈 الثاني' :
+                         currentUserRank === 3 ? '🥉 الثالث' :
+                         `من ${teamPerformance.length}`}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  // عرض معلومات للمدير
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-blue-100 text-sm font-medium">إجمالي الفريق</p>
+                        <div className="flex items-end gap-2 mt-2">
+                          <h2 className="text-5xl font-bold">{teamPerformance.reduce((sum, m) => sum + m.totalPoints, 0)}</h2>
+                          <span className="text-xl text-blue-100 mb-2">نقطة</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-white bg-opacity-20 rounded-2xl">
+                        <Users className="h-10 w-10" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
+                      <div className="flex items-center gap-2">
+                        <Award className="h-5 w-5" />
+                        <span className="font-semibold">👑 أنت المدير</span>
+                      </div>
+                      <div className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                        {teamPerformance.length} موظف
+                      </div>
+                    </div>
+                  </>
+                )}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
               </div>
             </Card>
 
-            {/* تفصيل النقاط */}
+            {/* تفصيل النقاط أو أفضل موظف */}
             <Card className="border-0 shadow-lg">
               <div className="p-6">
-                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
-                  تفصيل نقاطي
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">💰 صفقات</span>
-                    <span className="font-bold text-green-600">{currentUserPerformance.sales}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">📈 تحويلات</span>
-                    <span className="font-bold text-blue-600">{currentUserPerformance.conversions}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">✅ تفاعلات +</span>
-                    <span className="font-bold text-purple-600">{currentUserPerformance.positiveInteractions}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">⏰ متابعات في الوقت</span>
-                    <span className="font-bold text-orange-600">{currentUserPerformance.onTimeFollowUps}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">⭐ تقييمات 5 نجوم</span>
-                    <span className="font-bold text-yellow-600">{currentUserPerformance.fiveStarRatings}</span>
-                  </div>
-                </div>
+                {currentUserPerformance ? (
+                  // تفصيل نقاط الموظف
+                  <>
+                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
+                      تفصيل نقاطي
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">💰 صفقات</span>
+                        <span className="font-bold text-green-600">{currentUserPerformance.sales}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">📈 تحويلات</span>
+                        <span className="font-bold text-blue-600">{currentUserPerformance.conversions}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">✅ تفاعلات +</span>
+                        <span className="font-bold text-purple-600">{currentUserPerformance.positiveInteractions}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">⏰ متابعات في الوقت</span>
+                        <span className="font-bold text-orange-600">{currentUserPerformance.onTimeFollowUps}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">⭐ تقييمات 5 نجوم</span>
+                        <span className="font-bold text-yellow-600">{currentUserPerformance.fiveStarRatings}</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  // عرض أفضل موظف للمدير
+                  <>
+                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Award className="h-5 w-5 text-yellow-600" />
+                      🥇 أفضل موظف
+                    </h3>
+                    {teamPerformance[0] && (
+                      <div className="space-y-3">
+                        <div className="bg-yellow-50 rounded-lg p-3 border-2 border-yellow-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold text-gray-900">{teamPerformance[0].name}</span>
+                            <span className="text-2xl font-bold text-yellow-600">{teamPerformance[0].totalPoints}</span>
+                          </div>
+                          <p className="text-sm text-gray-600">{teamPerformance[0].role}</p>
+                        </div>
+                        <div className="space-y-2 pt-2 border-t">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">💰 صفقات</span>
+                            <span className="font-bold text-green-600">{teamPerformance[0].sales}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">📈 تحويلات</span>
+                            <span className="font-bold text-blue-600">{teamPerformance[0].conversions}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">✅ تفاعلات +</span>
+                            <span className="font-bold text-purple-600">{teamPerformance[0].positiveInteractions}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </Card>
 
