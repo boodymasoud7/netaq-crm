@@ -236,13 +236,56 @@ const ManagerDashboard = () => {
         tasks: userTasks.length
       });
       
-      // Calculate interaction score (including leads and their interactions with higher weight)
-      const interactionScore = (userClientInteractions.length * 2) + (userLeadInteractions.length * 3) + (userCompletedFollowUps.length * 3) + userClients.length + (userLeads.length * 2);
+      // نظام النقاط البسيط - كل حاجة = 1 نقطة
+      const userSales = sales.filter(sale => 
+        parseInt(sale.assignedTo) === user.id || parseInt(sale.createdBy) === user.id
+      );
+      
+      // حساب التحويلات (Leads تم تحويلها لـ Clients)
+      const convertedLeads = userLeads.filter(lead => 
+        lead.status === 'converted' || lead.convertedAt
+      );
+      
+      // تفاعلات إيجابية (outcome: interested, agreed, موافق، مهتم)
+      const positiveInteractions = userInteractions.filter(i => 
+        i.outcome && (
+          i.outcome.toLowerCase().includes('interest') ||
+          i.outcome.toLowerCase().includes('agreed') ||
+          i.outcome.toLowerCase().includes('موافق') ||
+          i.outcome.toLowerCase().includes('مهتم') ||
+          i.outcome.toLowerCase().includes('ناجح')
+        )
+      );
+      
+      // متابعات مكتملة في الوقت
+      const onTimeFollowUps = userCompletedFollowUps.filter(f => {
+        if (!f.completedDate || !f.scheduledDate) return false;
+        const completed = new Date(f.completedDate);
+        const scheduled = new Date(f.scheduledDate);
+        return completed <= scheduled;
+      });
+      
+      // تقييمات 5 نجوم من العملاء
+      const fiveStarRatings = userClients.filter(c => 
+        c.rating && parseFloat(c.rating) >= 5
+      );
+      
+      // إجمالي النقاط = كل حاجة × 1
+      const totalPoints = 
+        userSales.length +                    // صفقات
+        convertedLeads.length +               // تحويلات
+        positiveInteractions.length +         // تفاعلات إيجابية
+        onTimeFollowUps.length +              // متابعات في الوقت
+        fiveStarRatings.length;               // تقييمات 5 نجوم
+      
       const responseRate = userFollowUps.length > 0 ? (userCompletedFollowUps.length / userFollowUps.length) * 100 : 0;
 
       return {
+        userId: user.id,
         name: user.name || user.email,
         role: user.role === 'sales' ? 'مندوب مبيعات' : 'موظف خدمة عملاء',
+        
+        // البيانات الأساسية
         clients: userClients.length,
         leads: userLeads.length,
         interactions: userInteractions.length,
@@ -252,11 +295,24 @@ const ManagerDashboard = () => {
         pendingFollowUps: userFollowUps.length - userCompletedFollowUps.length,
         tasks: userTasks.length,
         completionRate: Math.round(responseRate),
-        interactionScore,
+        
+        // نظام النقاط الجديد
+        totalPoints: totalPoints,
+        sales: userSales.length,
+        conversions: convertedLeads.length,
+        positiveInteractions: positiveInteractions.length,
+        onTimeFollowUps: onTimeFollowUps.length,
+        fiveStarRatings: fiveStarRatings.length,
+        
+        // بيانات التفاعلات التفصيلية
+        allInteractions: userInteractions,
+        allFollowUps: userFollowUps,
+        
+        interactionScore: totalPoints, // استخدام totalPoints بدلاً من الحساب القديم
         avatar: user.role === 'sales' ? '👩‍💼' : '🎧'
       };
     })
-    .sort((a, b) => b.interactionScore - a.interactionScore)
+    .sort((a, b) => b.totalPoints - a.totalPoints) // ترتيب حسب النقاط
     .slice(0, 10);
 
   // Real alerts focused on customer service
@@ -852,16 +908,14 @@ const ManagerDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
+                    <tr className="border-b border-gray-200 bg-gray-50">
                       <th className="text-right py-3 px-4 font-semibold text-gray-700">الموظف</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">العملاء</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">عملاء محتملين</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">تفاعلات العملاء</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">تفاعلات محتملين</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">متابعات مكتملة</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">متابعات معلقة</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">معدل الاستجابة</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">نقاط التفاعل</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">💰 صفقات</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">📈 تحويلات</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">✅ تفاعلات إيجابية</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">⏰ متابعات في الوقت</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">⭐ تقييم 5 نجوم</th>
+                      <th className="text-center py-3 px-4 font-semibold text-blue-700 bg-blue-50">⚡ إجمالي النقاط</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -876,48 +930,168 @@ const ManagerDashboard = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-blue-600 font-semibold">{member.clients}</span>
+                        <td className="py-4 px-4 text-center">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            {member.sales || 0}
+                          </Badge>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-indigo-600 font-semibold">{member.leads}</span>
+                        <td className="py-4 px-4 text-center">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {member.conversions || 0}
+                          </Badge>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-green-600 font-semibold">{member.clientInteractions}</span>
+                        <td className="py-4 px-4 text-center">
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                            {member.positiveInteractions || 0}
+                          </Badge>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-teal-600 font-semibold">{member.leadInteractions}</span>
+                        <td className="py-4 px-4 text-center">
+                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                            {member.onTimeFollowUps || 0}
+                          </Badge>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-purple-600 font-semibold">{member.followUps}</span>
+                        <td className="py-4 px-4 text-center">
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            {member.fiveStarRatings || 0}
+                          </Badge>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className="text-orange-600 font-semibold">{member.pendingFollowUps}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2 w-20">
-                              <div
-                                className="bg-green-500 h-2 rounded-full transition-all duration-1000"
-                                style={{ width: `${Math.min(member.completionRate, 100)}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-sm font-semibold text-green-600 w-10">{member.completionRate}%</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge className={
-                            member.interactionScore >= 15 ? 'bg-green-100 text-green-700' :
-                            member.interactionScore >= 10 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          }>
-                            {member.interactionScore} نقطة
+                        <td className="py-4 px-4 text-center">
+                          <Badge className={`text-lg font-bold ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-700 border-yellow-300 border-2' :
+                            index === 1 ? 'bg-gray-100 text-gray-700 border-gray-300 border-2' :
+                            index === 2 ? 'bg-orange-100 text-orange-700 border-orange-300 border-2' :
+                            member.totalPoints >= 50 ? 'bg-green-100 text-green-700' :
+                            member.totalPoints >= 25 ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}
+                            {member.totalPoints} نقطة
                           </Badge>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* قسم التفاعلات التفصيلية */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-purple-600" />
+                📞 تفاصيل التفاعلات لكل موظف
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {teamPerformance.slice(0, 5).map((member, memberIndex) => {
+                  const recentInteractions = (member.allInteractions || []).slice(0, 5);
+                  
+                  return (
+                    <div key={memberIndex} className="border-b border-gray-200 pb-6 last:border-0">
+                      {/* رأس الموظف */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="text-3xl">{member.avatar}</div>
+                          <div>
+                            <h4 className="font-bold text-lg text-gray-900">{member.name}</h4>
+                            <p className="text-sm text-gray-600">{member.role}</p>
+                          </div>
+                          <Badge className="bg-blue-100 text-blue-700 text-lg">
+                            ⚡ {member.totalPoints} نقطة
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <div className="text-sm text-gray-600">صفقات</div>
+                            <div className="text-xl font-bold text-green-600">{member.sales}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm text-gray-600">تحويلات</div>
+                            <div className="text-xl font-bold text-blue-600">{member.conversions}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm text-gray-600">تفاعلات +</div>
+                            <div className="text-xl font-bold text-purple-600">{member.positiveInteractions}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* آخر 5 تفاعلات */}
+                      {recentInteractions.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-gray-50 border-b">
+                                <th className="text-right py-2 px-3 text-gray-600">#</th>
+                                <th className="text-right py-2 px-3 text-gray-600">التاريخ</th>
+                                <th className="text-right py-2 px-3 text-gray-600">النوع</th>
+                                <th className="text-right py-2 px-3 text-gray-600">الوصف</th>
+                                <th className="text-right py-2 px-3 text-gray-600">النتيجة</th>
+                                <th className="text-center py-2 px-3 text-gray-600">النقاط</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {recentInteractions.map((interaction, intIndex) => {
+                                const isPositive = interaction.outcome && (
+                                  interaction.outcome.toLowerCase().includes('interest') ||
+                                  interaction.outcome.toLowerCase().includes('agreed') ||
+                                  interaction.outcome.toLowerCase().includes('موافق') ||
+                                  interaction.outcome.toLowerCase().includes('مهتم') ||
+                                  interaction.outcome.toLowerCase().includes('ناجح')
+                                );
+                                const interactionDate = new Date(interaction.createdAt);
+                                
+                                return (
+                                  <tr key={intIndex} className="border-b hover:bg-gray-50">
+                                    <td className="py-2 px-3 text-gray-600">{intIndex + 1}</td>
+                                    <td className="py-2 px-3 text-gray-700">
+                                      {interactionDate.toLocaleDateString('ar-EG', { month: 'numeric', day: 'numeric' })}
+                                      <br />
+                                      <span className="text-xs text-gray-500">
+                                        {interactionDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </td>
+                                    <td className="py-2 px-3">
+                                      <Badge variant="outline" className="text-xs">
+                                        {interaction.type === 'call' ? '📞 مكالمة' :
+                                         interaction.type === 'meeting' ? '🤝 اجتماع' :
+                                         interaction.type === 'email' ? '📧 إيميل' :
+                                         interaction.type === 'whatsapp' ? '💬 واتساب' :
+                                         '📝 ' + interaction.type}
+                                      </Badge>
+                                    </td>
+                                    <td className="py-2 px-3 text-gray-700 max-w-xs truncate">
+                                      {interaction.title || interaction.description || 'تفاعل مع عميل'}
+                                    </td>
+                                    <td className="py-2 px-3">
+                                      <Badge className={isPositive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
+                                        {isPositive ? '✅ ' : '⏳ '}
+                                        {interaction.outcome || 'غير محدد'}
+                                      </Badge>
+                                    </td>
+                                    <td className="py-2 px-3 text-center">
+                                      <span className={`font-bold ${isPositive ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {isPositive ? '+1' : '+0'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-gray-500">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p>لا توجد تفاعلات مسجلة بعد</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
