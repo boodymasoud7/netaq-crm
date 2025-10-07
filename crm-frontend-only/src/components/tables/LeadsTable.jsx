@@ -78,6 +78,13 @@ export default function LeadsTable({
   const [editingAssignee, setEditingAssignee] = useState(null)
   const [salesStaff, setSalesStaff] = useState([])
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  
+  // حالات الفلاتر
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterSource, setFilterSource] = useState('all')
+  const [filterEmployee, setFilterEmployee] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Helper functions للملاحظات والتفاعلات من بيانات الـ lead نفسه
   const getNotesCount = (lead) => {
@@ -279,6 +286,57 @@ export default function LeadsTable({
   const clearSelection = () => {
     setSelectedLeads([])
   }
+  
+  // فلترة البيانات
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      const matchesSearch = searchTerm === '' || 
+        lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lead.phone?.includes(searchTerm) ||
+        lead.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesStatus = filterStatus === 'all' || lead.status === filterStatus
+      const matchesSource = filterSource === 'all' || lead.source === filterSource
+      const matchesEmployee = filterEmployee === 'all' || 
+        String(lead.assignedTo) === String(filterEmployee) ||
+        lead.assignedToName === filterEmployee
+      
+      return matchesSearch && matchesStatus && matchesSource && matchesEmployee
+    })
+  }, [leads, searchTerm, filterStatus, filterSource, filterEmployee])
+  
+  // حفظ البحث
+  const handleSaveSearch = () => {
+    const searchCriteria = {
+      searchTerm,
+      filterStatus,
+      filterSource,
+      filterEmployee,
+      timestamp: new Date().toISOString()
+    }
+    localStorage.setItem('savedLeadsSearch', JSON.stringify(searchCriteria))
+    toast.success('تم حفظ معايير البحث بنجاح')
+  }
+  
+  // تصدير البيانات المفلترة
+  const handleExportFiltered = () => {
+    const dataToExport = filteredLeads
+    if (dataToExport.length === 0) {
+      toast.error('لا توجد بيانات للتصدير')
+      return
+    }
+    onBulkExport?.(dataToExport)
+    toast.success(`تم تصدير ${dataToExport.length} عميل محتمل`)
+  }
+  
+  // إعادة تعيين الفلاتر
+  const handleResetFilters = () => {
+    setFilterStatus('all')
+    setFilterSource('all')
+    setFilterEmployee('all')
+    setSearchTerm('')
+    toast.success('تم إعادة تعيين الفلاتر')
+  }
 
   // إجراءات إضافية لكل عميل محتمل (حسب نظام الصلاحيات الجديد)
   const getAdditionalActions = (lead) => {
@@ -378,7 +436,7 @@ export default function LeadsTable({
             <Target className="h-6 w-6 text-orange-600" />
             <div>
               <h3 className="text-lg font-semibold text-orange-900">قائمة العملاء المحتملين</h3>
-              <p className="text-sm text-orange-600">{leads.length} من أصل {leads.length} عميل محتمل</p>
+              <p className="text-sm text-orange-600">{filteredLeads.length} من أصل {leads.length} عميل محتمل</p>
             </div>
           </div>
           {/* البحث والفلاتر المدمجة */}
@@ -387,6 +445,8 @@ export default function LeadsTable({
               <div className="relative">
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="بحث سريع..."
                   className="pl-10 pr-10 h-8 w-48 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
@@ -421,14 +481,25 @@ export default function LeadsTable({
                   variant="outline" 
                   size="sm" 
                   className="h-8 px-3 text-xs"
+                  onClick={() => setShowFilterModal(true)}
                 >
                   <Filter className="h-3 w-3 ml-1" />
                   فلترة
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-3 text-xs"
+                  onClick={handleSaveSearch}
+                >
                   حفظ البحث
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-3 text-xs"
+                  onClick={handleExportFiltered}
+                >
                   تصدير
                 </Button>
               </div>
@@ -480,7 +551,7 @@ export default function LeadsTable({
         </div>
       )}
 
-      {leads.length === 0 ? (
+      {filteredLeads.length === 0 ? (
         <div className="text-center py-12">
           <Target className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -500,7 +571,7 @@ export default function LeadsTable({
                   type="checkbox"
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setSelectedLeads(leads.map(l => l.id))
+                      setSelectedLeads(filteredLeads.map(l => l.id))
                     } else {
                       setSelectedLeads([])
                     }
@@ -537,7 +608,7 @@ export default function LeadsTable({
             </tr>
           </thead>
           <tbody className="bg-white">
-            {leads.map((lead) => (
+            {filteredLeads.map((lead) => (
               <tr 
                 key={lead.id} 
                 className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-orange-25 hover:to-red-25 transition-all duration-200 cursor-pointer"
@@ -745,6 +816,108 @@ export default function LeadsTable({
           </div>
         </div>
       </div>
+      )}
+
+      {/* Modal الفلتر المتقدم */}
+      {showFilterModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">الفلاتر المتقدمة</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilterModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* فلتر الحالة */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  الحالة
+                </label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="all">الكل</option>
+                  <option value="new">جديد</option>
+                  <option value="contacted">تم التواصل</option>
+                  <option value="interested">مهتم</option>
+                  <option value="qualified">مؤهل</option>
+                  <option value="cold">بارد</option>
+                  <option value="warm">دافئ</option>
+                  <option value="hot">ساخن</option>
+                </select>
+              </div>
+
+              {/* فلتر المصدر */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  المصدر
+                </label>
+                <select
+                  value={filterSource}
+                  onChange={(e) => setFilterSource(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="all">الكل</option>
+                  <option value="website">موقع إلكتروني</option>
+                  <option value="social_media">وسائل التواصل</option>
+                  <option value="referral">إحالة</option>
+                  <option value="cold_call">اتصال بارد</option>
+                  <option value="exhibition">معرض</option>
+                  <option value="advertising">إعلان</option>
+                </select>
+              </div>
+
+              {/* فلتر الموظف المسؤول - للمديرين فقط */}
+              {(isAdmin() || isSalesManager()) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الموظف المسؤول
+                  </label>
+                  <select
+                    value={filterEmployee}
+                    onChange={(e) => setFilterEmployee(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="all">الكل</option>
+                    {salesStaff.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.role === 'sales' ? 'مبيعات' : 'مندوب مبيعات'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* أزرار الإجراءات */}
+            <div className="flex items-center gap-3 mt-6">
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                className="flex-1"
+              >
+                <X className="h-4 w-4 ml-2" />
+                إعادة تعيين
+              </Button>
+              <Button
+                onClick={() => setShowFilterModal(false)}
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                <Check className="h-4 w-4 ml-2" />
+                تطبيق
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* حوار تأكيد نقل العملاء المحتملين للأرشيف */}
