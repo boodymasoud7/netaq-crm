@@ -160,9 +160,9 @@ app.listen(PORT, async () => {
       if (tablesSync) {
         console.log('✅ All database tables are ready!');
         
-        // بدء تشغيل خدمة التذكيرات
-        console.log('🔔 Starting reminder cron job...');
-        startReminderJob();
+        // بدء تشغيل خدمة التذكيرات - معطل مؤقتاً
+        // console.log('🔔 Starting reminder cron job...');
+        // startReminderJob();
         
         console.log('📁 All services are ready');
       } else {

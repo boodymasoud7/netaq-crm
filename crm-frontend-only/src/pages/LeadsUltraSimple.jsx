@@ -338,44 +338,40 @@ function LeadsUltraSimple() {
         })
       }
 
-      // تطبيق التحديثات وإنشاء متابعات تلقائية
-      const followUpAssignments = []
+      // تطبيق التحديثات - المتابعات التلقائية معطلة
       for (const update of updates) {
         await api.updateLead(update.leadId, {
           assignedTo: update.assignedTo,
           assignedToName: update.assignedToName,
           updatedAt: new Date()
         })
-        
-        // إضافة للمتابعات التلقائية
-        followUpAssignments.push({
-          leadId: update.leadId,
-          leadName: unassignedLeads.find(l => l.id === update.leadId)?.name || 'غير محدد',
-          assignedTo: update.assignedTo
-        })
       }
 
-      // إنشاء متابعات تلقائية للعملاء المحتملين الموزعين
-      try {
-        console.log('🎯 إنشاء متابعات تلقائية للعملاء الموزعين...')
-        const followUpResults = await autoFollowUpService.distributeFollowUpsWithLeads(
-          followUpAssignments,
-          currentUser?.id
-        )
-        
-        console.log('📋 Follow-up distribution result:', followUpResults)
-        
-        if (followUpResults.success) {
-          const createdFollowUps = followUpResults.data || []
-          console.log(`✅ تم إنشاء ${createdFollowUps.length} متابعة تلقائية من أصل ${followUpAssignments.length}`)
-        } else {
-          console.error('❌ فشل في إنشاء المتابعات:', followUpResults.message)
-        }
-        
-      } catch (followUpError) {
-        console.error('⚠️ خطأ في إنشاء المتابعات التلقائية:', followUpError)
-        // لا نوقف العملية، فقط نسجل الخطأ
-      }
+      // إنشاء متابعات تلقائية للعملاء المحتملين الموزعين - معطل
+      // const followUpAssignments = []
+      // for (const update of updates) {
+      //   followUpAssignments.push({
+      //     leadId: update.leadId,
+      //     leadName: unassignedLeads.find(l => l.id === update.leadId)?.name || 'غير محدد',
+      //     assignedTo: update.assignedTo
+      //   })
+      // }
+      // try {
+      //   console.log('🎯 إنشاء متابعات تلقائية للعملاء الموزعين...')
+      //   const followUpResults = await autoFollowUpService.distributeFollowUpsWithLeads(
+      //     followUpAssignments,
+      //     currentUser?.id
+      //   )
+      //   console.log('📋 Follow-up distribution result:', followUpResults)
+      //   if (followUpResults.success) {
+      //     const createdFollowUps = followUpResults.data || []
+      //     console.log(`✅ تم إنشاء ${createdFollowUps.length} متابعة تلقائية من أصل ${followUpAssignments.length}`)
+      //   } else {
+      //     console.error('❌ فشل في إنشاء المتابعات:', followUpResults.message)
+      //   }
+      // } catch (followUpError) {
+      //   console.error('⚠️ خطأ في إنشاء المتابعات التلقائية:', followUpError)
+      // }
 
       toast.success(`تم توزيع ${unassignedLeads.length} عميل محتمل على ${allSalesStaff.length} موظف مبيعات بنجاح`)
       setShowDistributeModal(false)

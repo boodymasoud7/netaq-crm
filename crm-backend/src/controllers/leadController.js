@@ -333,16 +333,16 @@ exports.createLead = [
 
       console.log(`✅ New lead created: ${lead.name} by ${req.user.name}`);
 
-      // إنشاء متابعة إذا تم تخصيص موظف مسؤول
-      if (assignedTo) {
-        try {
-          await AutoFollowUpService.createLeadFollowUps(lead.id, assignedTo, req.user.id);
-          console.log(`🎯 Follow-up created for new lead: ${lead.name} → User ${assignedTo}`);
-        } catch (error) {
-          console.error('⚠️ Failed to create follow-up for new lead:', error);
-          // لا نوقف العملية إذا فشلت المتابعات
-        }
-      }
+      // إنشاء متابعة إذا تم تخصيص موظف مسؤول - معطل
+      // if (assignedTo) {
+      //   try {
+      //     await AutoFollowUpService.createLeadFollowUps(lead.id, assignedTo, req.user.id);
+      //     console.log(`🎯 Follow-up created for new lead: ${lead.name} → User ${assignedTo}`);
+      //   } catch (error) {
+      //     console.error('⚠️ Failed to create follow-up for new lead:', error);
+      //     // لا نوقف العملية إذا فشلت المتابعات
+      //   }
+      // }
 
       res.status(201).json({
         message: 'Lead created successfully',

@@ -1,0 +1,5 @@
+[33m820c9fb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix: Add filter modal with employee filter and enable filter/save/export buttons
+[33m77bfe2b[m Feature: Add pagination up to 10000 items and employee filter for managers - Increase page size options to 2000, 5000, 10000 in all pages - Add assignedTo filter in clientController for managers - Update LeadsTable, ClientsTable, Sales, FollowUps, SimpleReminders
+[33m22c3f37[m Fix: Update to correct codebase with HTTPS support - use relative API URLs
+[33md675870[m Add notes and interactions counts to client/lead API responses - Performance optimized solution
+[33m484c046[m Revert: Remove notes and interactions indicators to reduce server load
