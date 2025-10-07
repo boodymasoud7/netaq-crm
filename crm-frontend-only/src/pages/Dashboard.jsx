@@ -18,6 +18,7 @@ import {
   Target,
   Zap,
   Award,
+  Trophy,
   Clock,
   MapPin,
   Star,
@@ -64,6 +65,9 @@ export default function Dashboard() {
   const { data: clientsData, loading: clientsLoading } = useApiData(() => dbAPI.getClients({ limit: 1000 }))
   const { data: leadsData, loading: leadsLoading } = useApiData(() => dbAPI.getLeads({ limit: 1000 }))
   const { data: salesData, loading: salesLoading } = useApiData(() => dbAPI.getSales({ limit: 1000 }))
+  const { data: usersData, loading: usersLoading } = useApiData(() => dbAPI.getUsers())
+  const { data: interactionsData, loading: interactionsLoading } = useApiData(() => dbAPI.getInteractions({ limit: 10000 }))
+  const { data: followUpsData, loading: followUpsLoading } = useApiData(() => dbAPI.getFollowUps({ limit: 10000 }))
   
   // Real Tasks and Reminders Data
   const {
@@ -88,6 +92,9 @@ export default function Dashboard() {
   const allClients = clientsData?.data || []
   const allLeads = leadsData?.data || []
   const allSales = salesData?.data || []
+  const users = usersData?.data || []
+  const interactions = interactionsData?.data || []
+  const followUps = followUpsData?.data || []
   
   // Apply role-based filtering
   const clients = filterByRole(allClients, 'clients')
@@ -98,6 +105,86 @@ export default function Dashboard() {
   )
   const sales = filterByRole(allSales, 'sales')
   const tasks = filterByRole(realTasks || [], 'tasks')
+
+  // حساب نقاط الأداء لكل موظف
+  const calculateTeamPerformance = () => {
+    return users
+      .filter(user => {
+        if (!user || !user.role) return true;
+        const role = user.role.toLowerCase();
+        const excludedRoles = ['admin', 'administrator', 'manager', 'مدير', 'مدير المبيعات', 'sales manager'];
+        return !excludedRoles.some(excludedRole => role.includes(excludedRole.toLowerCase()));
+      })
+      .map(user => {
+        const userClients = allClients.filter(client => 
+          parseInt(client.assignedTo) === user.id || parseInt(client.createdBy) === user.id
+        );
+        const userLeads = allLeads.filter(lead => 
+          parseInt(lead.assignedTo) === user.id || parseInt(lead.createdBy) === user.id
+        );
+        const userSales = allSales.filter(sale => 
+          parseInt(sale.assignedTo) === user.id || parseInt(sale.createdBy) === user.id
+        );
+        const userInteractions = interactions.filter(i => 
+          parseInt(i.createdBy) === user.id || parseInt(i.assignedTo) === user.id
+        );
+        const userFollowUps = followUps.filter(f => 
+          parseInt(f.assignedTo) === user.id || parseInt(f.createdBy) === user.id
+        );
+        const userCompletedFollowUps = userFollowUps.filter(f => f.status === 'done' || f.status === 'completed');
+
+        // حساب التحويلات
+        const convertedLeads = userLeads.filter(lead => 
+          lead.status === 'converted' || lead.convertedAt
+        );
+
+        // تفاعلات إيجابية
+        const positiveInteractions = userInteractions.filter(i => 
+          i.outcome && (
+            i.outcome.toLowerCase().includes('interest') ||
+            i.outcome.toLowerCase().includes('agreed') ||
+            i.outcome.toLowerCase().includes('موافق') ||
+            i.outcome.toLowerCase().includes('مهتم') ||
+            i.outcome.toLowerCase().includes('ناجح')
+          )
+        );
+
+        // متابعات في الوقت
+        const onTimeFollowUps = userCompletedFollowUps.filter(f => {
+          if (!f.completedDate || !f.scheduledDate) return false;
+          return new Date(f.completedDate) <= new Date(f.scheduledDate);
+        });
+
+        // تقييمات 5 نجوم
+        const fiveStarRatings = userClients.filter(c => c.rating && parseFloat(c.rating) >= 5);
+
+        // إجمالي النقاط
+        const totalPoints = 
+          userSales.length +
+          convertedLeads.length +
+          positiveInteractions.length +
+          onTimeFollowUps.length +
+          fiveStarRatings.length;
+
+        return {
+          userId: user.id,
+          name: user.name || user.email,
+          role: user.role === 'sales' ? 'مندوب مبيعات' : 'موظف خدمة عملاء',
+          totalPoints,
+          sales: userSales.length,
+          conversions: convertedLeads.length,
+          positiveInteractions: positiveInteractions.length,
+          onTimeFollowUps: onTimeFollowUps.length,
+          fiveStarRatings: fiveStarRatings.length,
+          avatar: user.role === 'sales' ? '👩‍💼' : '🎧'
+        };
+      })
+      .sort((a, b) => b.totalPoints - a.totalPoints);
+  };
+
+  const teamPerformance = calculateTeamPerformance();
+  const currentUserPerformance = teamPerformance.find(p => p.userId === currentUser?.id);
+  const currentUserRank = teamPerformance.findIndex(p => p.userId === currentUser?.id) + 1;
 
   // حساب النشاطات الأخيرة من البيانات الحقيقية
   const getRecentActivities = () => {
@@ -582,6 +669,115 @@ export default function Dashboard() {
           isSales={isSales}
           loading={loading}
         />
+
+        {/* قسم المنافسة والنقاط */}
+        {currentUserPerformance && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* نقاط الموظف الحالي */}
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden">
+              <div className="p-6 relative">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium">نقاطي الحالية</p>
+                    <div className="flex items-end gap-2 mt-2">
+                      <h2 className="text-5xl font-bold">{currentUserPerformance.totalPoints}</h2>
+                      <span className="text-xl text-blue-100 mb-2">نقطة</span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-white bg-opacity-20 rounded-2xl">
+                    <Award className="h-10 w-10" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    <span className="font-semibold">الترتيب: #{currentUserRank}</span>
+                  </div>
+                  <div className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                    {currentUserRank === 1 ? '🥇 الأول' :
+                     currentUserRank === 2 ? '🥈 الثاني' :
+                     currentUserRank === 3 ? '🥉 الثالث' :
+                     `من ${teamPerformance.length}`}
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
+              </div>
+            </Card>
+
+            {/* تفصيل النقاط */}
+            <Card className="border-0 shadow-lg">
+              <div className="p-6">
+                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  تفصيل نقاطي
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">💰 صفقات</span>
+                    <span className="font-bold text-green-600">{currentUserPerformance.sales}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">📈 تحويلات</span>
+                    <span className="font-bold text-blue-600">{currentUserPerformance.conversions}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">✅ تفاعلات +</span>
+                    <span className="font-bold text-purple-600">{currentUserPerformance.positiveInteractions}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">⏰ متابعات في الوقت</span>
+                    <span className="font-bold text-orange-600">{currentUserPerformance.onTimeFollowUps}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">⭐ تقييمات 5 نجوم</span>
+                    <span className="font-bold text-yellow-600">{currentUserPerformance.fiveStarRatings}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* لوحة الشرف */}
+            <Card className="border-0 shadow-lg">
+              <div className="p-6">
+                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                  🏆 لوحة الشرف
+                </h3>
+                <div className="space-y-3">
+                  {teamPerformance.slice(0, 5).map((member, index) => (
+                    <div 
+                      key={member.userId}
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        member.userId === currentUser?.id 
+                          ? 'bg-blue-50 border-2 border-blue-300 shadow-md' 
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="text-2xl">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : member.avatar}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-medium ${member.userId === currentUser?.id ? 'text-blue-900' : 'text-gray-900'}`}>
+                          {member.name}
+                          {member.userId === currentUser?.id && <span className="text-blue-600 text-xs mr-1">(أنت)</span>}
+                        </p>
+                        <p className="text-xs text-gray-500">{member.role}</p>
+                      </div>
+                      <div className={`font-bold text-lg ${
+                        index === 0 ? 'text-yellow-600' :
+                        index === 1 ? 'text-gray-600' :
+                        index === 2 ? 'text-orange-600' :
+                        'text-blue-600'
+                      }`}>
+                        {member.totalPoints}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Compact Interactive Widgets Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">

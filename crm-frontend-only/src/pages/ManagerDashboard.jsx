@@ -1095,8 +1095,15 @@ const ManagerDashboard = () => {
                                          '📝 ' + interaction.type}
                                       </Badge>
                                     </td>
-                                    <td className="py-2 px-3 text-gray-700 max-w-xs truncate">
-                                      {interaction.title || interaction.description || 'تفاعل مع عميل'}
+                                    <td className="py-2 px-3 text-gray-700 max-w-xs">
+                                      <div className="space-y-1">
+                                        {interaction.title && (
+                                          <div className="font-semibold text-sm text-gray-800">{interaction.title}</div>
+                                        )}
+                                        <div className="text-xs text-gray-600 line-clamp-2">
+                                          {interaction.description || 'لا توجد تفاصيل'}
+                                        </div>
+                                      </div>
                                     </td>
                                     <td className="py-2 px-3">
                                       <Badge className={isPositive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
