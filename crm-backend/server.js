@@ -33,6 +33,9 @@ const cronJobs = require('./src/services/cronJobs');
 // Initialize reminder cron job
 const { startReminderJob } = require('./src/cron/reminderJob');
 
+// Initialize notification cleanup job
+const { startNotificationCleanupJob } = require('./src/cron/cleanupNotifications');
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -88,6 +91,7 @@ app.use('/api/sales', saleRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/notifications-cleanup', require('./src/routes/notificationCleanup'));
 app.use('/api/interactions', interactionRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
@@ -166,6 +170,10 @@ app.listen(PORT, async () => {
         // بدء تشغيل خدمة التذكيرات - معطل مؤقتاً
         // console.log('🔔 Starting reminder cron job...');
         // startReminderJob();
+        
+        // بدء تشغيل خدمة تنظيف الإشعارات
+        console.log('🧹 Starting notification cleanup job...');
+        startNotificationCleanupJob();
         
         console.log('📁 All services are ready');
       } else {
