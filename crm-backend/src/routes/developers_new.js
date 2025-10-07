@@ -59,8 +59,8 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     // Map backend fields to frontend expected fields
     const mappedDevelopers = developers.map(dev => ({
       ...dev.toJSON(),
-      contactPerson: dev.email, // Frontend expects contactPerson, map from email
-      address: dev.location     // Frontend expects address, map from location
+      contactPerson: dev.specialization, // Frontend expects contactPerson, map from specialization
+      address: dev.location              // Frontend expects address, map from location
     }));
     
     res.json({
@@ -102,8 +102,9 @@ router.post('/', requirePermission('manage_developers'), async (req, res) => {
     } = req.body;
     
     // Map frontend fields to backend fields
-    const backendEmail = email || contactPerson;
+    const backendEmail = email;
     const backendLocation = location || address;
+    const backendSpecialization = specialization || contactPerson; // contactPerson maps to specialization
     
     // Validation
     if (!name) {
@@ -132,7 +133,7 @@ router.post('/', requirePermission('manage_developers'), async (req, res) => {
       email: backendEmail,
       phone,
       location: backendLocation,
-      specialization,
+      specialization: backendSpecialization,
       established: established ? parseInt(established) : null,
       description,
       website,
@@ -145,7 +146,7 @@ router.post('/', requirePermission('manage_developers'), async (req, res) => {
     // Map backend fields to frontend expected fields
     const mappedDeveloper = {
       ...newDeveloper.toJSON(),
-      contactPerson: newDeveloper.email,
+      contactPerson: newDeveloper.specialization,
       address: newDeveloper.location
     };
     
@@ -227,7 +228,7 @@ router.get('/:id', requirePermission('view_developers'), async (req, res) => {
     // Map backend fields to frontend expected fields
     const mappedDeveloper = {
       ...developer.toJSON(),
-      contactPerson: developer.email,
+      contactPerson: developer.specialization,
       address: developer.location
     };
     
@@ -255,8 +256,9 @@ router.put('/:id', requirePermission('manage_developers'), async (req, res) => {
     // Map frontend fields to backend fields
     const backendUpdateData = {
       ...updateData,
-      email: updateData.email || updateData.contactPerson,
-      location: updateData.location || updateData.address
+      email: updateData.email,
+      location: updateData.location || updateData.address,
+      specialization: updateData.specialization || updateData.contactPerson
     };
     
     // Remove frontend-only fields
@@ -293,7 +295,7 @@ router.put('/:id', requirePermission('manage_developers'), async (req, res) => {
     // Map backend fields to frontend expected fields
     const mappedDeveloper = {
       ...developer.toJSON(),
-      contactPerson: developer.email,
+      contactPerson: developer.specialization,
       address: developer.location
     };
     
