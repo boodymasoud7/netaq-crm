@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware, requirePermission } = require('../middleware/auth');
-const { Developer, User } = require('../../models');
+const { Developer, User, Project } = require('../../models');
 const { Op } = require('sequelize');
 
 // Apply authentication to all routes
@@ -56,11 +56,21 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     console.log(`📊 Found ${count} developers (excluding soft-deleted)`)
     console.log('👥 Developers data:', developers.map(d => ({ id: d.id, name: d.name, deleted_at: d.deleted_at })))
     
-    // Map backend fields to frontend expected fields
-    const mappedDevelopers = developers.map(dev => ({
-      ...dev.toJSON(),
-      contactPerson: dev.specialization, // Frontend expects contactPerson, map from specialization
-      address: dev.location              // Frontend expects address, map from location
+    // Count projects for each developer
+    const mappedDevelopers = await Promise.all(developers.map(async (dev) => {
+      const projectsCount = await Project.count({
+        where: {
+          developer: dev.name,
+          deleted_at: null
+        }
+      });
+      
+      return {
+        ...dev.toJSON(),
+        contactPerson: dev.specialization, // Frontend expects contactPerson, map from specialization
+        address: dev.location,             // Frontend expects address, map from location
+        projectsCount: projectsCount       // Add projects count
+      };
     }));
     
     res.json({
@@ -225,11 +235,20 @@ router.get('/:id', requirePermission('view_developers'), async (req, res) => {
       });
     }
     
+    // Count projects for this developer
+    const projectsCount = await Project.count({
+      where: {
+        developer: developer.name,
+        deleted_at: null
+      }
+    });
+    
     // Map backend fields to frontend expected fields
     const mappedDeveloper = {
       ...developer.toJSON(),
       contactPerson: developer.specialization,
-      address: developer.location
+      address: developer.location,
+      projectsCount: projectsCount
     };
     
     res.json({
