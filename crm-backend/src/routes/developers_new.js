@@ -12,7 +12,7 @@ router.use(authMiddleware);
 // @access  Private (view_developers permission)
 router.get('/', requirePermission('view_developers'), async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', status = '', specialization = '' } = req.query;
+    const { page = 1, limit = 10000, search = '', status = '', specialization = '' } = req.query;
     
     // Build where conditions
     const whereConditions = {};
@@ -56,9 +56,16 @@ router.get('/', requirePermission('view_developers'), async (req, res) => {
     console.log(`📊 Found ${count} developers (excluding soft-deleted)`)
     console.log('👥 Developers data:', developers.map(d => ({ id: d.id, name: d.name, deleted_at: d.deleted_at })))
     
+    // Map backend fields to frontend expected fields
+    const mappedDevelopers = developers.map(dev => ({
+      ...dev.toJSON(),
+      contactPerson: dev.email, // Frontend expects contactPerson, map from email
+      address: dev.location     // Frontend expects address, map from location
+    }));
+    
     res.json({
       success: true,
-      data: developers,
+      data: mappedDevelopers,
       pagination: {
         current_page: parseInt(page),
         per_page: parseInt(limit),
@@ -83,14 +90,20 @@ router.post('/', requirePermission('manage_developers'), async (req, res) => {
     const {
       name,
       email,
+      contactPerson, // Frontend sends this
       phone,
       location,
+      address, // Frontend sends this
       specialization,
       established,
       description,
       website,
       license_number
     } = req.body;
+    
+    // Map frontend fields to backend fields
+    const backendEmail = email || contactPerson;
+    const backendLocation = location || address;
     
     // Validation
     if (!name) {
@@ -116,9 +129,9 @@ router.post('/', requirePermission('manage_developers'), async (req, res) => {
     // Create new developer in database
     const newDeveloper = await Developer.create({
       name,
-      email,
+      email: backendEmail,
       phone,
-      location,
+      location: backendLocation,
       specialization,
       established: established ? parseInt(established) : null,
       description,
@@ -129,9 +142,16 @@ router.post('/', requirePermission('manage_developers'), async (req, res) => {
       status: 'active'
     });
     
+    // Map backend fields to frontend expected fields
+    const mappedDeveloper = {
+      ...newDeveloper.toJSON(),
+      contactPerson: newDeveloper.email,
+      address: newDeveloper.location
+    };
+    
     res.status(201).json({
       success: true,
-      data: newDeveloper,
+      data: mappedDeveloper,
       message: 'تم إنشاء المطور بنجاح'
     });
     
@@ -204,9 +224,16 @@ router.get('/:id', requirePermission('view_developers'), async (req, res) => {
       });
     }
     
+    // Map backend fields to frontend expected fields
+    const mappedDeveloper = {
+      ...developer.toJSON(),
+      contactPerson: developer.email,
+      address: developer.location
+    };
+    
     res.json({
       success: true,
-      data: developer
+      data: mappedDeveloper
     });
   } catch (error) {
     console.error('Error fetching developer:', error);
@@ -225,6 +252,17 @@ router.put('/:id', requirePermission('manage_developers'), async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
     
+    // Map frontend fields to backend fields
+    const backendUpdateData = {
+      ...updateData,
+      email: updateData.email || updateData.contactPerson,
+      location: updateData.location || updateData.address
+    };
+    
+    // Remove frontend-only fields
+    delete backendUpdateData.contactPerson;
+    delete backendUpdateData.address;
+    
     const developer = await Developer.findByPk(id);
     if (!developer) {
       return res.status(404).json({
@@ -234,10 +272,10 @@ router.put('/:id', requirePermission('manage_developers'), async (req, res) => {
     }
     
     // Check if license number is being updated and if it conflicts
-    if (updateData.license_number && updateData.license_number !== developer.license_number) {
+    if (backendUpdateData.license_number && backendUpdateData.license_number !== developer.license_number) {
       const existingDeveloper = await Developer.findOne({ 
         where: { 
-          license_number: updateData.license_number,
+          license_number: backendUpdateData.license_number,
           id: { [Op.ne]: id }
         } 
       });
@@ -250,11 +288,18 @@ router.put('/:id', requirePermission('manage_developers'), async (req, res) => {
     }
     
     // Update developer
-    await developer.update(updateData);
+    await developer.update(backendUpdateData);
+    
+    // Map backend fields to frontend expected fields
+    const mappedDeveloper = {
+      ...developer.toJSON(),
+      contactPerson: developer.email,
+      address: developer.location
+    };
     
     res.json({
       success: true,
-      data: developer,
+      data: mappedDeveloper,
       message: 'تم تحديث بيانات المطور بنجاح'
     });
   } catch (error) {

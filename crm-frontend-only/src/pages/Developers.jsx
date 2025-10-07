@@ -619,13 +619,13 @@ export default function Developers() {
                   </div>
                     </td>
                     <td className="py-3 px-4 align-middle">
-                      <div className="text-sm text-gray-900">{developer.contactPerson || 'غير محدد'}</div>
+                      <div className="text-sm text-gray-900">{developer.email || 'غير محدد'}</div>
                     </td>
                     <td className="py-3 px-4 align-middle">
                       <div className="text-sm text-gray-900">{developer.phone || 'غير محدد'}</div>
                     </td>
                     <td className="py-3 px-4 align-middle">
-                      <div className="text-sm text-gray-900">{developer.address?.split(',')[0] || 'غير محدد'}</div>
+                      <div className="text-sm text-gray-900">{developer.location?.split(',')[0] || 'غير محدد'}</div>
                     </td>
                     <td className="py-3 px-4 align-middle">
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
