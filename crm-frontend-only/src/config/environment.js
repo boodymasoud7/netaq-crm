@@ -5,8 +5,8 @@ export const ENV_CONFIG = {
   // API Mode: true = Real Backend, false = Mock Data
   USE_REAL_API: true, // Using Real Backend with simple test server
   
-  // Backend URL
-  BACKEND_URL: 'http://54.221.136.112/api',
+  // Backend URL - Uses relative path to automatically match protocol (HTTP/HTTPS)
+  BACKEND_URL: '/api',
   
   // App Configuration
   APP_NAME: 'CRM Real Estate System',
