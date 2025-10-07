@@ -871,6 +871,9 @@ export default function Sales() {
                     <option value={200}>200</option>
                     <option value={500}>500</option>
                     <option value={1000}>1000</option>
+                    <option value={2000}>2000</option>
+                    <option value={5000}>5000</option>
+                    <option value={10000}>الكل (10000)</option>
                   </select>
                   <span className="text-green-700 text-xs font-medium">مبيعة</span>
                 </div>

@@ -26,6 +26,7 @@ exports.getAllClients = [
         search = '',
         status = '',
         source = '',
+        assignedTo = '',
         sortBy = 'createdAt',
         sortOrder = 'DESC'
       } = req.query;
@@ -49,6 +50,11 @@ exports.getAllClients = [
         ];
       }
       // Admin and sales_manager can see all clients (no additional filtering)
+      
+      // Allow managers to filter by assigned user
+      if (assignedTo && (userRole === 'admin' || userRole === 'sales_manager')) {
+        whereConditions.assignedTo = assignedTo;
+      }
       
       if (search) {
         const searchCondition = {
