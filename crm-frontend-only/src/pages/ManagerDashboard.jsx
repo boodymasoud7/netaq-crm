@@ -987,7 +987,7 @@ const ManagerDashboard = () => {
             <CardContent>
               <div className="space-y-6">
                 {teamPerformance.slice(0, 5).map((member, memberIndex) => {
-                  const recentInteractions = (member.allInteractions || []).slice(0, 5);
+                  const allInteractions = (member.allInteractions || []); // عرض كل التفاعلات
                   
                   return (
                     <div key={memberIndex} className="border-b border-gray-200 pb-6 last:border-0">
@@ -1019,14 +1019,28 @@ const ManagerDashboard = () => {
                         </div>
                       </div>
 
-                      {/* آخر 5 تفاعلات */}
-                      {recentInteractions.length > 0 ? (
-                        <div className="overflow-x-auto">
+                      {/* كل التفاعلات */}
+                      {allInteractions.length > 0 ? (
+                        <>
+                          <div className="mb-3 flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-5 w-5 text-blue-600" />
+                              <span className="font-semibold text-gray-700">جميع التفاعلات:</span>
+                              <Badge className="bg-blue-100 text-blue-700 text-base font-bold">
+                                {allInteractions.length} تفاعل
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              التفاعلات الإيجابية: <span className="font-bold text-green-600">{member.positiveInteractions}</span> من {allInteractions.length}
+                            </div>
+                          </div>
+                          <div className="overflow-x-auto max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
                           <table className="w-full text-sm">
-                            <thead>
-                              <tr className="bg-gray-50 border-b">
+                            <thead className="sticky top-0 bg-gray-50 z-10">
+                              <tr className="border-b">
                                 <th className="text-right py-2 px-3 text-gray-600">#</th>
                                 <th className="text-right py-2 px-3 text-gray-600">التاريخ</th>
+                                <th className="text-right py-2 px-3 text-gray-600">اسم العميل</th>
                                 <th className="text-right py-2 px-3 text-gray-600">النوع</th>
                                 <th className="text-right py-2 px-3 text-gray-600">الوصف</th>
                                 <th className="text-right py-2 px-3 text-gray-600">النتيجة</th>
@@ -1034,7 +1048,7 @@ const ManagerDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {recentInteractions.map((interaction, intIndex) => {
+                              {allInteractions.map((interaction, intIndex) => {
                                 const isPositive = interaction.outcome && (
                                   interaction.outcome.toLowerCase().includes('interest') ||
                                   interaction.outcome.toLowerCase().includes('agreed') ||
@@ -1043,6 +1057,16 @@ const ManagerDashboard = () => {
                                   interaction.outcome.toLowerCase().includes('ناجح')
                                 );
                                 const interactionDate = new Date(interaction.createdAt);
+                                
+                                // جلب اسم العميل
+                                let clientName = 'غير محدد';
+                                if (interaction.itemType === 'client' || interaction.itemType === 'Client') {
+                                  const client = clients.find(c => c.id === parseInt(interaction.itemId));
+                                  clientName = client?.name || 'عميل غير موجود';
+                                } else if (interaction.itemType === 'lead' || interaction.itemType === 'Lead') {
+                                  const lead = leads.find(l => l.id === parseInt(interaction.itemId));
+                                  clientName = lead?.name || 'عميل محتمل غير موجود';
+                                }
                                 
                                 return (
                                   <tr key={intIndex} className="border-b hover:bg-gray-50">
@@ -1053,6 +1077,14 @@ const ManagerDashboard = () => {
                                       <span className="text-xs text-gray-500">
                                         {interactionDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
                                       </span>
+                                    </td>
+                                    <td className="py-2 px-3">
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-gray-700 font-medium">{clientName}</span>
+                                        <Badge variant="outline" className="text-xs">
+                                          {interaction.itemType === 'lead' || interaction.itemType === 'Lead' ? '🔵 محتمل' : '🟢 عميل'}
+                                        </Badge>
+                                      </div>
                                     </td>
                                     <td className="py-2 px-3">
                                       <Badge variant="outline" className="text-xs">
@@ -1083,6 +1115,7 @@ const ManagerDashboard = () => {
                             </tbody>
                           </table>
                         </div>
+                        </>
                       ) : (
                         <div className="text-center py-6 text-gray-500">
                           <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
