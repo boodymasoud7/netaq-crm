@@ -83,7 +83,7 @@ export default function BackupManagement() {
   const loadBackups = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://54.221.136.112/api/backups/list', {
+      const response = await fetch('/api/backups/list', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
         }
@@ -115,7 +115,7 @@ export default function BackupManagement() {
 
   const loadStorageInfo = async () => {
     try {
-      const response = await fetch('http://54.221.136.112/api/backups/storage', {
+      const response = await fetch('/api/backups/storage', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
         }
@@ -134,7 +134,7 @@ export default function BackupManagement() {
     try {
       setCreating(true)
       
-      const response = await fetch('http://54.221.136.112/api/backups/create', {
+      const response = await fetch('/api/backups/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ export default function BackupManagement() {
     try {
       toast.loading('جاري تحميل النسخة الاحتياطية...')
       
-      const response = await fetch(`http://54.221.136.112/api/backups/download/${backupId}`, {
+      const response = await fetch(`/api/backups/download/${backupId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
         }
@@ -210,7 +210,7 @@ export default function BackupManagement() {
       setRestoringId(backupId)
       toast.loading('جاري استعادة النسخة الاحتياطية...')
       
-      const response = await fetch(`http://54.221.136.112/api/backups/restore/${backupId}`, {
+      const response = await fetch(`/api/backups/restore/${backupId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
@@ -251,7 +251,7 @@ export default function BackupManagement() {
     const { backupId } = pendingDelete
 
     try {
-      const response = await fetch(`http://54.221.136.112/api/backups/delete/${backupId}`, {
+      const response = await fetch(`/api/backups/delete/${backupId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
@@ -278,7 +278,7 @@ export default function BackupManagement() {
       const formData = new FormData()
       formData.append('backup', file)
       
-      const response = await fetch('http://54.221.136.112/api/backups/upload', {
+      const response = await fetch('/api/backups/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
@@ -346,7 +346,7 @@ export default function BackupManagement() {
       setRefreshing(true)
       toast.loading('جاري مسح جميع النسخ الاحتياطية...')
       
-      const response = await fetch('http://54.221.136.112/api/backups/clear-all', {
+      const response = await fetch('/api/backups/clear-all', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
