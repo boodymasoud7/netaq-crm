@@ -8,7 +8,6 @@ import {
   DollarSign,
   Phone,
   Mail,
-  Plus,
   ArrowUpRight,
   ArrowDownRight,
   BarChart3,
@@ -24,13 +23,11 @@ import {
   CheckCircle,
   AlertCircle,
   Briefcase,
-  PieChart,
   LineChart,
   Timer,
   Sparkles
 } from 'lucide-react'
 import { Card } from '../components/ui/card'
-import { Button } from '../components/ui/button'
 import { useApiData } from '../hooks/useApi'
 import { dbAPI } from '../lib/apiSwitch.js'
 import { useAuth } from '../contexts/AuthContext'
@@ -634,26 +631,36 @@ export default function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button 
-                  onClick={() => navigate('/clients')}
-                  className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold px-6 py-3 rounded-xl border-2 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-1 bg-blue-100 rounded-lg">
-                      <Plus className="h-4 w-4 text-blue-600" />
+              
+              {/* 🏆 لوحة الشرف - مدمجة في Hero Section */}
+              {teamPerformance.length > 0 && (
+                <div className="flex items-center gap-3 overflow-x-auto pb-2">
+                  {teamPerformance.slice(0, 5).map((member, index) => (
+                    <div 
+                      key={member.userId}
+                      className={`flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-sm transition-all ${
+                        member.userId === currentUser?.id 
+                          ? 'bg-white bg-opacity-30 border-2 border-white shadow-lg' 
+                          : 'bg-white bg-opacity-20 hover:bg-opacity-25'
+                      } min-w-[160px]`}
+                    >
+                      <div className="text-2xl">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : member.avatar}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-bold text-sm text-white`}>
+                          {member.name}
+                          {member.userId === currentUser?.id && <span className="text-xs block opacity-80">(أنت)</span>}
+                        </p>
+                        <p className="text-xs text-white opacity-70">{member.role}</p>
+                      </div>
+                      <div className={`font-bold text-lg text-white`}>
+                        {member.totalPoints}
+                      </div>
                     </div>
-                    <span className="font-bold">إضافة عميل جديد</span>
-                  </div>
-                </Button>
-                <Button 
-                  onClick={() => navigate('/analytics')}
-                  className="bg-white text-blue-600 hover:bg-blue-50"
-                >
-                  <PieChart className="h-4 w-4 mr-2" />
-                  التحليلات المتقدمة
-                </Button>
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           {/* Decorative Elements */}
@@ -667,9 +674,6 @@ export default function Dashboard() {
           isAdmin={isAdmin}
           isSales={isSales}
           loading={loading}
-          teamPerformance={teamPerformance}
-          currentUserPerformance={currentUserPerformance}
-          currentUserRank={currentUserRank}
         />
 
         {/* Compact Interactive Widgets Section */}

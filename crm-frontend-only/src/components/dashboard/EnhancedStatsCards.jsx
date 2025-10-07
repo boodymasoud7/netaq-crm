@@ -76,30 +76,7 @@ export default function EnhancedStatsCards({
       achievement: 'ممتاز',
       period: 'الربع الحالي'
     },
-    // كارت أفضل موظف أو نقاط الموظف
-    teamPerformance.length > 0 ? {
-      id: 'topEmployee',
-      title: currentUserPerformance ? 'نقاطي' : '🏆 أفضل موظف',
-      value: currentUserPerformance 
-        ? currentUserPerformance.totalPoints 
-        : (teamPerformance[0]?.totalPoints || 0),
-      subtitle: currentUserPerformance 
-        ? `الترتيب #${currentUserRank}` 
-        : (teamPerformance[0]?.name || 'غير محدد'),
-      change: currentUserPerformance 
-        ? (currentUserRank === 1 ? '🥇 الأول' : currentUserRank === 2 ? '🥈 الثاني' : currentUserRank === 3 ? '🥉 الثالث' : `#${currentUserRank}`)
-        : `${teamPerformance[0]?.totalPoints || 0} نقطة`,
-      trend: 'up',
-      icon: Award,
-      gradient: 'from-yellow-500 via-yellow-600 to-orange-600',
-      bgGradient: 'from-yellow-50 to-orange-50',
-      description: currentUserPerformance 
-        ? `من أصل ${teamPerformance.length} موظف` 
-        : (teamPerformance[0]?.role || 'موظف'),
-      target: Math.max(...teamPerformance.map(m => m.totalPoints)),
-      achievement: currentUserRank === 1 ? 'استثنائي' : currentUserRank === 2 ? 'ممتاز' : currentUserRank === 3 ? 'متفوق' : 'جيد',
-      period: 'هذا الشهر'
-    } : {
+    {
       id: 'revenue',
       title: isAdmin ? 'إجمالي المبيعات' : isSales ? 'إيراداتي' : 'إيرادات الفريق',
       value: formatCurrency(personalStats?.revenue || 0),
@@ -212,9 +189,6 @@ export default function EnhancedStatsCards({
                       }
                     </p>
                   </div>
-                  {stat.subtitle && (
-                    <p className="text-sm font-medium text-gray-800 mt-1">{stat.subtitle}</p>
-                  )}
                   <p className="text-xs text-gray-600 mt-1">{stat.description}</p>
                 </div>
 
