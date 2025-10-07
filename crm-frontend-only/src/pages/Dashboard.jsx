@@ -635,28 +635,26 @@ export default function Dashboard() {
               
               {/* 🏆 لوحة الشرف - مدمجة في Hero Section */}
               {teamPerformance.length > 0 && (
-                <div className="flex items-center gap-3 overflow-x-auto pb-2">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
                   {teamPerformance.slice(0, 5).map((member, index) => (
                     <div 
                       key={member.userId}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-sm transition-all ${
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all ${
                         member.userId === currentUser?.id 
-                          ? 'bg-white bg-opacity-30 border-2 border-white shadow-lg' 
-                          : 'bg-white bg-opacity-20 hover:bg-opacity-25'
-                      } min-w-[160px]`}
+                          ? 'bg-white bg-opacity-30 border border-white shadow-md' 
+                          : 'bg-white bg-opacity-15 hover:bg-opacity-20'
+                      } min-w-fit`}
                     >
-                      <div className="text-2xl">
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : member.avatar}
+                      <div className="text-lg">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
                       </div>
-                      <div className="flex-1">
-                        <p className={`font-bold text-sm text-white`}>
+                      <div className="flex items-center gap-1.5">
+                        <p className={`font-semibold text-xs text-white`}>
                           {member.name}
-                          {member.userId === currentUser?.id && <span className="text-xs block opacity-80">(أنت)</span>}
                         </p>
-                        <p className="text-xs text-white opacity-70">{member.role}</p>
-                      </div>
-                      <div className={`font-bold text-lg text-white`}>
-                        {member.totalPoints}
+                        <span className={`font-bold text-sm text-white opacity-90`}>
+                          {member.totalPoints}
+                        </span>
                       </div>
                     </div>
                   ))}
