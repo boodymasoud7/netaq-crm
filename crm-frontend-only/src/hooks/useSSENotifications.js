@@ -86,8 +86,9 @@ export function useSSENotifications() {
     
     console.log('🔑 Using token:', token.substring(0, 20) + '...')
 
-    // إنشاء اتصال SSE مع token كـ query parameter
-    const eventSource = new EventSource(`http://54.221.136.112/api/notifications-stream/stream?token=${encodeURIComponent(token)}`)
+    // إنشاء اتصال SSE مع token كـ query parameter - use current domain
+    const apiBase = window.location.origin;
+    const eventSource = new EventSource(`${apiBase}/api/notifications-stream/stream?token=${encodeURIComponent(token)}`)
 
     eventSource.onopen = () => {
       console.log('✅ SSE connection established')

@@ -27,7 +27,7 @@ export function useSSENotificationSender() {
 
     try {
       // إرسال للباك إند عبر fetch
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending new lead notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending new client notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending interaction added notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +225,7 @@ export function useSSENotificationSender() {
     });
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -274,7 +274,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending note reply notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -321,7 +321,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending task assigned notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -367,7 +367,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending task action notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -413,7 +413,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending task note added notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -459,7 +459,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending task note reply notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -504,7 +504,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending new project notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -549,7 +549,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending new sale notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -594,7 +594,7 @@ export function useSSENotificationSender() {
     console.log('📤 Sending new unit notification:', notification)
 
     try {
-      const response = await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+      const response = await fetch('/api/notifications-stream/emit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -652,7 +652,7 @@ export function useSSENotificationSender() {
 
     try {
       // إرسال الإشعار للخادم
-      const response = await fetch('http://54.221.136.112/api/notifications/send', {
+      const response = await fetch('/api/notifications/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -666,7 +666,7 @@ export function useSSENotificationSender() {
         
         // أيضاً إرسال event للـ SSE
         try {
-          await fetch('http://54.221.136.112/api/notifications-stream/emit', {
+          await fetch('/api/notifications-stream/emit', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
