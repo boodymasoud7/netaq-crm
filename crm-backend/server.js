@@ -36,6 +36,9 @@ const { startReminderJob } = require('./src/cron/reminderJob');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
+// Trust proxy - required for Nginx reverse proxy
+app.set('trust proxy', 1);
+
 // Rate limiting - relaxed for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
