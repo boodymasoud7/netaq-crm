@@ -662,15 +662,7 @@ export default function Dashboard() {
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white bg-opacity-5 rounded-full translate-y-24 -translate-x-24"></div>
         </div>
 
-        {/* Enhanced Stats Cards */}
-        <EnhancedStatsCards 
-          personalStats={personalStats}
-          isAdmin={isAdmin}
-          isSales={isSales}
-          loading={loading}
-        />
-
-        {/* قسم المنافسة والنقاط */}
+        {/* قسم المنافسة والنقاط - في الأول! */}
         {currentUserPerformance && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* نقاط الموظف الحالي */}
@@ -778,6 +770,14 @@ export default function Dashboard() {
             </Card>
           </div>
         )}
+
+        {/* Enhanced Stats Cards */}
+        <EnhancedStatsCards 
+          personalStats={personalStats}
+          isAdmin={isAdmin}
+          isSales={isSales}
+          loading={loading}
+        />
 
         {/* Compact Interactive Widgets Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
