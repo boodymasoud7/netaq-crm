@@ -160,6 +160,7 @@ function LeadsUltraSimple() {
   const [viewingLead, setViewingLead] = useState(null)
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedSource, setSelectedSource] = useState('all')
+  const [selectedEmployee, setSelectedEmployee] = useState('all')
   const [showDistributeModal, setShowDistributeModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [leadToDelete, setLeadToDelete] = useState(null)
@@ -392,6 +393,12 @@ function LeadsUltraSimple() {
     const matchesStatus = selectedStatus === 'all' || lead.status === selectedStatus
     const matchesSource = selectedSource === 'all' || lead.source === selectedSource
     
+    // فلترة الموظف المسؤول (للمديرين فقط)
+    const matchesEmployee = selectedEmployee === 'all' || 
+                           lead.assignedTo == selectedEmployee ||
+                           lead.assignedToName === selectedEmployee ||
+                           String(lead.assignedTo) === String(selectedEmployee)
+    
     // فلترة الصلاحيات
     let hasPermission = false
     if (canViewAllLeads()) {
@@ -404,7 +411,7 @@ function LeadsUltraSimple() {
       hasPermission = (lead.createdBy == userId || lead.assignedTo == userId)
     }
     
-    return matchesSearch && matchesStatus && matchesSource && hasPermission
+    return matchesSearch && matchesStatus && matchesSource && matchesEmployee && hasPermission
   }) || []
   
   // ثم استبعاد العملاء المحولين من النتيجة النهائية (بعد فلترة الصلاحيات)
@@ -1575,6 +1582,50 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           </CardContent>
         </Card>
       </div>
+
+      {/* الفلاتر */}
+      {(isAdmin() || isSalesManager()) && (
+        <Card className="bg-white border-0 shadow-md rounded-xl">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">فلترة حسب:</span>
+              </div>
+              
+              {/* فلتر الموظف المسؤول */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">الموظف المسؤول:</span>
+                <select
+                  value={selectedEmployee}
+                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="all">الكل</option>
+                  {salesUsers.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.role === 'sales' ? 'مبيعات' : 'مندوب مبيعات'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* زر إعادة تعيين الفلاتر */}
+              {selectedEmployee !== 'all' && (
+                <Button
+                  onClick={() => setSelectedEmployee('all')}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  إعادة تعيين
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* جدول العملاء المحتملين */}
       <LeadsTable

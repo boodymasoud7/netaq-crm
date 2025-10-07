@@ -26,6 +26,7 @@ exports.getAllClients = [
         search = '',
         status = '',
         source = '',
+        assignedTo = '',
         sortBy = 'createdAt',
         sortOrder = 'DESC'
       } = req.query;
@@ -78,6 +79,11 @@ exports.getAllClients = [
 
       if (source) {
         whereConditions.source = source;
+      }
+
+      // Filter by assigned employee (for managers/admins)
+      if (assignedTo && (userRole === 'admin' || userRole === 'sales_manager')) {
+        whereConditions.assignedTo = assignedTo;
       }
 
       // Get clients with pagination and include assigned user name
