@@ -28,6 +28,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { Card } from '../components/ui/card'
+import { Button } from '../components/ui/button'
 import { useApiData } from '../hooks/useApi'
 import { dbAPI } from '../lib/apiSwitch.js'
 import { useAuth } from '../contexts/AuthContext'
