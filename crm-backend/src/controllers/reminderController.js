@@ -64,9 +64,13 @@ const getUserReminders = async (req, res) => {
     const user_id = req.user.id;
     const { status, search, from, to, page = 1, limit = 100 } = req.query;
 
-    let whereClause = 'WHERE user_id = $1';
-    let binds = [user_id];
-    let bindIndex = 2;
+    // التحقق من صلاحيات المدير
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+
+    let whereClause = isManager ? 'WHERE 1=1' : 'WHERE user_id = $1';
+    let binds = isManager ? [] : [user_id];
+    let bindIndex = isManager ? 1 : 2;
 
     if (status && ['pending', 'done'].includes(status)) {
       whereClause += ` AND status = $${bindIndex}`;
@@ -95,7 +99,8 @@ const getUserReminders = async (req, res) => {
     const offset = (page - 1) * limit;
 
     // جلب التذكيرات باستخدام SimpleReminder model
-    const whereConditions = { user_id };
+    // المديرين يرون كل التذكيرات، الموظفين يرون تذكيراتهم فقط
+    const whereConditions = isManager ? {} : { user_id };
 
     if (status && ['pending', 'done'].includes(status)) {
       whereConditions.status = status;
@@ -159,9 +164,16 @@ const updateReminder = async (req, res) => {
     const user_id = req.user.id;
     const { note, remind_at, status } = req.body;
 
+    // التحقق من صلاحيات المدير
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+
+    // المديرين يقدروا يعدلوا أي تذكير، الموظفين تذكيراتهم فقط
+    const whereConditions = isManager ? { id } : { id, user_id };
+
     // التحقق من وجود التذكير
     const existing = await SimpleReminder.findOne({
-      where: { id, user_id }
+      where: whereConditions
     });
 
     if (!existing) {
@@ -213,8 +225,15 @@ const deleteReminder = async (req, res) => {
     const { id } = req.params;
     const user_id = req.user.id;
 
+    // التحقق من صلاحيات المدير
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+
+    // المديرين يقدروا يحذفوا أي تذكير، الموظفين تذكيراتهم فقط
+    const whereConditions = isManager ? { id } : { id, user_id };
+
     const result = await SimpleReminder.destroy({
-      where: { id, user_id }
+      where: whereConditions
     });
 
     if (result === 0) {
@@ -244,9 +263,16 @@ const markReminderAsDone = async (req, res) => {
     const { id } = req.params;
     const user_id = req.user.id;
 
+    // التحقق من صلاحيات المدير
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+
+    // المديرين يقدروا يكملوا أي تذكير، الموظفين تذكيراتهم فقط
+    const whereConditions = isManager ? { id } : { id, user_id };
+
     // التحقق من وجود التذكير
     const existing = await SimpleReminder.findOne({
-      where: { id, user_id }
+      where: whereConditions
     });
 
     if (!existing) {
