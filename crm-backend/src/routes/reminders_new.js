@@ -42,13 +42,18 @@ router.get('/', requirePermission('view_tasks'), async (req, res) => {
       whereConditions.assignedTo = parseInt(assignedTo);
     }
     
-    // Role-based filtering: sales users see only their reminders
-    if (req.user.role === 'sales' || req.user.role === 'sales_agent') {
+    // Role-based filtering: sales users see only their reminders, managers/admins see all
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+    
+    if (!isManager && (userRole === 'sales' || userRole === 'sales_agent')) {
+      // موظفو المبيعات يرون تذكيراتهم فقط
       whereConditions[Op.or] = [
         { assignedTo: req.user.id },
         { createdBy: req.user.id }
       ];
     }
+    // المديرين يرون كل التذكيرات (لا فلترة)
     
     // Calculate pagination
     const offset = (page - 1) * limit;
@@ -195,8 +200,11 @@ router.put('/:id', requirePermission('manage_tasks'), async (req, res) => {
       });
     }
     
-    // Check permission: only assigned user, creator, or admin can update
-    if (req.user.role !== 'admin' && 
+    // Check permission: only assigned user, creator, admin, or manager can update
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+    
+    if (!isManager && 
         reminder.assignedTo !== req.user.id && 
         reminder.createdBy !== req.user.id) {
       return res.status(403).json({
@@ -237,8 +245,11 @@ router.patch('/:id/complete', requirePermission('manage_tasks'), async (req, res
       });
     }
     
-    // Check permission: only assigned user, creator, or admin can complete
-    if (req.user.role !== 'admin' && 
+    // Check permission: only assigned user, creator, admin, or manager can complete
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+    
+    if (!isManager && 
         reminder.assignedTo !== req.user.id && 
         reminder.createdBy !== req.user.id) {
       return res.status(403).json({
@@ -284,8 +295,11 @@ router.delete('/:id', requirePermission('manage_tasks'), async (req, res) => {
       });
     }
     
-    // Check permission: only creator or admin can delete
-    if (req.user.role !== 'admin' && reminder.createdBy !== req.user.id) {
+    // Check permission: only creator, admin, or manager can delete
+    const userRole = (req.user.role || '').toLowerCase();
+    const isManager = userRole.includes('admin') || userRole.includes('manager') || userRole === 'مدير';
+    
+    if (!isManager && reminder.createdBy !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'ليس لديك صلاحية لحذف هذا التذكير'
@@ -380,9 +394,3 @@ router.get('/dashboard', requirePermission('view_tasks'), async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-
-
-
