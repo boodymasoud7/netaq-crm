@@ -78,6 +78,11 @@ export default function LeadsTable({
   const setSelectedLeads = onSelectedLeadsChange || setLocalSelectedLeads
   const [editingAssignee, setEditingAssignee] = useState(null)
   const [salesStaff, setSalesStaff] = useState([])
+  
+  // Modal التفاعلات
+  const [showInteractionsModal, setShowInteractionsModal] = useState(false)
+  const [selectedLeadForInteractions, setSelectedLeadForInteractions] = useState(null)
+  const [leadInteractionsList, setLeadInteractionsList] = useState([])
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
   
   // حالات الفلاتر
@@ -95,7 +100,8 @@ export default function LeadsTable({
   }
 
   const getInteractionsCount = (lead) => {
-    return lead?.interactionsCount || 0
+    // استخدام البيانات من leadsInteractions prop
+    return leadsInteractions && leadsInteractions[lead.id]?.count ? leadsInteractions[lead.id].count : (lead?.interactionsCount || 0)
   }
 
   // نظام الصلاحيات المحدث مع النظام الديناميكي
@@ -355,6 +361,37 @@ export default function LeadsTable({
     setFilterInterest('all')
     setSearchTerm('')
     toast.success('تم إعادة تعيين الفلاتر')
+  }
+  
+  // عرض التفاعلات عند الضغط على الأيقونة
+  const handleShowInteractions = async (lead, e) => {
+    e.stopPropagation()
+    setSelectedLeadForInteractions(lead)
+    
+    try {
+      // جلب التفاعلات من API
+      const response = await api.getInteractions({ 
+        itemType: 'lead', 
+        itemId: lead.id,
+        limit: 100 
+      })
+      
+      if (response.success && response.data) {
+        // ترتيب التفاعلات من الأحدث للأقدم
+        const sortedInteractions = [...response.data].sort((a, b) => {
+          return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
+        })
+        setLeadInteractionsList(sortedInteractions)
+      } else {
+        setLeadInteractionsList([])
+      }
+      
+      setShowInteractionsModal(true)
+    } catch (error) {
+      console.error('Error fetching interactions:', error)
+      toast.error('حدث خطأ أثناء جلب التفاعلات')
+      setLeadInteractionsList([])
+    }
   }
 
   // إجراءات إضافية لكل عميل محتمل (حسب نظام الصلاحيات الجديد)
@@ -672,7 +709,11 @@ export default function LeadsTable({
                         {/* Indicators للتفاعلات والملاحظات */}
                         <div className="flex items-center gap-1">
                           {getInteractionsCount(lead) > 0 && (
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
+                            <Badge 
+                              onClick={(e) => handleShowInteractions(lead, e)}
+                              className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-all hover:scale-105"
+                              title="اضغط لعرض التفاعلات"
+                            >
                               <MessageCircle className="h-3 w-3" />
                               <span>{getInteractionsCount(lead)}</span>
                             </Badge>
@@ -984,6 +1025,124 @@ export default function LeadsTable({
         cancelText="إلغاء"
         type="warning"
       />
+
+      {/* نافذة عرض التفاعلات */}
+      {showInteractionsModal && selectedLeadForInteractions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="h-6 w-6" />
+                  <div>
+                    <h3 className="text-lg font-bold">تفاعلات {selectedLeadForInteractions.name}</h3>
+                    <p className="text-sm text-blue-100">عدد التفاعلات: {leadInteractionsList.length}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowInteractionsModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+              {leadInteractionsList.length === 0 ? (
+                <div className="text-center py-12">
+                  <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">لا توجد تفاعلات مسجلة لهذا العميل</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {leadInteractionsList.map((interaction, index) => {
+                    // تحديد اللون بناءً على النتيجة
+                    const outcomeColors = {
+                      positive: 'bg-green-50 border-green-200',
+                      neutral: 'bg-yellow-50 border-yellow-200',
+                      negative: 'bg-red-50 border-red-200'
+                    }
+                    
+                    const outcomeIcons = {
+                      positive: '✅',
+                      neutral: '⚪',
+                      negative: '❌'
+                    }
+                    
+                    const outcomeTexts = {
+                      positive: 'إيجابي',
+                      neutral: 'محايد',
+                      negative: 'سلبي'
+                    }
+                    
+                    const typeTexts = {
+                      call: '📞 مكالمة',
+                      email: '📧 بريد إلكتروني',
+                      meeting: '🤝 اجتماع',
+                      whatsapp: '💬 واتساب',
+                      other: '📝 أخرى'
+                    }
+
+                    return (
+                      <div
+                        key={interaction.id || index}
+                        className={`border-2 rounded-xl p-4 ${outcomeColors[interaction.outcome] || 'bg-gray-50 border-gray-200'}`}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{outcomeIcons[interaction.outcome] || '📌'}</span>
+                            <div>
+                              <h4 className="font-bold text-gray-900">{interaction.title || 'تفاعل'}</h4>
+                              <p className="text-xs text-gray-500">
+                                {typeTexts[interaction.type] || interaction.type} • {formatDateArabic(interaction.createdAt || interaction.date)}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge className={`${
+                            interaction.outcome === 'positive' ? 'bg-green-200 text-green-800' :
+                            interaction.outcome === 'neutral' ? 'bg-yellow-200 text-yellow-800' :
+                            interaction.outcome === 'negative' ? 'bg-red-200 text-red-800' :
+                            'bg-gray-200 text-gray-800'
+                          }`}>
+                            {outcomeTexts[interaction.outcome] || interaction.outcome}
+                          </Badge>
+                        </div>
+                        
+                        {interaction.description && (
+                          <p className="text-sm text-gray-700 mt-2 pr-7">
+                            {interaction.description}
+                          </p>
+                        )}
+                        
+                        {interaction.createdByName && (
+                          <p className="text-xs text-gray-500 mt-2 pr-7">
+                            📝 بواسطة: {interaction.createdByName}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t">
+              <Button
+                onClick={() => setShowInteractionsModal(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white"
+              >
+                إغلاق
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
