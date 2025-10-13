@@ -123,8 +123,8 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
       </Button>
 
             {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-600 to-indigo-700 px-6 py-4 text-white">
               <div className="flex items-center justify-between">
@@ -149,7 +149,7 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-5 overflow-y-auto max-h-[calc(90vh-160px)]">
               {/* نوع التفاعل */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">نوع التفاعل</label>
@@ -222,7 +222,7 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
                 {/* قوالب إيجابية */}
                 <div className="mb-3">
                   <p className="text-xs font-semibold text-green-700 mb-2">🟢 إيجابية</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <button
                       type="button"
                       onClick={() => setInteractionData({
@@ -281,7 +281,7 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
                 {/* قوالب محايدة */}
                 <div className="mb-3">
                   <p className="text-xs font-semibold text-yellow-700 mb-2">🟡 محايدة</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <button
                       type="button"
                       onClick={() => setInteractionData({
@@ -340,7 +340,7 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
                 {/* قوالب سلبية */}
                 <div>
                   <p className="text-xs font-semibold text-red-700 mb-2">🔴 سلبية</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <button
                       type="button"
                       onClick={() => setInteractionData({
