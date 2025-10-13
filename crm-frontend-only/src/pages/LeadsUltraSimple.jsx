@@ -190,13 +190,38 @@ function LeadsUltraSimple() {
         // جلب جميع التفاعلات
         const response = await api.getInteractions({ limit: 100000 })
         if (response.success && response.data) {
-          // إنشاء خريطة تربط lead ID بعدد التفاعلات
+          // إنشاء خريطة تربط lead ID بعدد التفاعلات وآخر نتيجة
           const interactionsMap = {}
-          response.data.forEach(interaction => {
+          const interactionsCountMap = {}
+          
+          // ترتيب التفاعلات حسب التاريخ (الأحدث أولاً)
+          const sortedInteractions = [...response.data].sort((a, b) => {
+            return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
+          })
+          
+          sortedInteractions.forEach(interaction => {
             if (interaction.itemType === 'lead' && interaction.itemId) {
-              interactionsMap[interaction.itemId] = (interactionsMap[interaction.itemId] || 0) + 1
+              // عد التفاعلات
+              interactionsCountMap[interaction.itemId] = (interactionsCountMap[interaction.itemId] || 0) + 1
+              
+              // حفظ آخر تفاعل (outcome) إذا لم يتم حفظه بعد
+              if (!interactionsMap[interaction.itemId]) {
+                interactionsMap[interaction.itemId] = {
+                  count: 1,
+                  lastOutcome: interaction.outcome || 'neutral',
+                  lastInteractionDate: interaction.createdAt || interaction.date
+                }
+              }
             }
           })
+          
+          // دمج العدد مع البيانات
+          Object.keys(interactionsCountMap).forEach(leadId => {
+            if (interactionsMap[leadId]) {
+              interactionsMap[leadId].count = interactionsCountMap[leadId]
+            }
+          })
+          
           setLeadsInteractions(interactionsMap)
         }
       } catch (error) {
@@ -1615,10 +1640,10 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
               <div>
                 <p className="text-sm font-medium text-purple-600 mb-1">تم عمل تفاعل</p>
                 <p className="text-3xl font-bold text-purple-900">
-                  {finalFilteredLeads?.filter(l => leadsInteractions[l.id] && leadsInteractions[l.id] > 0).length || 0}
+                  {finalFilteredLeads?.filter(l => leadsInteractions[l.id]?.count > 0).length || 0}
                 </p>
                 <p className="text-sm text-purple-600 mt-1">
-                  {finalFilteredLeads?.filter(l => !leadsInteractions[l.id] || leadsInteractions[l.id] === 0).length || 0} بدون تفاعل
+                  {finalFilteredLeads?.filter(l => !leadsInteractions[l.id]?.count || leadsInteractions[l.id]?.count === 0).length || 0} بدون تفاعل
                 </p>
               </div>
               <div className="relative">

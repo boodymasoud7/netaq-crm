@@ -85,7 +85,8 @@ export default function LeadsTable({
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterSource, setFilterSource] = useState('all')
   const [filterEmployee, setFilterEmployee] = useState('all')
-  const [filterInteractions, setFilterInteractions] = useState('all') // فلتر التفاعلات
+  const [filterInteractions, setFilterInteractions] = useState('all') // فلتر عدد التفاعلات
+  const [filterInterest, setFilterInterest] = useState('all') // فلتر حالة الاهتمام
   const [searchTerm, setSearchTerm] = useState('')
 
   // Helper functions للملاحظات والتفاعلات من بيانات الـ lead نفسه
@@ -303,15 +304,23 @@ export default function LeadsTable({
         String(lead.assignedTo) === String(filterEmployee) ||
         lead.assignedToName === filterEmployee
       
-      // فلتر التفاعلات
-      const hasInteractions = leadsInteractions && leadsInteractions[lead.id] && leadsInteractions[lead.id] > 0
+      // فلتر عدد التفاعلات
+      const hasInteractions = leadsInteractions && leadsInteractions[lead.id]?.count > 0
       const matchesInteractions = filterInteractions === 'all' ||
         (filterInteractions === 'with_interactions' && hasInteractions) ||
         (filterInteractions === 'without_interactions' && !hasInteractions)
       
-      return matchesSearch && matchesStatus && matchesSource && matchesEmployee && matchesInteractions
+      // فلتر حالة الاهتمام (بناءً على آخر تفاعل)
+      const lastOutcome = leadsInteractions?.[lead.id]?.lastOutcome
+      const matchesInterest = filterInterest === 'all' ||
+        (filterInterest === 'interested' && lastOutcome === 'positive') ||
+        (filterInterest === 'neutral' && lastOutcome === 'neutral') ||
+        (filterInterest === 'not_interested' && lastOutcome === 'negative') ||
+        (filterInterest === 'no_contact' && !leadsInteractions?.[lead.id])
+      
+      return matchesSearch && matchesStatus && matchesSource && matchesEmployee && matchesInteractions && matchesInterest
     })
-  }, [leads, searchTerm, filterStatus, filterSource, filterEmployee, filterInteractions, leadsInteractions])
+  }, [leads, searchTerm, filterStatus, filterSource, filterEmployee, filterInteractions, filterInterest, leadsInteractions])
   
   // حفظ البحث
   const handleSaveSearch = () => {
@@ -343,6 +352,7 @@ export default function LeadsTable({
     setFilterSource('all')
     setFilterEmployee('all')
     setFilterInteractions('all')
+    setFilterInterest('all')
     setSearchTerm('')
     toast.success('تم إعادة تعيين الفلاتر')
   }
@@ -919,6 +929,24 @@ export default function LeadsTable({
                   <option value="all">الكل</option>
                   <option value="with_interactions">تم عمل تفاعل</option>
                   <option value="without_interactions">لم يتم عمل تفاعل</option>
+                </select>
+              </div>
+
+              {/* فلتر حالة الاهتمام - متاح للجميع */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  حالة الاهتمام
+                </label>
+                <select
+                  value={filterInterest}
+                  onChange={(e) => setFilterInterest(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="all">الكل</option>
+                  <option value="interested">✅ مهتم (آخر تفاعل إيجابي)</option>
+                  <option value="neutral">⚪ محايد (آخر تفاعل محايد)</option>
+                  <option value="not_interested">❌ غير مهتم (آخر تفاعل سلبي)</option>
+                  <option value="no_contact">⭕ لم يتم التواصل</option>
                 </select>
               </div>
             </div>

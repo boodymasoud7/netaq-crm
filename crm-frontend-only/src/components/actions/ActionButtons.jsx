@@ -150,44 +150,261 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
 
             {/* Content */}
             <div className="p-6 space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">نوع التفاعل</label>
-                  <select
-                    value={interactionData.type}
-                    onChange={(e) => setInteractionData({...interactionData, type: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="call">📞 اتصال هاتفي</option>
-                    <option value="whatsapp">💬 رسالة WhatsApp</option>
-                    <option value="meeting">🤝 اجتماع</option>
-                    <option value="email">📧 بريد إلكتروني</option>
-                    <option value="visit">🏢 زيارة</option>
-                  </select>
-                </div>
+              {/* نوع التفاعل */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">نوع التفاعل</label>
+                <select
+                  value={interactionData.type}
+                  onChange={(e) => setInteractionData({...interactionData, type: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="call">📞 اتصال هاتفي</option>
+                  <option value="whatsapp">💬 رسالة WhatsApp</option>
+                  <option value="meeting">🤝 اجتماع</option>
+                  <option value="email">📧 بريد إلكتروني</option>
+                  <option value="visit">🏢 زيارة</option>
+                </select>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">النتيجة</label>
-                  <select
-                    value={interactionData.outcome}
-                    onChange={(e) => setInteractionData({...interactionData, outcome: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              {/* النتيجة - أزرار كبيرة */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-3">النتيجة</label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setInteractionData({...interactionData, outcome: 'positive'})}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      interactionData.outcome === 'positive'
+                        ? 'border-green-500 bg-green-50 shadow-lg'
+                        : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
+                    }`}
                   >
-                    <option value="positive">✅ إيجابية</option>
-                    <option value="neutral">⚪ محايدة</option>
-                    <option value="negative">❌ سلبية</option>
-                    <option value="follow-up">🔄 تحتاج متابعة</option>
-                  </select>
+                    <div className="text-center">
+                      <div className="text-3xl mb-1">✅</div>
+                      <div className="text-sm font-bold text-green-700">إيجابي</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInteractionData({...interactionData, outcome: 'neutral'})}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      interactionData.outcome === 'neutral'
+                        ? 'border-yellow-500 bg-yellow-50 shadow-lg'
+                        : 'border-gray-200 hover:border-yellow-300 hover:bg-yellow-50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-3xl mb-1">⚪</div>
+                      <div className="text-sm font-bold text-yellow-700">محايد</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInteractionData({...interactionData, outcome: 'negative'})}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      interactionData.outcome === 'negative'
+                        ? 'border-red-500 bg-red-50 shadow-lg'
+                        : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-3xl mb-1">❌</div>
+                      <div className="text-sm font-bold text-red-700">سلبي</div>
+                    </div>
+                  </button>
                 </div>
               </div>
 
+              {/* القوالب السريعة الشاملة */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">عنوان التفاعل *</label>
+                <label className="block text-sm font-medium text-gray-900 mb-3">قوالب سريعة</label>
+                
+                {/* قوالب إيجابية */}
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-green-700 mb-2">🟢 إيجابية</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'positive',
+                        type: 'call',
+                        title: 'مهتم جداً',
+                        description: 'العميل أبدى اهتمام كبير بالخدمة وطلب المزيد من التفاصيل'
+                      })}
+                      className="p-2 text-sm bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg text-right transition-all"
+                    >
+                      👍 مهتم جداً
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'positive',
+                        type: 'email',
+                        title: 'طلب عرض سعر',
+                        description: 'العميل طلب إرسال عرض سعر تفصيلي للخدمات'
+                      })}
+                      className="p-2 text-sm bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg text-right transition-all"
+                    >
+                      💰 طلب عرض سعر
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'positive',
+                        type: 'meeting',
+                        title: 'حجز موعد',
+                        description: 'تم حجز موعد لاجتماع أو زيارة لمناقشة التفاصيل'
+                      })}
+                      className="p-2 text-sm bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg text-right transition-all"
+                    >
+                      📅 حجز موعد
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'positive',
+                        type: 'call',
+                        title: 'جاهز للشراء',
+                        description: 'العميل جاهز لاتخاذ قرار الشراء قريباً'
+                      })}
+                      className="p-2 text-sm bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg text-right transition-all"
+                    >
+                      ✅ جاهز للشراء
+                    </button>
+                  </div>
+                </div>
+
+                {/* قوالب محايدة */}
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-yellow-700 mb-2">🟡 محايدة</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'neutral',
+                        type: 'call',
+                        title: 'يفكر في الأمر',
+                        description: 'العميل يحتاج وقت للتفكير قبل اتخاذ القرار'
+                      })}
+                      className="p-2 text-sm bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-right transition-all"
+                    >
+                      🤔 يفكر في الأمر
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'neutral',
+                        type: 'call',
+                        title: 'طلب معاودة الاتصال',
+                        description: 'العميل طلب الاتصال به في وقت لاحق'
+                      })}
+                      className="p-2 text-sm bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-right transition-all"
+                    >
+                      📞 معاودة اتصال
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'neutral',
+                        type: 'call',
+                        title: 'مشغول حالياً',
+                        description: 'العميل مشغول ولم يتمكن من إكمال المحادثة'
+                      })}
+                      className="p-2 text-sm bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-right transition-all"
+                    >
+                      ⏳ مشغول
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'neutral',
+                        type: 'call',
+                        title: 'يحتاج استشارة',
+                        description: 'العميل يحتاج استشارة شخص آخر قبل القرار'
+                      })}
+                      className="p-2 text-sm bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-right transition-all"
+                    >
+                      👥 يحتاج استشارة
+                    </button>
+                  </div>
+                </div>
+
+                {/* قوالب سلبية */}
+                <div>
+                  <p className="text-xs font-semibold text-red-700 mb-2">🔴 سلبية</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'negative',
+                        type: 'call',
+                        title: 'غير مهتم',
+                        description: 'العميل غير مهتم بالخدمة في الوقت الحالي'
+                      })}
+                      className="p-2 text-sm bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-right transition-all"
+                    >
+                      🚫 غير مهتم
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'negative',
+                        type: 'call',
+                        title: 'السعر مرتفع',
+                        description: 'العميل يرى أن السعر غير مناسب له'
+                      })}
+                      className="p-2 text-sm bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-right transition-all"
+                    >
+                      💸 السعر مرتفع
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'negative',
+                        type: 'call',
+                        title: 'أجل القرار',
+                        description: 'العميل قرر تأجيل القرار لفترة لاحقة'
+                      })}
+                      className="p-2 text-sm bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-right transition-all"
+                    >
+                      ⏸️ أجل القرار
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInteractionData({
+                        ...interactionData,
+                        outcome: 'negative',
+                        type: 'call',
+                        title: 'رفض العرض',
+                        description: 'العميل رفض العرض المقدم بشكل نهائي'
+                      })}
+                      className="p-2 text-sm bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-right transition-all"
+                    >
+                      ❌ رفض العرض
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* حقول قابلة للتعديل */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">عنوان التفاعل</label>
                 <input
                   type="text"
                   value={interactionData.title}
                   onChange={(e) => setInteractionData({...interactionData, title: e.target.value})}
-                  placeholder="مثال: مناقشة متطلبات المشروع الجديد"
+                  placeholder="يمكنك التعديل أو اختيار قالب سريع"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -197,45 +414,10 @@ export function InteractionsButton({ onAddInteraction, itemId, itemName, itemTyp
                 <textarea
                   value={interactionData.description}
                   onChange={(e) => setInteractionData({...interactionData, description: e.target.value})}
-                  placeholder="اكتب تفاصيل المحادثة، النقاط المهمة، والخطوات التالية..."
-                  rows="4"
+                  placeholder="يمكنك إضافة تفاصيل إضافية..."
+                  rows="3"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                 />
-              </div>
-
-              {/* Quick Templates */}
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">قوالب سريعة</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setInteractionData({...interactionData, title: 'مكالمة استفسار', description: 'العميل استفسر عن الخدمات المتاحة والأسعار'})}
-                    className="p-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg text-right"
-                  >
-                    📞 مكالمة استفسار
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInteractionData({...interactionData, title: 'اجتماع تفاوض', description: 'تم مناقشة تفاصيل العرض والتفاوض على الشروط'})}
-                    className="p-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg text-right"
-                  >
-                    🤝 اجتماع تفاوض
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInteractionData({...interactionData, title: 'متابعة العرض', description: 'تم التواصل لمتابعة العرض المقدم والرد على الاستفسارات'})}
-                    className="p-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg text-right"
-                  >
-                    🔄 متابعة العرض
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInteractionData({...interactionData, title: 'إنهاء الصفقة', description: 'تم الاتفاق على الشروط وإنهاء الصفقة بنجاح'})}
-                    className="p-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg text-right"
-                  >
-                    ✅ إنهاء الصفقة
-                  </button>
-                </div>
               </div>
             </div>
 
