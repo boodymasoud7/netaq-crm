@@ -74,7 +74,6 @@ function LeadsUltraSimple() {
   const [searchTerm, setSearchTerm] = useState('')
   const [pageSize, setPageSize] = useState(100) // عدد العملاء في الصفحة
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
-  const [selectedInteractionStatus, setSelectedInteractionStatus] = useState('all') // فلتر التفاعلات
   const [leadsInteractions, setLeadsInteractions] = useState({}) // خريطة تحتوي على عدد التفاعلات لكل lead
 
   // دالة تغيير حجم الصفحة
@@ -426,13 +425,6 @@ function LeadsUltraSimple() {
                            lead.assignedToName === selectedEmployee ||
                            String(lead.assignedTo) === String(selectedEmployee)
     
-    // فلترة التفاعلات - جديد
-    const hasInteractions = leadsInteractions[lead.id] && leadsInteractions[lead.id] > 0
-    const matchesInteractionStatus = 
-      selectedInteractionStatus === 'all' ||
-      (selectedInteractionStatus === 'with_interactions' && hasInteractions) ||
-      (selectedInteractionStatus === 'without_interactions' && !hasInteractions)
-    
     // فلترة الصلاحيات
     let hasPermission = false
     if (canViewAllLeads()) {
@@ -445,7 +437,7 @@ function LeadsUltraSimple() {
       hasPermission = (lead.createdBy == userId || lead.assignedTo == userId)
     }
     
-    return matchesSearch && matchesStatus && matchesSource && matchesEmployee && matchesInteractionStatus && hasPermission
+    return matchesSearch && matchesStatus && matchesSource && matchesEmployee && hasPermission
   }) || []
   
   // ثم استبعاد العملاء المحولين من النتيجة النهائية (بعد فلترة الصلاحيات)
@@ -1642,67 +1634,6 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
         </Card>
       </div>
 
-      {/* الفلاتر */}
-      <Card className="bg-white border-0 shadow-md rounded-xl">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">فلترة حسب:</span>
-            </div>
-            
-            {/* فلتر الموظف المسؤول - للمديرين فقط */}
-            {(isAdmin() || isSalesManager()) && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">الموظف المسؤول:</span>
-                <select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  <option value="all">الكل</option>
-                  {salesUsers.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.role === 'sales' ? 'مبيعات' : 'مندوب مبيعات'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* فلتر التفاعلات - متاح للجميع */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">التفاعلات:</span>
-              <select
-                value={selectedInteractionStatus}
-                onChange={(e) => setSelectedInteractionStatus(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value="all">الكل</option>
-                <option value="with_interactions">تم عمل تفاعل</option>
-                <option value="without_interactions">لم يتم عمل تفاعل</option>
-              </select>
-            </div>
-
-            {/* زر إعادة تعيين الفلاتر */}
-            {(selectedEmployee !== 'all' || selectedInteractionStatus !== 'all') && (
-              <Button
-                onClick={() => {
-                  setSelectedEmployee('all')
-                  setSelectedInteractionStatus('all')
-                }}
-                variant="outline"
-                size="sm"
-                className="text-xs"
-              >
-                <XCircle className="h-3 w-3 mr-1" />
-                إعادة تعيين الفلاتر
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* جدول العملاء المحتملين */}
       <LeadsTable
           leads={finalFilteredLeads}
@@ -1725,6 +1656,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           selectedLeads={selectedLeads}
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
+          leadsInteractions={leadsInteractions}
         />
 
       {/* منطقة الترقيم */}

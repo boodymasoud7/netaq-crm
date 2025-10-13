@@ -63,7 +63,8 @@ export default function LeadsTable({
   onSelectedLeadsChange,
   selectedLeads: propSelectedLeads,
   pageSize,
-  onPageSizeChange
+  onPageSizeChange,
+  leadsInteractions
 }) {
   // LeadsTable rendered successfully
   const { currentUser, userProfile } = useAuth()
@@ -84,6 +85,7 @@ export default function LeadsTable({
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterSource, setFilterSource] = useState('all')
   const [filterEmployee, setFilterEmployee] = useState('all')
+  const [filterInteractions, setFilterInteractions] = useState('all') // فلتر التفاعلات
   const [searchTerm, setSearchTerm] = useState('')
 
   // Helper functions للملاحظات والتفاعلات من بيانات الـ lead نفسه
@@ -301,9 +303,15 @@ export default function LeadsTable({
         String(lead.assignedTo) === String(filterEmployee) ||
         lead.assignedToName === filterEmployee
       
-      return matchesSearch && matchesStatus && matchesSource && matchesEmployee
+      // فلتر التفاعلات
+      const hasInteractions = leadsInteractions && leadsInteractions[lead.id] && leadsInteractions[lead.id] > 0
+      const matchesInteractions = filterInteractions === 'all' ||
+        (filterInteractions === 'with_interactions' && hasInteractions) ||
+        (filterInteractions === 'without_interactions' && !hasInteractions)
+      
+      return matchesSearch && matchesStatus && matchesSource && matchesEmployee && matchesInteractions
     })
-  }, [leads, searchTerm, filterStatus, filterSource, filterEmployee])
+  }, [leads, searchTerm, filterStatus, filterSource, filterEmployee, filterInteractions, leadsInteractions])
   
   // حفظ البحث
   const handleSaveSearch = () => {
@@ -334,6 +342,7 @@ export default function LeadsTable({
     setFilterStatus('all')
     setFilterSource('all')
     setFilterEmployee('all')
+    setFilterInteractions('all')
     setSearchTerm('')
     toast.success('تم إعادة تعيين الفلاتر')
   }
@@ -896,6 +905,22 @@ export default function LeadsTable({
                   </select>
                 </div>
               )}
+
+              {/* فلتر التفاعلات - متاح للجميع */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  التفاعلات
+                </label>
+                <select
+                  value={filterInteractions}
+                  onChange={(e) => setFilterInteractions(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="all">الكل</option>
+                  <option value="with_interactions">تم عمل تفاعل</option>
+                  <option value="without_interactions">لم يتم عمل تفاعل</option>
+                </select>
+              </div>
             </div>
 
             {/* أزرار الإجراءات */}
