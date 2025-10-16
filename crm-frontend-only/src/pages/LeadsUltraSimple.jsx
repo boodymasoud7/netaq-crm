@@ -206,14 +206,25 @@ function LeadsUltraSimple() {
               
               // حفظ آخر تفاعل (outcome) إذا لم يتم حفظه بعد
               if (!interactionsMap[interaction.itemId]) {
+                // Map backend outcome values to frontend values
+                const outcomeMapping = {
+                  'interested': 'positive',
+                  'not_interested': 'negative',
+                  'no_response': 'neutral',
+                  'callback_requested': 'neutral',
+                  'meeting_scheduled': 'positive',
+                  'demo_requested': 'positive',
+                  'visit_scheduled': 'positive',
+                  'contract_discussed': 'positive',
+                  'objection_raised': 'negative'
+                }
+                
+                const mappedOutcome = outcomeMapping[interaction.outcome] || interaction.outcome || 'neutral'
+                
                 interactionsMap[interaction.itemId] = {
                   count: 1,
-                  lastOutcome: interaction.outcome || 'neutral',
+                  lastOutcome: mappedOutcome,
                   lastInteractionDate: interaction.createdAt || interaction.date
-                }
-                // Log للتأكد من البيانات
-                if (interaction.outcome === 'negative') {
-                  console.log('🔍 Found negative interaction for lead:', interaction.itemId, interaction)
                 }
               }
             }
@@ -225,11 +236,6 @@ function LeadsUltraSimple() {
               interactionsMap[leadId].count = interactionsCountMap[leadId]
             }
           })
-          
-          // Log النتيجة النهائية
-          console.log('📊 Leads Interactions Map:', interactionsMap)
-          const negativeLeads = Object.keys(interactionsMap).filter(id => interactionsMap[id].lastOutcome === 'negative')
-          console.log('❌ Leads with negative outcome:', negativeLeads.length, negativeLeads)
           
           setLeadsInteractions(interactionsMap)
         }

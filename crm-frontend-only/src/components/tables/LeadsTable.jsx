@@ -298,12 +298,6 @@ export default function LeadsTable({
   
   // فلترة البيانات
   const filteredLeads = useMemo(() => {
-    // Log للتأكد من الفلتر
-    if (filterInterest !== 'all') {
-      console.log('🔍 Interest Filter Active:', filterInterest)
-      console.log('📊 Leads Interactions:', leadsInteractions)
-    }
-    
     return leads.filter(lead => {
       const matchesSearch = searchTerm === '' || 
         lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -329,11 +323,6 @@ export default function LeadsTable({
         (filterInterest === 'neutral' && lastOutcome === 'neutral') ||
         (filterInterest === 'not_interested' && lastOutcome === 'negative') ||
         (filterInterest === 'no_contact' && !leadsInteractions?.[lead.id])
-      
-      // Log للعملاء السلبيين فقط
-      if (filterInterest === 'not_interested' && lastOutcome === 'negative') {
-        console.log('✅ Found negative lead:', lead.id, lead.name, lastOutcome)
-      }
       
       return matchesSearch && matchesStatus && matchesSource && matchesEmployee && matchesInteractions && matchesInterest
     })
