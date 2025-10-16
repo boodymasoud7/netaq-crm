@@ -652,6 +652,11 @@ export default function LeadsTable({
                   مورد البيانات
                 </th>
               )}
+              {(isAdmin() || isSalesManager()) && (
+                <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                  الاهتمام
+                </th>
+              )}
               <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                 تاريخ الإضافة
               </th>
@@ -808,6 +813,15 @@ export default function LeadsTable({
                   <td className="px-3 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {lead.source || 'غير محدد'}
+                    </div>
+                  </td>
+                )}
+
+                {/* الاهتمام */}
+                {(isAdmin() || isSalesManager()) && (
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {lead.interest || 'غير محدد'}
                     </div>
                   </td>
                 )}

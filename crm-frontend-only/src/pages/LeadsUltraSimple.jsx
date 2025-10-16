@@ -323,6 +323,7 @@ function LeadsUltraSimple() {
   const [bulkImportFile, setBulkImportFile] = useState(null)
   const [isImporting, setIsImporting] = useState(false)
   const [bulkImportSource, setBulkImportSource] = useState('')
+  const [bulkImportInterest, setBulkImportInterest] = useState('')
 
   const [selectedLeads, setSelectedLeads] = useState([])
 
@@ -1017,7 +1018,7 @@ function LeadsUltraSimple() {
           source: (bulkImportSource?.trim() && bulkImportSource.trim().length >= 2) ? bulkImportSource.trim() : 'bulk_import',
           status: status,
           notes: notesIndex >= 0 ? String(row[notesIndex] || '') : '',
-          interest: 'General', // Backend accepts any string
+          interest: (bulkImportInterest?.trim() && bulkImportInterest.trim().length >= 2) ? bulkImportInterest.trim() : 'عقارات', // Backend accepts any string
           clientType: 'Individual',
           priority: 'medium', // Backend expects: low, medium, high, urgent
           score: 0
@@ -1237,7 +1238,7 @@ function LeadsUltraSimple() {
           source: (bulkImportSource?.trim() && bulkImportSource.trim().length >= 2) ? bulkImportSource.trim() : 'bulk_import',
           status: status,
           notes: notesIndex >= 0 ? values[notesIndex] : '',
-          interest: 'General', // Backend accepts any string
+          interest: (bulkImportInterest?.trim() && bulkImportInterest.trim().length >= 2) ? bulkImportInterest.trim() : 'عقارات', // Backend accepts any string
           clientType: 'Individual',
           priority: 'medium', // Backend expects: low, medium, high, urgent
           score: 0
@@ -1375,6 +1376,7 @@ function LeadsUltraSimple() {
 
       setBulkImportFile(null)
       setBulkImportSource('')
+      setBulkImportInterest('')
       setShowBulkImportModal(false)
     } catch (error) {
       console.error('خطأ في الاستيراد الجماعي:', error)
@@ -2342,6 +2344,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                     setShowBulkImportModal(false)
                     setBulkImportFile(null)
                     setBulkImportSource('')
+                    setBulkImportInterest('')
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -2412,6 +2415,22 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                       </p>
                     </div>
 
+                    {/* حقل مصدر البيانات أو الاهتمام */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-900">
+                        مصدر البيانات أو الاهتمام
+                      </label>
+                      <Input
+                        placeholder="مثال: عقارات، سيارات، استثمار..."
+                        value={bulkImportInterest}
+                        onChange={(e) => setBulkImportInterest(e.target.value)}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-gray-500">
+                        حدد نوع الاهتمام أو مصدر البيانات (اختياري)
+                      </p>
+                    </div>
+
                     <Button
                       onClick={handleBulkImport}
                       disabled={!bulkImportFile || isImporting || !bulkImportSource.trim()}
@@ -2442,7 +2461,8 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                         <li>• البريد الإلكتروني</li>
                         <li>• <strong>رقم الهاتف</strong> (مطلوب)</li>
                         <li>• الشركة</li>
-                        <li>• المصدر</li>
+                        <li>• <strong>المصدر / مورد البيانات</strong> (مطلوب)</li>
+                        <li>• <strong>الاهتمام</strong> (اختياري - مثل: عقارات، استثمار...)</li>
                         <li>• الحالة</li>
                         <li>• الملاحظات</li>
                       </ul>
@@ -2497,6 +2517,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                     setShowBulkImportModal(false)
                     setBulkImportFile(null)
                     setBulkImportSource('')
+                    setBulkImportInterest('')
                   }}
                   className="px-6"
                 >
