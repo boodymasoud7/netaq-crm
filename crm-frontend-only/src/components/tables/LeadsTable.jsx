@@ -319,9 +319,9 @@ export default function LeadsTable({
       // فلتر حالة الاهتمام (بناءً على آخر تفاعل)
       const lastOutcome = leadsInteractions?.[lead.id]?.lastOutcome
       const matchesInterest = filterInterest === 'all' ||
-        (filterInterest === 'interested' && (lastOutcome === 'excellent' || lastOutcome === 'good')) ||
+        (filterInterest === 'interested' && lastOutcome === 'positive') ||
         (filterInterest === 'neutral' && lastOutcome === 'neutral') ||
-        (filterInterest === 'not_interested' && (lastOutcome === 'poor' || lastOutcome === 'bad')) ||
+        (filterInterest === 'not_interested' && lastOutcome === 'negative') ||
         (filterInterest === 'no_contact' && !leadsInteractions?.[lead.id])
       
       return matchesSearch && matchesStatus && matchesSource && matchesEmployee && matchesInteractions && matchesInterest
