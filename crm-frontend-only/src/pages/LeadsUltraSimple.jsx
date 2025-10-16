@@ -211,6 +211,10 @@ function LeadsUltraSimple() {
                   lastOutcome: interaction.outcome || 'neutral',
                   lastInteractionDate: interaction.createdAt || interaction.date
                 }
+                // Log للتأكد من البيانات
+                if (interaction.outcome === 'negative') {
+                  console.log('🔍 Found negative interaction for lead:', interaction.itemId, interaction)
+                }
               }
             }
           })
@@ -221,6 +225,11 @@ function LeadsUltraSimple() {
               interactionsMap[leadId].count = interactionsCountMap[leadId]
             }
           })
+          
+          // Log النتيجة النهائية
+          console.log('📊 Leads Interactions Map:', interactionsMap)
+          const negativeLeads = Object.keys(interactionsMap).filter(id => interactionsMap[id].lastOutcome === 'negative')
+          console.log('❌ Leads with negative outcome:', negativeLeads.length, negativeLeads)
           
           setLeadsInteractions(interactionsMap)
         }
