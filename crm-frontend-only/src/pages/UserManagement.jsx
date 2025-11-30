@@ -55,6 +55,7 @@ export default function UserManagement() {
   const [editFormData, setEditFormData] = useState({
     name: '',
     username: '',
+    email: '',
     password: '',
     phone: '',
     role: '',
@@ -133,6 +134,7 @@ export default function UserManagement() {
     setEditFormData({
       name: '',
       username: '',
+      email: '',
       password: '',
       phone: '',
       role: '',
@@ -148,6 +150,7 @@ export default function UserManagement() {
     setEditFormData({
       name: user.name || '',
       username: user.username || '',
+      email: user.email || '',
       password: '', // Don't pre-fill password
       phone: user.phone || '',
       role: user.role || '',
@@ -188,6 +191,7 @@ export default function UserManagement() {
       const updateData = {
         name: editFormData.name,
         username: editFormData.username,
+        email: editFormData.email,
         phone: editFormData.phone,
         role: editFormData.role,
         department: editFormData.department,
@@ -800,6 +804,22 @@ export default function UserManagement() {
                     placeholder="اسم المستخدم" 
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    البريد الإلكتروني
+                  </label>
+                  <Input 
+                    name="email"
+                    type="email"
+                    value={editFormData.email}
+                    onChange={handleEditInputChange}
+                    placeholder="example@email.com" 
+                  />
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ تحذير: تغيير الإيميل قد يؤثر على تسجيل الدخول
+                  </p>
                 </div>
 
                 <div>
