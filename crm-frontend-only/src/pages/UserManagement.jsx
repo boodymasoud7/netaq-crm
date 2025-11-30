@@ -36,6 +36,8 @@ export default function UserManagement() {
   
   // State
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [roleFilter, setRoleFilter] = useState('all')
@@ -49,6 +51,15 @@ export default function UserManagement() {
     role: 'sales',
     department: '',
     status: 'active'
+  })
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    username: '',
+    password: '',
+    phone: '',
+    role: '',
+    department: '',
+    status: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -115,6 +126,89 @@ export default function UserManagement() {
       department: '',
       status: 'active'
     })
+  }
+
+  // Reset edit form
+  const resetEditForm = () => {
+    setEditFormData({
+      name: '',
+      username: '',
+      password: '',
+      phone: '',
+      role: '',
+      department: '',
+      status: ''
+    })
+    setEditingUser(null)
+  }
+
+  // Handle edit user
+  const handleEditUser = (user) => {
+    setEditingUser(user)
+    setEditFormData({
+      name: user.name || '',
+      username: user.username || '',
+      password: '', // Don't pre-fill password
+      phone: user.phone || '',
+      role: user.role || '',
+      department: user.department || '',
+      status: user.status || 'active'
+    })
+    setShowEditModal(true)
+  }
+
+  // Handle edit form input changes
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  // Handle edit form submission
+  const handleEditSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!editFormData.name || !editFormData.username) {
+      toast.error('الاسم واسم المستخدم مطلوبان')
+      return
+    }
+
+    // Password validation (only if provided)
+    if (editFormData.password && editFormData.password.length < 6) {
+      toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      
+      // Prepare update data (only include password if it's provided)
+      const updateData = {
+        name: editFormData.name,
+        username: editFormData.username,
+        phone: editFormData.phone,
+        role: editFormData.role,
+        department: editFormData.department,
+        status: editFormData.status
+      }
+      
+      // Only include password if user entered a new one
+      if (editFormData.password) {
+        updateData.password = editFormData.password
+      }
+      
+      await updateUser(editingUser.id, updateData)
+      toast.success('تم تحديث المستخدم بنجاح')
+      setShowEditModal(false)
+      resetEditForm()
+    } catch (error) {
+      console.error('Error updating user:', error)
+      toast.error(error.message || 'فشل في تحديث المستخدم')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Handle form submission
@@ -606,6 +700,15 @@ export default function UserManagement() {
                         <Button
                           size="sm"
                           variant="outline"
+                            onClick={() => handleEditUser(user)}
+                            className="text-blue-600 hover:text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 text-xs font-medium"
+                        >
+                          <Edit className="h-3 w-3 ml-1" />
+                          تعديل
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                             onClick={() => handleStatusToggle(user)}
                             disabled={user.id === currentUser?.id}
                             className={`text-xs font-medium ${
@@ -646,6 +749,164 @@ export default function UserManagement() {
           )}
         </div>
       </Card>
+
+      {/* Edit User Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <CardHeader className="bg-blue-600 text-white">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  تعديل بيانات المستخدم
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    resetEditForm()
+                  }}
+                  className="text-white hover:bg-white/20"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-6">
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الاسم الكامل <span className="text-red-500">*</span>
+                  </label>
+                  <Input 
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditInputChange}
+                    placeholder="مثال: أحمد محمد علي" 
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    اسم المستخدم <span className="text-red-500">*</span>
+                  </label>
+                  <Input 
+                    name="username"
+                    value={editFormData.username}
+                    onChange={handleEditInputChange}
+                    placeholder="اسم المستخدم" 
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    كلمة المرور الجديدة
+                  </label>
+                  <Input 
+                    name="password"
+                    type="password" 
+                    value={editFormData.password}
+                    onChange={handleEditInputChange}
+                    placeholder="اتركه فارغاً إذا لم ترد تغيير كلمة المرور" 
+                    minLength={6}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 اترك هذا الحقل فارغاً إذا كنت لا تريد تغيير كلمة المرور
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
+                  <Input 
+                    name="phone"
+                    value={editFormData.phone}
+                    onChange={handleEditInputChange}
+                    placeholder="+966xxxxxxxxx" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      الدور <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      name="role"
+                      value={editFormData.role}
+                      onChange={handleEditInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="sales">موظف مبيعات</option>
+                      <option value="sales_manager">مدير مبيعات</option>
+                      <option value="admin">مدير النظام</option>
+                      <option value="employee">موظف</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">الحالة</label>
+                    <select 
+                      name="status"
+                      value={editFormData.status}
+                      onChange={handleEditInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="active">نشط</option>
+                      <option value="inactive">غير نشط</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">القسم</label>
+                  <Input 
+                    name="department"
+                    value={editFormData.department}
+                    onChange={handleEditInputChange}
+                    placeholder="مثال: المبيعات" 
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4">
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    onClick={() => {
+                      setShowEditModal(false)
+                      resetEditForm()
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button 
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                        جاري الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 ml-2" />
+                        حفظ التعديلات
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Add User Modal */}
       {showAddModal && (
