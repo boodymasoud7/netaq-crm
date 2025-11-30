@@ -6,7 +6,8 @@ const {
   createUser,
   getUserById,
   updateUser,
-  deleteUser
+  deleteUser,
+  updateUserStatus
 } = require('../controllers/userController');
 
 // Apply authentication to all routes
@@ -31,6 +32,11 @@ router.get('/:id', requirePermission('view_users'), getUserById);
 // @desc    Update user
 // @access  Private (admin or manage_users permission)
 router.put('/:id', requirePermission('manage_users'), updateUser);
+
+// @route   PUT /api/users/:id/status
+// @desc    Update user status (active/inactive)
+// @access  Private (admin or manage_users permission)
+router.put('/:id/status', requirePermission('manage_users'), updateUserStatus);
 
 // @route   DELETE /api/users/:id
 // @desc    Delete user

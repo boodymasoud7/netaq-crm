@@ -378,3 +378,71 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// @route   PUT /api/users/:id/status
+// @desc    Update user status (active/inactive)
+// @access  Private (admin or manage_users permission)
+exports.updateUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    console.log(`🔄 Updating user ${id} status to: ${status}`);
+
+    // Validate status
+    if (!status || !['active', 'inactive'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'حالة غير صالحة. يجب أن تكون active أو inactive'
+      });
+    }
+
+    // Find user
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'المستخدم غير موجود'
+      });
+    }
+
+    // Prevent user from deactivating themselves
+    if (req.user && req.user.id === parseInt(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'لا يمكنك تغيير حالة حسابك الشخصي'
+      });
+    }
+
+    // Update status
+    user.status = status;
+    await user.save();
+
+    console.log(`✅ User ${id} status updated to: ${status}`);
+
+    res.json({
+      success: true,
+      message: `تم ${status === 'active' ? 'تفعيل' : 'إلغاء تفعيل'} المستخدم بنجاح`,
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        status: user.status,
+        department: user.department,
+        phone: user.phone,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء تحديث حالة المستخدم'
+    });
+  }
+};
+
