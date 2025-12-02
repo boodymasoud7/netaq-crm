@@ -44,6 +44,7 @@ export const useApi = () => {
     updateClient: (id, data) => makeApiCall(dbAPI.updateClient, id, data),
     deleteClient: (id) => makeApiCall(dbAPI.deleteClient, id),
     getClientStats: () => makeApiCall(dbAPI.getClientStats),
+    checkClientDuplicates: (phone, email, excludeId) => makeApiCall(dbAPI.checkClientDuplicates, phone, email, excludeId),
 
     // Archive methods
     getArchivedClients: (params) => makeApiCall(dbAPI.getArchivedClients, params),

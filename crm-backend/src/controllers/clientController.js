@@ -9,7 +9,7 @@ exports.getAllClients = [
   query('limit').optional().isInt({ min: 1, max: 10000 }).withMessage('Limit must be between 1 and 10000'),
   query('status').optional().isIn(['active', 'inactive', 'potential', 'converted']).withMessage('Invalid status'),
   query('source').optional().isLength({ min: 1 }).withMessage('Source cannot be empty'),
-  
+
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -35,11 +35,11 @@ exports.getAllClients = [
 
       // Build where conditions
       const whereConditions = {};
-      
+
       // Role-based filtering: sales users can only see their own clients
       const userRole = req.user.role;
       const userId = req.user.id;
-      
+
       if (userRole === 'sales' || userRole === 'sales_agent' || userRole === 'employee') {
         console.log('📊 Backend: Filtering clients for sales user:', userId);
         // Sales users can only see clients assigned to them (by user ID, name, or email)
@@ -50,12 +50,12 @@ exports.getAllClients = [
         ];
       }
       // Admin and sales_manager can see all clients (no additional filtering)
-      
+
       // Allow managers to filter by assigned user
       if (assignedTo && (userRole === 'admin' || userRole === 'sales_manager')) {
         whereConditions.assignedTo = assignedTo;
       }
-      
+
       if (search) {
         const searchCondition = {
           [Op.or]: [
@@ -65,7 +65,7 @@ exports.getAllClients = [
             { notes: { [Op.iLike]: `%${search}%` } }
           ]
         };
-        
+
         // If role-based filtering exists, combine with search
         if (whereConditions[Op.or]) {
           whereConditions[Op.and] = [
@@ -96,7 +96,7 @@ exports.getAllClients = [
 
       // Get counts for all clients efficiently
       const clientIds = rawClients.map(client => client.id);
-      
+
       // Get notes counts for all clients at once
       const notesCounts = await Note.count({
         where: {
@@ -105,7 +105,7 @@ exports.getAllClients = [
         },
         group: ['itemId']
       });
-      
+
       // Get interactions counts for all clients at once
       const interactionsCounts = await Interaction.count({
         where: {
@@ -114,18 +114,18 @@ exports.getAllClients = [
         },
         group: ['itemId']
       });
-      
+
       // Create count maps
       const notesCountMap = {};
       const interactionsCountMap = {};
-      
+
       // Process notes counts (Sequelize returns array of {itemId, count})
       if (Array.isArray(notesCounts)) {
         notesCounts.forEach(item => {
           notesCountMap[item.itemId] = item.count;
         });
       }
-      
+
       // Process interactions counts
       if (Array.isArray(interactionsCounts)) {
         interactionsCounts.forEach(item => {
@@ -136,15 +136,15 @@ exports.getAllClients = [
       // Enrich clients with assigned user names and counts
       const clients = await Promise.all(rawClients.map(async (client) => {
         const clientData = client.toJSON();
-        
+
         // Try to get assigned user name if assignedTo exists
         if (clientData.assignedTo) {
           try {
             // Check if assignedTo is a number (ID) or string (name)
             const isNumericId = !isNaN(clientData.assignedTo) && Number.isInteger(Number(clientData.assignedTo));
-            
+
             let assignedUser = null;
-            
+
             if (isNumericId) {
               // Find by ID
               assignedUser = await User.findByPk(Number(clientData.assignedTo), {
@@ -157,7 +157,7 @@ exports.getAllClients = [
                 attributes: ['name']
               });
             }
-            
+
             if (assignedUser) {
               clientData.assignedToName = assignedUser.name;
             } else {
@@ -168,11 +168,11 @@ exports.getAllClients = [
             clientData.assignedToName = clientData.assignedTo; // fallback to stored value
           }
         }
-        
+
         // Add notes and interactions counts from maps
         clientData.notesCount = notesCountMap[clientData.id] || 0;
         clientData.interactionsCount = interactionsCountMap[clientData.id] || 0;
-        
+
         return clientData;
       }));
 
@@ -320,7 +320,7 @@ exports.createClient = [
 
     } catch (error) {
       console.error('Create client error:', error);
-      
+
       if (error.name === 'SequelizeValidationError') {
         return res.status(400).json({
           message: 'Validation error',
@@ -446,7 +446,7 @@ exports.deleteClient = async (req, res) => {
     });
 
     await client.destroy();
-    
+
     console.log(`✅ Client deleted: ${client.name} by ${userName} (ID: ${userId})`);
 
     res.json({
@@ -474,7 +474,7 @@ exports.getClientStats = async (req, res) => {
     });
 
     const totalClients = await Client.count();
-    
+
     const sourceStats = await Client.findAll({
       attributes: [
         'source',
@@ -523,7 +523,7 @@ exports.getClientStats = async (req, res) => {
 exports.getArchivedClients = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 10000 }).withMessage('Limit must be between 1 and 10000'),
-  
+
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -548,7 +548,7 @@ exports.getArchivedClients = [
       const whereConditions = {
         deleted_at: { [Op.ne]: null } // Only get soft deleted records
       };
-      
+
       if (search) {
         whereConditions[Op.or] = [
           { name: { [Op.iLike]: `%${search}%` } },
@@ -606,7 +606,7 @@ exports.restoreClient = async (req, res) => {
 
     // Find the soft-deleted client
     const client = await Client.findByPk(id, { paranoid: false });
-    
+
     if (!client) {
       return res.status(404).json({
         message: 'Client not found',
@@ -647,7 +647,7 @@ exports.permanentDeleteClient = async (req, res) => {
 
     // Find the soft-deleted client
     const client = await Client.findByPk(id, { paranoid: false });
-    
+
     if (!client) {
       return res.status(404).json({
         message: 'Client not found',
@@ -663,7 +663,7 @@ exports.permanentDeleteClient = async (req, res) => {
     }
 
     const clientName = client.name;
-    
+
     // Permanently delete
     await client.destroy({ force: true });
 
@@ -686,7 +686,7 @@ exports.permanentDeleteClient = async (req, res) => {
 exports.permanentDeleteAllClients = async (req, res) => {
   try {
     // Find all soft-deleted clients
-    const archivedClients = await Client.findAll({ 
+    const archivedClients = await Client.findAll({
       paranoid: false,
       where: {
         deleted_at: {
@@ -703,9 +703,9 @@ exports.permanentDeleteAllClients = async (req, res) => {
     }
 
     const count = archivedClients.length;
-    
+
     // Permanently delete all archived clients
-    await Client.destroy({ 
+    await Client.destroy({
       force: true,
       paranoid: false,
       where: {
@@ -726,6 +726,98 @@ exports.permanentDeleteAllClients = async (req, res) => {
     console.error('Permanent delete all clients error:', error);
     res.status(500).json({
       message: 'Server error while permanently deleting all clients',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+// Check for duplicate clients
+exports.checkDuplicates = async (req, res) => {
+  try {
+    const { phone, email, excludeId } = req.query;
+
+    if (!phone && !email) {
+      return res.status(400).json({
+        message: 'Phone or email is required for duplicate check',
+        code: 'MISSING_PARAMS'
+      });
+    }
+
+    const whereConditions = {
+      [Op.or]: []
+    };
+
+    // Check by phone (exact match)
+    if (phone) {
+      whereConditions[Op.or].push({
+        phone: phone.trim()
+      });
+    }
+
+    // Check by email (case-insensitive)
+    if (email) {
+      whereConditions[Op.or].push({
+        email: { [Op.iLike]: email.trim() }
+      });
+    }
+
+    // Exclude current client when editing
+    if (excludeId) {
+      whereConditions.id = { [Op.ne]: excludeId };
+    }
+
+    // Find duplicates (without JOIN due to type mismatch)
+    const duplicates = await Client.findAll({
+      where: whereConditions,
+      attributes: ['id', 'name', 'phone', 'email', 'status', 'source', 'createdAt', 'assignedTo', 'budget'],
+      limit: 10,
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Get unique assignedTo IDs
+    const assignedToIds = [...new Set(duplicates.map(client => client.assignedTo).filter(id => id))];
+
+    // Fetch users for these IDs
+    const users = await User.findAll({
+      where: {
+        id: assignedToIds.map(id => parseInt(id)).filter(id => !isNaN(id))
+      },
+      attributes: ['id', 'name', 'email']
+    });
+
+    // Create a map of user ID to user name
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user.id] = user.name;
+    });
+
+    // Format response to include assignedToName
+    const formattedDuplicates = duplicates.map(client => ({
+      id: client.id,
+      name: client.name,
+      phone: client.phone,
+      email: client.email,
+      status: client.status,
+      source: client.source,
+      createdAt: client.createdAt,
+      assignedTo: client.assignedTo,
+      assignedToName: client.assignedTo ? (userMap[parseInt(client.assignedTo)] || 'غير محدد') : 'غير محدد',
+      budget: client.budget
+    }));
+
+    console.log(`🔍 Duplicate check: found ${duplicates.length} potential duplicates for phone=${phone}, email=${email}`);
+
+    res.json({
+      message: 'Duplicate check completed',
+      hasDuplicates: duplicates.length > 0,
+      duplicates: formattedDuplicates,
+      count: duplicates.length
+    });
+
+  } catch (error) {
+    console.error('Check duplicates error:', error);
+    res.status(500).json({
+      message: 'Server error while checking duplicates',
       code: 'SERVER_ERROR'
     });
   }

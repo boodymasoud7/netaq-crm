@@ -21,6 +21,11 @@ router.get('/stats', requirePermission('view_clients'), clientController.getClie
 // @access  Private (view_clients permission)
 router.get('/archive', requirePermission('view_clients'), clientController.getArchivedClients);
 
+// @route   GET /api/clients/check-duplicates
+// @desc    Check for duplicate clients by phone or email
+// @access  Private (view_clients permission)
+router.get('/check-duplicates', requirePermission('view_clients'), clientController.checkDuplicates);
+
 // @route   GET /api/clients/:id
 // @desc    Get single client by ID
 // @access  Private (view_clients permission)

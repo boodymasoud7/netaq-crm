@@ -238,6 +238,15 @@ export const dbAPI = {
     return await apiCall(`/clients/${id}`, { method: 'DELETE' })
   },
 
+  checkClientDuplicates: async (phone, email, excludeId = null) => {
+    console.log('🔍 Checking for duplicate clients:', { phone, email, excludeId })
+    const params = new URLSearchParams()
+    if (phone) params.append('phone', phone)
+    if (email) params.append('email', email)
+    if (excludeId) params.append('excludeId', excludeId)
+    return await apiCall(`/clients/check-duplicates?${params.toString()}`)
+  },
+
   // === ARCHIVE APIs ===
   getArchivedClients: async (params = {}) => {
     console.log('📁 Getting archived clients:', params)
