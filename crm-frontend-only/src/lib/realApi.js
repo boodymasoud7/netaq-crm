@@ -19,7 +19,7 @@ const getDevUser = () => {
     if (devUserOverride) {
       return devUserOverride;
     }
-    
+
     // Otherwise use the actual logged in user
     try {
       const userData = localStorage.getItem('user');
@@ -31,7 +31,7 @@ const getDevUser = () => {
     } catch (error) {
       console.warn('Error parsing user data:', error);
     }
-    
+
     // Fallback to admin only if no user is logged in
     return '46';
   }
@@ -50,7 +50,7 @@ window.showCurrentUser = () => {
   const devUser = getDevUser();
   const users = {
     46: 'Admin (المدير الرئيسي)',
-    47: 'Sales (omayma)', 
+    47: 'Sales (omayma)',
     48: 'Sales (esraa)',
     49: 'Sales Manager (maged)'
   };
@@ -71,7 +71,7 @@ if (process.env.NODE_ENV === 'development') {
 const apiCall = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken')
   const devUser = getDevUser();
-  
+
   // Add devUser parameter for development
   let fullEndpoint = endpoint;
   if (devUser) {
@@ -79,7 +79,7 @@ const apiCall = async (endpoint, options = {}) => {
     fullEndpoint += `${separator}devUser=${devUser}`;
     console.log(`🔧 API Call as user ${devUser}:`, fullEndpoint);
   }
-  
+
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -112,24 +112,24 @@ const apiCall = async (endpoint, options = {}) => {
       ...restOptions.headers
     }
   }
-  
+
   try {
     const response = await fetch(url, finalOptions)
-    
-      if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    // Only log errors in development and if it's not a 404 (backend not available)
-    if (process.env.NODE_ENV === 'development' && response.status !== 404) {
-      console.error(`API Error Details [${endpoint}]:`)
-      console.error('Status:', response.status, response.statusText)
-      console.error('Error Data:', errorData)
-      console.error('Request URL:', url)
-      console.error('Request Body:', finalOptions.body)
-      console.error('Request Headers:', finalOptions.headers)
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      // Only log errors in development and if it's not a 404 (backend not available)
+      if (process.env.NODE_ENV === 'development' && response.status !== 404) {
+        console.error(`API Error Details [${endpoint}]:`)
+        console.error('Status:', response.status, response.statusText)
+        console.error('Error Data:', errorData)
+        console.error('Request URL:', url)
+        console.error('Request Body:', finalOptions.body)
+        console.error('Request Headers:', finalOptions.headers)
+      }
+      throw new Error(errorData.message || `HTTP ${response.status}`)
     }
-    throw new Error(errorData.message || `HTTP ${response.status}`)
-  }
-    
+
     return await response.json()
   } catch (error) {
     // Only log errors in development and if it's not a network error (backend not available)
@@ -144,33 +144,33 @@ const apiCall = async (endpoint, options = {}) => {
 export const authAPI = {
   login: async (email, password) => {
     console.log('🔐 Real authAPI.login called:', { email })
-    
+
     const response = await apiCall('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     })
-    
+
     if (response.token && response.user) {
       localStorage.setItem('authToken', response.token)
       localStorage.setItem('user', JSON.stringify(response.user))
       console.log('✅ Login successful, token and user saved to localStorage')
     }
-    
+
     return response
   },
 
   logout: async () => {
     console.log('🚪 Real logout')
-    
+
     try {
       await apiCall('/auth/logout', { method: 'POST' })
     } catch (error) {
       console.warn('Logout API call failed, proceeding with local cleanup')
     }
-    
+
     localStorage.removeItem('authToken')
     localStorage.removeItem('user')
-    
+
     return { success: true }
   },
 
@@ -477,6 +477,17 @@ export const dbAPI = {
     return await apiCall('/leads/stats')
   },
 
+  checkLeadDuplicates: async (phone, email, excludeId = null) => {
+    console.log('🔍 Checking for duplicate leads:', { phone, email, excludeId })
+    const params = new URLSearchParams()
+    if (phone) params.append('phone', phone)
+    if (email) params.append('email', email)
+    if (excludeId) params.append('excludeId', excludeId)
+
+    return await apiCall(`/leads/check-duplicates?${params.toString()}`)
+  },
+
+
   // Projects
   getProjects: async (params = {}) => {
     console.log('🏗️ Getting projects from backend')
@@ -608,7 +619,7 @@ export const dbAPI = {
   // Statistics (Combined)
   getStats: async () => {
     console.log('📊 Getting combined statistics')
-    
+
     try {
       const [clientStats, leadStats, projectStats, salesStats, taskStats] = await Promise.all([
         apiCall('/clients/stats'),
@@ -634,13 +645,13 @@ export const dbAPI = {
   // Manager Statistics (Enhanced for ManagerDashboard)
   getManagerStats: async () => {
     console.log('📊 Getting manager-level statistics from backend API')
-    
+
     try {
       // Try to use the new backend manager stats API first
       const response = await apiCall('/stats/manager')
-      
+
       console.log('📊 Manager Stats Backend Response:', response)
-      
+
       if (response.success && response.data) {
         return {
           success: true,
@@ -651,7 +662,7 @@ export const dbAPI = {
       }
     } catch (backendError) {
       console.error('❌ Backend manager stats failed, using fallback:', backendError)
-      
+
       try {
         // Fallback: Get all the data needed for manager dashboard
         const [clientsRes, leadsRes, salesRes, projectsRes, tasksRes, usersRes] = await Promise.all([
@@ -663,55 +674,55 @@ export const dbAPI = {
           apiCall('/users?limit=1000')
         ])
 
-      const clients = clientsRes.data || []
-      const leads = leadsRes.data || []
-      const sales = salesRes.data || []
-      const projects = projectsRes.data || []
-      const tasks = tasksRes.data || []
-      const users = usersRes.data || []
+        const clients = clientsRes.data || []
+        const leads = leadsRes.data || []
+        const sales = salesRes.data || []
+        const projects = projectsRes.data || []
+        const tasks = tasksRes.data || []
+        const users = usersRes.data || []
 
-      // Calculate comprehensive statistics
-      const today = new Date()
-      const todayStr = today.toDateString()
+        // Calculate comprehensive statistics
+        const today = new Date()
+        const todayStr = today.toDateString()
 
-      const stats = {
-        // Basic counts
-        totalClients: clients.length,
-        totalLeads: leads.length,
-        totalSales: sales.length,
-        totalProjects: projects.length,
-        totalTasks: tasks.length,
-        totalEmployees: users.filter(u => ['sales', 'sales_agent', 'sales_manager'].includes(u.role)).length,
-        
-        // Today's activities
-        todayLeads: leads.filter(l => new Date(l.createdAt).toDateString() === todayStr).length,
-        todayConversions: leads.filter(l => 
-          (l.status === 'محول' || l.status === 'converted') &&
-          new Date(l.updatedAt).toDateString() === todayStr
-        ).length,
-        todaySales: sales.filter(s => new Date(s.createdAt).toDateString() === todayStr).length,
-        
-        // Performance metrics
-        conversionRate: leads.length > 0 ? 
-          ((leads.filter(l => l.status === 'محول' || l.status === 'converted').length / leads.length) * 100).toFixed(1) : 0,
-        
-        totalRevenue: sales.reduce((sum, sale) => sum + (parseFloat(sale.amount) || parseFloat(sale.totalAmount) || 0), 0),
-        
-        hotLeads: leads.filter(l => 
-          l.priority === 'high' || 
-          l.status === 'hot' || 
-          l.status === 'ساخن' ||
-          (l.budget && parseInt(l.budget) > 1000000)
-        ).length,
+        const stats = {
+          // Basic counts
+          totalClients: clients.length,
+          totalLeads: leads.length,
+          totalSales: sales.length,
+          totalProjects: projects.length,
+          totalTasks: tasks.length,
+          totalEmployees: users.filter(u => ['sales', 'sales_agent', 'sales_manager'].includes(u.role)).length,
 
-        // Task statistics
-        completedTasks: tasks.filter(t => t.status === 'completed' || t.status === 'مكتملة').length,
-        pendingTasks: tasks.filter(t => t.status === 'pending' || t.status === 'قيد الانتظار').length,
-        
-        // Project statistics
-        activeProjects: projects.filter(p => p.status === 'active' || p.status === 'نشط').length,
-        completedProjects: projects.filter(p => p.status === 'completed' || p.status === 'مكتمل').length
-      }
+          // Today's activities
+          todayLeads: leads.filter(l => new Date(l.createdAt).toDateString() === todayStr).length,
+          todayConversions: leads.filter(l =>
+            (l.status === 'محول' || l.status === 'converted') &&
+            new Date(l.updatedAt).toDateString() === todayStr
+          ).length,
+          todaySales: sales.filter(s => new Date(s.createdAt).toDateString() === todayStr).length,
+
+          // Performance metrics
+          conversionRate: leads.length > 0 ?
+            ((leads.filter(l => l.status === 'محول' || l.status === 'converted').length / leads.length) * 100).toFixed(1) : 0,
+
+          totalRevenue: sales.reduce((sum, sale) => sum + (parseFloat(sale.amount) || parseFloat(sale.totalAmount) || 0), 0),
+
+          hotLeads: leads.filter(l =>
+            l.priority === 'high' ||
+            l.status === 'hot' ||
+            l.status === 'ساخن' ||
+            (l.budget && parseInt(l.budget) > 1000000)
+          ).length,
+
+          // Task statistics
+          completedTasks: tasks.filter(t => t.status === 'completed' || t.status === 'مكتملة').length,
+          pendingTasks: tasks.filter(t => t.status === 'pending' || t.status === 'قيد الانتظار').length,
+
+          // Project statistics
+          activeProjects: projects.filter(p => p.status === 'active' || p.status === 'نشط').length,
+          completedProjects: projects.filter(p => p.status === 'completed' || p.status === 'مكتمل').length
+        }
 
         return {
           success: true,
@@ -735,14 +746,14 @@ export const dbAPI = {
   // Activity Feed for Real-time Monitor
   getActivityFeed: async (params = {}) => {
     console.log('📊 Getting activity feed from backend API')
-    
+
     try {
       // Use the new backend activity feed API
       const queryParams = new URLSearchParams(params).toString()
       const response = await apiCall(`/stats/activity-feed${queryParams ? '?' + queryParams : ''}`)
-      
+
       console.log('📊 Activity Feed Backend Response:', response)
-      
+
       return {
         success: true,
         data: response.data || {}
@@ -760,7 +771,7 @@ export const dbAPI = {
   // Fallback Activity Feed (if backend fails)
   getActivityFeedFallback: async (params = {}) => {
     console.log('📊 Getting activity feed (fallback)')
-    
+
     try {
       // Get recent activities from multiple sources + users for mapping
       const [clientsRes, leadsRes, salesRes, projectsRes, tasksRes, usersRes] = await Promise.all([
@@ -928,11 +939,11 @@ export const dbAPI = {
         ...(token && { 'Authorization': `Bearer ${token}` })
       }
     })
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
+
     const result = await response.json()
     return result.data || []
   },

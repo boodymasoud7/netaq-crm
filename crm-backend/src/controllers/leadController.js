@@ -10,7 +10,7 @@ exports.getAllLeads = [
   query('limit').optional().isInt({ min: 1, max: 10000 }).withMessage('Limit must be between 1 and 10000'),
   query('status').optional().isIn(['new', 'contacted', 'interested', 'qualified', 'converted', 'lost']).withMessage('Invalid status'),
   query('priority').optional().isIn(['low', 'medium', 'high', 'urgent']).withMessage('Invalid priority'),
-  
+
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -37,11 +37,11 @@ exports.getAllLeads = [
 
       // Build where conditions
       const whereConditions = {};
-      
+
       // Role-based filtering: sales users can only see their own leads
       const userRole = req.user.role;
       const userId = req.user.id;
-      
+
       if (userRole === 'sales' || userRole === 'sales_agent') {
         // Sales users can only see leads assigned to them or created by them
         whereConditions[Op.or] = [
@@ -52,7 +52,7 @@ exports.getAllLeads = [
         ];
       }
       // Admin and sales_manager can see all leads (no additional filtering)
-      
+
       if (search) {
         const searchCondition = {
           [Op.or]: [
@@ -63,7 +63,7 @@ exports.getAllLeads = [
             { notes: { [Op.iLike]: `%${search}%` } }
           ]
         };
-        
+
         // If role-based filtering exists, combine with search
         if (whereConditions[Op.or]) {
           whereConditions[Op.and] = [
@@ -118,7 +118,7 @@ exports.getAllLeads = [
 
       // Get counts for all leads efficiently
       const leadIds = rawLeads.map(lead => lead.id);
-      
+
       // Get notes counts
       const notesCounts = await Note.count({
         where: {
@@ -127,7 +127,7 @@ exports.getAllLeads = [
         },
         group: ['itemId']
       });
-      
+
       // Get interactions counts
       const interactionsCounts = await Interaction.count({
         where: {
@@ -136,18 +136,18 @@ exports.getAllLeads = [
         },
         group: ['itemId']
       });
-      
+
       // Create count maps
       const notesCountMap = {};
       const interactionsCountMap = {};
-      
+
       // Process notes counts (Sequelize returns array of {itemId, count})
       if (Array.isArray(notesCounts)) {
         notesCounts.forEach(item => {
           notesCountMap[item.itemId] = item.count;
         });
       }
-      
+
       // Process interactions counts
       if (Array.isArray(interactionsCounts)) {
         interactionsCounts.forEach(item => {
@@ -158,21 +158,21 @@ exports.getAllLeads = [
       // Enrich leads with user names and counts efficiently
       const leads = rawLeads.map(lead => {
         const leadData = lead.toJSON();
-        
+
         // Add assigned user name
         if (leadData.assignedTo) {
           leadData.assignedToName = userByIdMap[leadData.assignedTo] || userByNameMap[leadData.assignedTo] || leadData.assignedTo;
         }
-        
+
         // Add created by user name  
         if (leadData.createdBy) {
           leadData.createdByName = userByIdMap[leadData.createdBy] || userByNameMap[leadData.createdBy] || leadData.createdBy;
         }
-        
+
         // Add notes and interactions counts
         leadData.notesCount = notesCountMap[leadData.id] || 0;
         leadData.interactionsCount = interactionsCountMap[leadData.id] || 0;
-        
+
         return leadData;
       });
 
@@ -351,7 +351,7 @@ exports.createLead = [
 
     } catch (error) {
       console.error('Create lead error:', error);
-      
+
       if (error.name === 'SequelizeValidationError') {
         return res.status(400).json({
           message: 'Validation error',
@@ -434,15 +434,15 @@ exports.updateLead = [
       // إدارة المتابعات عند تغيير المسؤول
       try {
         if (updateData.assignedTo && updateData.assignedTo !== oldAssignedTo) {
-          
+
           if (!oldAssignedTo || oldAssignedTo === null) {
             // التوزيع الأول - إنشاء متابعة جديدة
             await AutoFollowUpService.createLeadFollowUps(lead.id, updateData.assignedTo, req.user.id);
-            
+
           } else {
             // تغيير المسؤول - نقل المتابعات الموجودة
             await FollowUp.update(
-              { 
+              {
                 assignedTo: updateData.assignedTo,
                 updatedAt: new Date()
               },
@@ -464,8 +464,8 @@ exports.updateLead = [
       try {
         if (updateData.status && updateData.status !== oldStatus && lead.assignedTo) {
           await AutoFollowUpService.createFollowUpBasedOnStatus(
-            lead.id, 
-            updateData.status, 
+            lead.id,
+            updateData.status,
             lead.assignedTo
           );
           console.log(`🤖 Status-based follow-up created for lead: ${lead.id} (${oldStatus} → ${updateData.status})`);
@@ -511,7 +511,7 @@ exports.deleteLead = async (req, res) => {
     });
 
     await lead.destroy();
-    
+
     console.log(`✅ Lead deleted: ${lead.name} by ${userName} (ID: ${userId})`);
 
     res.json({
@@ -660,7 +660,7 @@ exports.getLeadStats = async (req, res) => {
 exports.getArchivedLeads = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 10000 }).withMessage('Limit must be between 1 and 10000'),
-  
+
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -685,7 +685,7 @@ exports.getArchivedLeads = [
       const whereConditions = {
         deleted_at: { [Op.ne]: null } // Only get soft deleted records
       };
-      
+
       if (search) {
         whereConditions[Op.or] = [
           { name: { [Op.iLike]: `%${search}%` } },
@@ -741,7 +741,7 @@ exports.restoreLead = async (req, res) => {
 
     // Find the soft-deleted lead
     const lead = await Lead.findByPk(id, { paranoid: false });
-    
+
     if (!lead) {
       return res.status(404).json({
         message: 'Lead not found',
@@ -782,7 +782,7 @@ exports.permanentDeleteLead = async (req, res) => {
 
     // Find the soft-deleted lead
     const lead = await Lead.findByPk(id, { paranoid: false });
-    
+
     if (!lead) {
       return res.status(404).json({
         message: 'Lead not found',
@@ -798,7 +798,7 @@ exports.permanentDeleteLead = async (req, res) => {
     }
 
     const leadName = lead.name;
-    
+
     // Permanently delete
     await lead.destroy({ force: true });
 
@@ -817,11 +817,73 @@ exports.permanentDeleteLead = async (req, res) => {
   }
 };
 
+// Check for duplicate leads
+exports.checkDuplicates = async (req, res) => {
+  try {
+    const { phone, email, excludeId } = req.query;
+
+    if (!phone && !email) {
+      return res.status(400).json({
+        message: 'Phone or email is required for duplicate check',
+        code: 'MISSING_PARAMS'
+      });
+    }
+
+    const whereConditions = {
+      [Op.or]: []
+    };
+
+    // Check by phone (exact match)
+    if (phone) {
+      whereConditions[Op.or].push({
+        phone: phone.trim()
+      });
+    }
+
+    // Check by email (case-insensitive)
+    if (email) {
+      whereConditions[Op.or].push({
+        email: { [Op.iLike]: email.trim() }
+      });
+    }
+
+    // Exclude current lead when editing
+    if (excludeId) {
+      whereConditions.id = { [Op.ne]: excludeId };
+    }
+
+    // Find duplicates
+    const duplicates = await Lead.findAll({
+      where: whereConditions,
+      attributes: ['id', 'name', 'phone', 'email', 'status', 'source', 'createdAt', 'assignedTo', 'priority', 'score'],
+      limit: 10,
+      order: [['createdAt', 'DESC']]
+    });
+
+    console.log(`🔍 Duplicate check: found ${duplicates.length} potential duplicates for phone=${phone}, email=${email}`);
+
+    res.json({
+      message: 'Duplicate check completed',
+      hasDuplicates: duplicates.length > 0,
+      duplicates: duplicates,
+      count: duplicates.length
+    });
+
+  } catch (error) {
+    console.error('Check duplicates error:', error);
+    res.status(500).json({
+      message: 'Server error while checking duplicates',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+
 // Delete all archived leads permanently
 exports.permanentDeleteAllLeads = async (req, res) => {
   try {
     // Find all soft-deleted leads
-    const archivedLeads = await Lead.findAll({ 
+    const archivedLeads = await Lead.findAll({
       paranoid: false,
       where: {
         deleted_at: {
@@ -838,9 +900,9 @@ exports.permanentDeleteAllLeads = async (req, res) => {
     }
 
     const count = archivedLeads.length;
-    
+
     // Permanently delete all archived leads
-    await Lead.destroy({ 
+    await Lead.destroy({
       force: true,
       paranoid: false,
       where: {

@@ -11,6 +11,12 @@ router.use(authMiddleware);
 // @access  Private (view_leads permission)
 router.get('/', requirePermission('view_leads'), leadController.getAllLeads);
 
+// @route   GET /api/leads/check-duplicates
+// @desc    Check for duplicate leads
+// @access  Private (view_leads permission)
+// Check for duplicates (must be before /:id route)
+router.get('/check-duplicates', requirePermission('view_leads'), leadController.checkDuplicates);
+
 // @route   GET /api/leads/stats
 // @desc    Get lead statistics
 // @access  Private (view_leads permission)
