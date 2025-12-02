@@ -1799,10 +1799,15 @@ const dashboardAPI = {
 // Export API_CONFIG separately for direct access
 export { API_CONFIG }
 
+// Make API available globally for debugging and direct access
+if (typeof window !== 'undefined') {
+  window.api = dbAPI
+  console.log('✅ window.api is now available globally!')
+}
+
 export default {
   authAPI,
   dbAPI,
-  followUpsAPI,
   dashboardAPI,
   config: API_CONFIG
 }
