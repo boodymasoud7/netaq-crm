@@ -96,10 +96,10 @@ export default function DuplicateLeadModal({ duplicates, onContinue, onCancel, o
                                         <span className="text-xs">تم الإضافة: {formatDateArabic(duplicate.createdAt)}</span>
                                     </div>
 
-                                    {duplicate.assignedTo && (
+                                    {duplicate.assignedToName && (
                                         <div className="flex items-center gap-2 text-gray-600">
                                             <Users className="w-4 h-4 text-gray-400" />
-                                            <span className="text-xs">المسؤول: {duplicate.assignedTo}</span>
+                                            <span className="text-xs">المسؤول: {duplicate.assignedToName}</span>
                                         </div>
                                     )}
                                 </div>
@@ -118,24 +118,20 @@ export default function DuplicateLeadModal({ duplicates, onContinue, onCancel, o
 
                 {/* Footer */}
                 <div className="p-6 border-t border-gray-200 bg-gray-50">
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800 font-medium">
+                            <strong>تنبيه:</strong> لا يمكن إضافة هذا العميل لأنه موجود مسبقاً في النظام. يرجى التواصل مع المدير لمزيد من المعلومات.
+                        </p>
+                    </div>
                     <div className="flex gap-3 justify-end">
                         <Button
                             variant="outline"
                             onClick={onCancel}
                             className="min-w-[120px]"
                         >
-                            إلغاء
-                        </Button>
-                        <Button
-                            onClick={onContinue}
-                            className="bg-amber-500 hover:bg-amber-600 text-white min-w-[120px]"
-                        >
-                            متابعة الإضافة
+                            إغلاق
                         </Button>
                     </div>
-                    <p className="text-xs text-gray-500 text-center mt-3">
-                        سيتم إضافة العميل المحتمل كسجل جديد رغم التشابه
-                    </p>
                 </div>
             </div>
         </div>

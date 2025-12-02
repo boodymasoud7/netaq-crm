@@ -852,20 +852,43 @@ exports.checkDuplicates = async (req, res) => {
       whereConditions.id = { [Op.ne]: excludeId };
     }
 
-    // Find duplicates
+    // Find duplicates with assigned user info
     const duplicates = await Lead.findAll({
       where: whereConditions,
       attributes: ['id', 'name', 'phone', 'email', 'status', 'source', 'createdAt', 'assignedTo', 'priority', 'score'],
+      include: [
+        {
+          model: User,
+          as: 'assignedToUser',
+          attributes: ['id', 'name', 'email'],
+          required: false
+        }
+      ],
       limit: 10,
       order: [['createdAt', 'DESC']]
     });
+
+    // Format response to include assignedToName
+    const formattedDuplicates = duplicates.map(lead => ({
+      id: lead.id,
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email,
+      status: lead.status,
+      source: lead.source,
+      createdAt: lead.createdAt,
+      assignedTo: lead.assignedTo,
+      assignedToName: lead.assignedToUser ? lead.assignedToUser.name : 'غير محدد',
+      priority: lead.priority,
+      score: lead.score
+    }));
 
     console.log(`🔍 Duplicate check: found ${duplicates.length} potential duplicates for phone=${phone}, email=${email}`);
 
     res.json({
       message: 'Duplicate check completed',
       hasDuplicates: duplicates.length > 0,
-      duplicates: duplicates,
+      duplicates: formattedDuplicates,
       count: duplicates.length
     });
 
@@ -877,6 +900,7 @@ exports.checkDuplicates = async (req, res) => {
     });
   }
 };
+
 
 
 // Delete all archived leads permanently
