@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Phone, 
-  Mail, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
   Star,
   Eye,
   MoreHorizontal,
@@ -44,6 +44,7 @@ import LoadingPage from '../components/ui/loading'
 import { autoFollowUpService } from '../services/autoFollowUpService'
 import LeadsTable from '../components/tables/LeadsTable'
 import LeadsDetailsModal from '../components/modals/LeadsDetailsModal'
+import DuplicateLeadModal from '../components/modals/DuplicateLeadModal'
 import SimpleAddReminderModal from '../components/reminders/SimpleAddReminderModal'
 import QuickReminderModal from '../components/reminders/QuickReminderModal'
 import RatingViewModal from '../components/modals/RatingViewModal'
@@ -82,14 +83,14 @@ function LeadsUltraSimple() {
     updateParams({ page: 1, limit: newSize }) // العودة للصفحة الأولى مع الحجم الجديد
   }
   const [quickSearchTerm, setQuickSearchTerm] = useState('')
-  
+
   // استيراد نظام الصلاحيات
-  const { 
-    isAdmin, 
-    isSalesManager, 
-    isSales, 
+  const {
+    isAdmin,
+    isSalesManager,
+    isSales,
     checkPermission,
-    filterByRole 
+    filterByRole
   } = usePermissions()
 
   // دوال التحقق من الصلاحيات للعملاء المحتملين
@@ -127,31 +128,31 @@ function LeadsUltraSimple() {
 
   const canConvertLead = useMemo(() => {
     return (lead) => {
-    if (!lead) return false
-    if (isAdmin()) return true
+      if (!lead) return false
+      if (isAdmin()) return true
       if (isSalesManager()) return checkPermission('convert_leads')
-      
+
       // السماح لموظفي المبيعات بتحويل العملاء المحتملين المخصصين لهم أو الذين أنشأوهم
       if (isSales()) {
         // فحص الصلاحية أولاً
-    const hasPermission = checkPermission('convert_leads')
-    if (!hasPermission) return false
-        
+        const hasPermission = checkPermission('convert_leads')
+        if (!hasPermission) return false
+
         // ثم فحص الملكية - استخدام multiple identifiers
         const userId = currentUser?.uid || currentUser?.id || userProfile?.id
         const userEmail = currentUser?.email || userProfile?.email
         const userName = userProfile?.displayName || userProfile?.name || currentUser?.displayName
-        
+
         // Ownership check with multiple identifiers - convert to strings for comparison
         const leadAssignedTo = String(lead.assignedTo || '')
         const leadCreatedBy = String(lead.createdBy || '')
-        
-        return leadAssignedTo === String(userId || '') || 
-               leadAssignedTo === String(userEmail || '') || 
-               leadAssignedTo === String(userName || '') ||
-               leadCreatedBy === String(userId || '') ||
-               leadCreatedBy === String(userEmail || '') ||
-               leadCreatedBy === String(userName || '')
+
+        return leadAssignedTo === String(userId || '') ||
+          leadAssignedTo === String(userEmail || '') ||
+          leadAssignedTo === String(userName || '') ||
+          leadCreatedBy === String(userId || '') ||
+          leadCreatedBy === String(userEmail || '') ||
+          leadCreatedBy === String(userName || '')
       }
       return checkPermission('convert_leads')
     }
@@ -166,7 +167,7 @@ function LeadsUltraSimple() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [leadToDelete, setLeadToDelete] = useState(null)
   const [showConvertConfirm, setShowConvertConfirm] = useState(false)
-  
+
   // مودال التذكير السريع
   const [showQuickReminderModal, setShowQuickReminderModal] = useState(false)
   const [selectedLeadForReminder, setSelectedLeadForReminder] = useState(null)
@@ -178,11 +179,16 @@ function LeadsUltraSimple() {
   const [showUpdateRatingModal, setShowUpdateRatingModal] = useState(false)
   const [updateRatingForLead, setUpdateRatingForLead] = useState(null)
   const [showBulkImportModal, setShowBulkImportModal] = useState(false)
-  
+
+  // Duplicate Detection State
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [duplicateLeads, setDuplicateLeads] = useState([])
+  const [pendingLeadData, setPendingLeadData] = useState(null)
+
   // Lead assignment state
   const [showAssignmentModal, setShowAssignmentModal] = useState(false)
   const [salesUsers, setSalesUsers] = useState([])
-  
+
   // Fetch interactions for all leads to enable filtering
   useEffect(() => {
     const fetchLeadsInteractions = async () => {
@@ -193,17 +199,17 @@ function LeadsUltraSimple() {
           // إنشاء خريطة تربط lead ID بعدد التفاعلات وآخر نتيجة
           const interactionsMap = {}
           const interactionsCountMap = {}
-          
+
           // ترتيب التفاعلات حسب التاريخ (الأحدث أولاً)
           const sortedInteractions = [...response.data].sort((a, b) => {
             return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
           })
-          
+
           sortedInteractions.forEach(interaction => {
             if (interaction.itemType === 'lead' && interaction.itemId) {
               // عد التفاعلات
               interactionsCountMap[interaction.itemId] = (interactionsCountMap[interaction.itemId] || 0) + 1
-              
+
               // حفظ آخر تفاعل (outcome) إذا لم يتم حفظه بعد
               if (!interactionsMap[interaction.itemId]) {
                 // Map backend outcome values to frontend values
@@ -218,9 +224,9 @@ function LeadsUltraSimple() {
                   'contract_discussed': 'positive',
                   'objection_raised': 'negative'
                 }
-                
+
                 const mappedOutcome = outcomeMapping[interaction.outcome] || interaction.outcome || 'neutral'
-                
+
                 interactionsMap[interaction.itemId] = {
                   count: 1,
                   lastOutcome: mappedOutcome,
@@ -229,14 +235,14 @@ function LeadsUltraSimple() {
               }
             }
           })
-          
+
           // دمج العدد مع البيانات
           Object.keys(interactionsCountMap).forEach(leadId => {
             if (interactionsMap[leadId]) {
               interactionsMap[leadId].count = interactionsCountMap[leadId]
             }
           })
-          
+
           setLeadsInteractions(interactionsMap)
         }
       } catch (error) {
@@ -244,10 +250,10 @@ function LeadsUltraSimple() {
         setLeadsInteractions({})
       }
     }
-    
+
     fetchLeadsInteractions()
   }, [leads]) // إعادة الجلب عند تغيير الـ leads
-  
+
   // Fetch sales users from API
   useEffect(() => {
     const fetchSalesUsers = async () => {
@@ -262,8 +268,8 @@ function LeadsUltraSimple() {
               name: user.name,
               email: user.email,
               role: user.role,
-            leadsCount: 0, // Will be updated from leads data
-            salesCount: 0  // Will be updated from sales data
+              leadsCount: 0, // Will be updated from leads data
+              salesCount: 0  // Will be updated from sales data
             }))
           setSalesUsers(salesUsersData)
 
@@ -274,7 +280,7 @@ function LeadsUltraSimple() {
         setSalesUsers([])
       }
     }
-    
+
     fetchSalesUsers()
   }, [])
 
@@ -320,14 +326,14 @@ function LeadsUltraSimple() {
   const UnassignedLeadsCountSimple = ({ leads }) => {
     const unassignedCount = useMemo(() => {
       if (!leads || leads.length === 0) return 0
-      
-      const count = leads.filter(lead => 
+
+      const count = leads.filter(lead =>
         // استبعاد العملاء المحولين
         (lead.status !== 'converted' && lead.status !== 'محول') &&
         // العملاء غير المخصصين
         (!lead.assignedTo || lead.assignedTo === '' || lead.assignedTo === null)
       ).length
-      
+
 
       return count
     }, [leads])
@@ -356,13 +362,26 @@ function LeadsUltraSimple() {
     priority: 'متوسطة'
   })
 
+  // تعيين الموظف الحالي تلقائياً لموظفي المبيعات عند فتح المودال
+  useEffect(() => {
+    if (showAddModal && !isAdmin() && !isSalesManager()) {
+      const currentUserId = currentUser?.id || userProfile?.id
+      if (currentUserId) {
+        setNewLead(prev => ({
+          ...prev,
+          assignedTo: currentUserId
+        }))
+      }
+    }
+  }, [showAddModal, currentUser, userProfile, isAdmin, isSalesManager])
+
   // دالة التوزيع التلقائي
   const handleAutoDistribute = async () => {
     try {
       // استخدام salesUsers من الـ state (موظفي مبيعات فقط، بدون مديرين)
       const allSalesStaff = salesUsers.filter(user => user.role === 'sales' || user.role === 'sales_agent')
 
-      
+
       if (allSalesStaff.length === 0) {
         toast.error('لا يوجد موظفي مبيعات متاحين للتوزيع')
         return
@@ -371,9 +390,9 @@ function LeadsUltraSimple() {
       // جلب جميع العملاء المحتملين غير المخصصين من الـ API (بدون حد pagination)
 
       const allLeadsResponse = await api.getLeads({ limit: 10000 }) // رقم كبير لجلب الكل
-      
 
-      
+
+
       if (!allLeadsResponse || !allLeadsResponse.data) {
         toast.error('فشل في جلب العملاء المحتملين')
         console.error('❌ Invalid API response:', allLeadsResponse)
@@ -381,7 +400,7 @@ function LeadsUltraSimple() {
       }
 
       // فلترة العملاء المحتملين غير المخصصين فقط
-      const unassignedLeads = allLeadsResponse.data.filter(lead => 
+      const unassignedLeads = allLeadsResponse.data.filter(lead =>
         !lead.assignedTo || lead.assignedTo === '' || lead.assignedTo === null
       )
 
@@ -411,7 +430,7 @@ function LeadsUltraSimple() {
           updatedAt: new Date()
         })
       }
-      
+
       // تم تعطيل إنشاء المتابعات والتذكيرات التلقائية
 
       toast.success(`تم توزيع ${unassignedLeads.length} عميل محتمل على ${allSalesStaff.length} موظف مبيعات بنجاح`)
@@ -427,17 +446,17 @@ function LeadsUltraSimple() {
   const filteredLeads = leads?.filter(lead => {
     // فلترة أساسية (البحث والحالة والمصدر)
     const matchesSearch = lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.phone?.includes(searchTerm)
+      lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.phone?.includes(searchTerm)
     const matchesStatus = selectedStatus === 'all' || lead.status === selectedStatus
     const matchesSource = selectedSource === 'all' || lead.source === selectedSource
-    
+
     // فلترة الموظف المسؤول (للمديرين فقط)
-    const matchesEmployee = selectedEmployee === 'all' || 
-                           lead.assignedTo == selectedEmployee ||
-                           lead.assignedToName === selectedEmployee ||
-                           String(lead.assignedTo) === String(selectedEmployee)
-    
+    const matchesEmployee = selectedEmployee === 'all' ||
+      lead.assignedTo == selectedEmployee ||
+      lead.assignedToName === selectedEmployee ||
+      String(lead.assignedTo) === String(selectedEmployee)
+
     // فلترة الصلاحيات
     let hasPermission = false
     if (canViewAllLeads()) {
@@ -449,16 +468,16 @@ function LeadsUltraSimple() {
       // استخدام == بدلاً من === للمقارنة بغض النظر عن نوع البيانات (string vs number)
       hasPermission = (lead.createdBy == userId || lead.assignedTo == userId)
     }
-    
+
     return matchesSearch && matchesStatus && matchesSource && matchesEmployee && hasPermission
   }) || []
-  
+
   // ثم استبعاد العملاء المحولين من النتيجة النهائية (بعد فلترة الصلاحيات)
-  const finalFilteredLeads = filteredLeads.filter(lead => 
+  const finalFilteredLeads = filteredLeads.filter(lead =>
     lead.status !== 'converted' && lead.status !== 'محول'
   )
-  
-  
+
+
 
 
   const handleAddLead = async (e) => {
@@ -473,9 +492,29 @@ function LeadsUltraSimple() {
         toast.error('رقم الهاتف مطلوب ويجب أن يكون على الأقل 10 أرقام')
         return
       }
+
+      // Check for duplicates before adding
+      const duplicateCheck = await api.checkLeadDuplicates(newLead.phone, newLead.email)
+
+      if (duplicateCheck.hasDuplicates && duplicateCheck.duplicates.length > 0) {
+        console.log('🔍 Duplicates found:', duplicateCheck.duplicates)
+        setDuplicateLeads(duplicateCheck.duplicates)
+        setPendingLeadData(newLead)
+        setShowDuplicateModal(true)
+        return // Stop here and show modal
+      }
       if (!newLead.source) {
         newLead.source = 'website' // Default source
       }
+
+      // إذا كان موظف مبيعات (ليس مدير)، يتم تعيينه تلقائياً
+      if (!isAdmin() && !isSalesManager()) {
+        const currentUserId = currentUser?.id || userProfile?.id
+        if (!newLead.assignedTo && currentUserId) {
+          newLead.assignedTo = currentUserId
+        }
+      }
+
       if (!newLead.assignedTo) {
         toast.error('يجب اختيار الموظف المسؤول')
         return
@@ -489,7 +528,7 @@ function LeadsUltraSimple() {
       const mapStatus = (status) => {
         const statusMap = {
           'بارد': 'new',
-          'فاتر': 'contacted', 
+          'فاتر': 'contacted',
           'مهتم': 'interested',
           'ساخن': 'qualified',
           'مؤهل': 'qualified',
@@ -514,7 +553,7 @@ function LeadsUltraSimple() {
         priority: 'medium', // Default priority
         assignedTo: newLead.assignedTo // الموظف المخصص
       }
-      
+
       // Add optional fields only if they have values
       if (newLead.email && newLead.email.trim()) {
         leadData.email = newLead.email.trim()
@@ -529,24 +568,24 @@ function LeadsUltraSimple() {
       const result = await api.addLead(leadData)
 
       // المتابعات ستُنشأ تلقائياً في الباك إند
-      
+
       // Refresh the leads list
       refetch()
-      
+
       // إشعار نجاح الإضافة للموظف الحالي
       notifyNewLead(newLead.name)
-      
+
       // إرسال إشعار فوري للمديرين عبر SSE
       await sendNewLeadNotification(newLead.name)
-      
-      setNewLead({ 
-        name: '', 
-        email: '', 
-        phone: '', 
-        source: '', 
-        status: 'بارد', 
-        score: 0, 
-        notes: '', 
+
+      setNewLead({
+        name: '',
+        email: '',
+        phone: '',
+        source: '',
+        status: 'بارد',
+        score: 0,
+        notes: '',
         interests: [],
         clientType: 'فردي',
         assignedTo: '',
@@ -559,6 +598,96 @@ function LeadsUltraSimple() {
       toast.error('فشل في إضافة العميل المحتمل')
     }
   }
+
+  // Handle continuing with duplicate
+  const handleContinueWithDuplicate = async () => {
+    try {
+      setShowDuplicateModal(false)
+
+      if (!pendingLeadData) {
+        toast.error('لا توجد بيانات معلقة')
+        return
+      }
+
+      // Proceed with adding the lead despite duplicates
+      const mapStatus = (status) => {
+        const statusMap = {
+          'بارد': 'new',
+          'فاتر': 'contacted',
+          'مهتم': 'interested',
+          'ساخن': 'qualified',
+          'مؤهل': 'qualified',
+          'محول': 'converted',
+          'مفقود': 'lost'
+        }
+        return statusMap[status] || status || 'new'
+      }
+
+      const mapSource = (source) => {
+        return source && source.trim() ? source.trim() : 'غير محدد'
+      }
+
+      const leadData = {
+        name: pendingLeadData.name.trim(),
+        phone: pendingLeadData.phone.trim(),
+        status: mapStatus(pendingLeadData.status),
+        source: mapSource(pendingLeadData.source),
+        interest: pendingLeadData.interest || 'عقارات',
+        priority: 'medium',
+        assignedTo: pendingLeadData.assignedTo
+      }
+
+      if (pendingLeadData.email && pendingLeadData.email.trim()) {
+        leadData.email = pendingLeadData.email.trim()
+      }
+      if (pendingLeadData.notes && pendingLeadData.notes.trim()) {
+        leadData.notes = pendingLeadData.notes.trim()
+      }
+      if (pendingLeadData.budget && !isNaN(parseFloat(pendingLeadData.budget))) {
+        leadData.budget = parseFloat(pendingLeadData.budget)
+      }
+
+      await api.addLead(leadData)
+
+      refetch()
+      notifyNewLead(pendingLeadData.name)
+      await sendNewLeadNotification(pendingLeadData.name)
+
+      setNewLead({
+        name: '',
+        email: '',
+        phone: '',
+        source: '',
+        status: 'بارد',
+        score: 0,
+        notes: '',
+        interests: [],
+        clientType: 'فردي',
+        assignedTo: '',
+        priority: 'متوسطة'
+      })
+      setShowAddModal(false)
+      setPendingLeadData(null)
+      setDuplicateLeads([])
+      toast.success('تم إضافة العميل المحتمل بنجاح')
+    } catch (error) {
+      console.error('خطأ في المتابعة:', error)
+      toast.error('فشل في إضافة العميل المحتمل')
+    }
+  }
+
+  const handleCancelDuplicate = () => {
+    setShowDuplicateModal(false)
+    setDuplicateLeads([])
+    setPendingLeadData(null)
+    toast.info('تم إلغاء الإضافة')
+  }
+
+  const handleViewDuplicateLead = (duplicate) => {
+    setShowDuplicateModal(false)
+    setViewingLead(duplicate)
+  }
+
 
   const handleEditLead = (lead) => {
     setEditingLead(lead)
@@ -582,7 +711,7 @@ function LeadsUltraSimple() {
 
   const confirmDeleteLead = async () => {
     if (!leadToDelete) return
-    
+
     try {
       // تحديث حالة العميل المحتمل للأرشفة بدلاً من الحذف النهائي
       await api.deleteLead(leadToDelete.id)
@@ -618,13 +747,13 @@ function LeadsUltraSimple() {
       // Here you would call the real API to save the reminder
       // For now, we'll just log it and show success
 
-      
+
       // In the future, this would be:
       // await api.addReminder(reminderData)
-      
+
       // Show success message
       toast.success(`تم إضافة تذكير لـ ${reminderData.itemName} بنجاح`)
-      
+
       // Close modal
       setShowReminderModal(false)
       setReminderForLead(null)
@@ -650,10 +779,10 @@ function LeadsUltraSimple() {
   const handleSaveUpdatedRating = async (updatedLead) => {
     try {
       await api.updateLead(updatedLead.id, updatedLead)
-      
+
       // إعادة تحميل البيانات
       await refetch()
-      
+
       toast.success('تم تحديث التقييم بنجاح!')
     } catch (error) {
       console.error('خطأ في تحديث التقييم:', error)
@@ -701,17 +830,17 @@ function LeadsUltraSimple() {
       }
 
       const result = await api.addNote(noteData)
-      
+
 
       toast.success('تم إضافة الملاحظة بنجاح')
-      
+
       // إرسال إشعار للمديرين عن الملاحظة الجديدة
       await sendNoteAddedNotification(lead.name, 'عميل محتمل', note.content)
-      
+
       // إعادة تحميل التفاصيل إذا كان العميل المحتمل معروضاً
       if (viewingLead && note?.itemId === viewingLead.id) {
         // تحديث الملاحظات في الـ viewingLead
-        setViewingLead({...viewingLead, updatedAt: new Date()})
+        setViewingLead({ ...viewingLead, updatedAt: new Date() })
       }
     } catch (error) {
       console.error('خطأ في حفظ الملاحظة:', error)
@@ -731,16 +860,16 @@ function LeadsUltraSimple() {
       await api.addInteraction(leadInteractionData)
 
       toast.success('تم إضافة التفاعل بنجاح')
-      
+
       // البحث عن العميل المحتمل لإرسال الإشعار
       const lead = leads?.find(l => l.id === interactionData.itemId)
       if (lead) {
         await sendInteractionAddedNotification(lead.name, 'عميل محتمل', interactionData.type || 'تفاعل')
       }
-      
+
       // إعادة تحميل التفاصيل إذا كان العميل المحتمل معروضاً
       if (viewingLead && interactionData?.itemId === viewingLead.id) {
-        setViewingLead({...viewingLead, updatedAt: new Date()})
+        setViewingLead({ ...viewingLead, updatedAt: new Date() })
       }
     } catch (error) {
       console.error('❌ Error adding lead interaction:', error)
@@ -751,7 +880,7 @@ function LeadsUltraSimple() {
 
 
   // === الإجراءات الجماعية ===
-  
+
   const handleBulkDelete = async (leadIds) => {
     try {
       await Promise.all(leadIds.map(id => api.deleteLead(id)))
@@ -778,17 +907,17 @@ function LeadsUltraSimple() {
         lead.status || '',
         lead.score || ''
       ])
-      
+
       const csvContent = [csvHeaders, ...csvData]
         .map(row => row.join(','))
         .join('\n')
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
       link.download = `leads_export_${new Date().toISOString().split('T')[0]}.csv`
       link.click()
-      
+
       toast.success(`تم تصدير ${selectedLeadsData.length} عميل محتمل بنجاح`)
     } catch (error) {
       console.error('خطأ في التصدير:', error)
@@ -815,11 +944,11 @@ function LeadsUltraSimple() {
         source: leadToConvert.source || 'تحويل من عميل محتمل',
         budget: leadToConvert.budget || null
       }
-      
+
       const result = await api.addClient(clientData)
       const clientId = result.data.id
       console.log('🔄 Client created from lead conversion - ID:', clientId, 'Name:', clientData.name)
-      
+
       // إضافة تفاعل التحويل في Timeline
       const conversionInteraction = {
         clientId: leadToConvert.id,
@@ -839,39 +968,39 @@ function LeadsUltraSimple() {
           conversionDate: new Date()
         }
       }
-      
+
       // هنا سيتم حفظ التفاعل في قاعدة البيانات مستقبلاً
 
-      
+
       // إرسال تنبيه للمديرين بالعميل الجديد المحول
       // تم حذف إشعار الفريق مؤقتاً
-      
+
       // إرسال تنبيه إضافي للمديرين عن تحويل العميل المحتمل (إذا كان المس��خدم موظف مبيعات)
       if (isSales()) {
         // تم حذف إشعار تحويل العميل المحتمل مؤقتاً
       }
-      
+
       // Update lead status to converted instead of deleting
-      await api.updateLead(leadToConvert.id, { 
+      await api.updateLead(leadToConvert.id, {
         status: 'converted',
         convertedAt: new Date().toISOString(),
         convertedTo: clientId,
         convertedBy: currentUser?.uid || currentUser?.id || userProfile?.id
       })
-      
+
       // Refresh leads list
       refetch()
-      
+
       // إشعار نجاح التحويل للموظف الحالي
       notifyLeadConverted(leadToConvert.name)
-      
+
       // إرسال إشعار فوري للمديرين عبر SSE
       await sendLeadConvertedNotification(leadToConvert.name)
-      
+
       toast.success(`تم تحويل العميل المحتمل إلى عميل بنجاح! سيتم توجيهك لصفحة العملاء...`)
       setShowConvertConfirm(false)
       setLeadToConvert(null)
-      
+
       // Navigate to clients page after a short delay
       setTimeout(() => {
         navigate('/clients')
@@ -912,19 +1041,19 @@ function LeadsUltraSimple() {
 
 
   // === وظائف الاستيراد الجماعي ===
-  
+
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0]
     if (selectedFile) {
       // التحقق من نوع الملف
       const allowedTypes = ['.csv', '.xlsx', '.xls']
       const fileExtension = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'))
-      
+
       if (!allowedTypes.includes(fileExtension)) {
         toast.error('يرجى اختيار ملف CSV أو Excel فقط')
         return
       }
-      
+
       setBulkImportFile(selectedFile)
       toast.success('تم اختيار الملف بنجاح')
     }
@@ -933,14 +1062,14 @@ function LeadsUltraSimple() {
   // دالة لمعالجة بيانات Excel
   const parseExcelData = (jsonData) => {
 
-    
+
     if (jsonData.length < 2) {
       throw new Error('الملف فارغ أو لا يحتوي على بيانات صالحة')
     }
 
     const headers = jsonData[0].map(h => String(h || '').toLowerCase())
     console.log('🏷️ العناوين المستخرجة:', headers)
-    
+
     const data = []
 
     // Map English and Arabic headers to array indices
@@ -973,13 +1102,13 @@ function LeadsUltraSimple() {
       if (!row || row.length === 0) continue
 
       console.log(`📝 السطر ${i}:`, row)
-      
+
       let rawName = nameIndex >= 0 ? String(row[nameIndex] || '') : ''
       let rawPhone = phoneIndex >= 0 ? String(row[phoneIndex] || '') : ''
-      
+
       // إصلاح الاسم العربي
       let cleanName = cleanArabicText(rawName)
-      
+
       // إصلاح رقم الهاتف
       let cleanPhone = fixPhoneNumber(rawPhone)
 
@@ -1011,7 +1140,7 @@ function LeadsUltraSimple() {
           score: 0
           // Only send fields that backend expects and validates
         }
-        
+
         console.log('✅ عميل محتمل تم إنشاؤه:', lead)
         data.push(lead)
       } else {
@@ -1026,41 +1155,41 @@ function LeadsUltraSimple() {
   // دالة لتنظيف النص العربي
   const cleanArabicText = (text) => {
     if (!text) return ''
-    
+
     let cleanText = String(text).trim()
-    
+
     // إصلاح مشاكل الترميز الشائعة
     if (cleanText.includes('?') || cleanText.includes('�')) {
       console.log('⚠️ مشكلة في ترميز النص:', cleanText)
       // يمكن إضافة منطق إصلاح الترميز هنا إذا لزم الأمر
     }
-    
+
     return cleanText
   }
 
   // دالة لإصلاح رقم الهاتف
   const fixPhoneNumber = (phone) => {
     if (!phone) return ''
-    
+
     let cleanPhone = String(phone).trim()
 
-    
+
     // إزالة المسافات والرموز غير المرغوبة (باستثناء الأرقام و +)
     cleanPhone = cleanPhone.replace(/[^\d+]/g, '')
-    
+
     // إصلاح المشكلة الرئيسية: الرقم المعكوس (ينتهي بـ + أو يحتوي على + في مكان خاطئ)
     if (cleanPhone.includes('+') && !cleanPhone.startsWith('+')) {
 
-      
+
       // إزالة جميع علامات + وإعادة ترتيب الرقم
       let numbersOnly = cleanPhone.replace(/\+/g, '')
       console.log('🔢 الأرقام فقط:', numbersOnly)
-      
+
       // التحقق إذا كان الرقم يحتوي على كود الدولة 20
       if (numbersOnly.includes('20')) {
         // العثور على موضع 20 وإعادة ترتيب الرقم
         let countryCodeIndex = numbersOnly.indexOf('20')
-        
+
         if (countryCodeIndex === numbersOnly.length - 2) {
           // كود الدولة في النهاية (معكوس تماماً)
           let mainNumber = numbersOnly.substring(0, countryCodeIndex)
@@ -1108,7 +1237,7 @@ function LeadsUltraSimple() {
         cleanPhone = '+20' + cleanPhone
       }
     }
-    
+
     // التأكد من صحة تنسيق الرقم المصري
     if (cleanPhone.startsWith('+20')) {
       let numberPart = cleanPhone.substring(3)
@@ -1120,7 +1249,7 @@ function LeadsUltraSimple() {
         }
       }
     }
-    
+
 
     return cleanPhone
   }
@@ -1128,7 +1257,7 @@ function LeadsUltraSimple() {
   const parseCSV = (csvText) => {
     console.log('🔍 بدء تحليل CSV...')
     console.log('📄 أول 500 حرف من الملف:', csvText.substring(0, 500))
-    
+
     const lines = csvText.split('\n').filter(line => line.trim())
     if (lines.length < 2) {
       throw new Error('الملف فارغ أو لا يحتوي على بيانات صالحة')
@@ -1142,10 +1271,10 @@ function LeadsUltraSimple() {
       const result = []
       let current = ''
       let inQuotes = false
-      
+
       for (let i = 0; i < line.length; i++) {
         const char = line[i]
-        
+
         if (char === '"') {
           inQuotes = !inQuotes
         } else if (char === ',' && !inQuotes) {
@@ -1155,14 +1284,14 @@ function LeadsUltraSimple() {
           current += char
         }
       }
-      
+
       result.push(current.trim())
       return result.map(v => v.replace(/^"|"$/g, '')) // إزالة علامات التنصيص
     }
 
     const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase())
     console.log('🏷️ العناوين المستخرجة:', headers)
-    
+
     const data = []
 
     // Map English and Arabic headers to array indices
@@ -1193,13 +1322,13 @@ function LeadsUltraSimple() {
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i])
       console.log(`📝 السطر ${i}:`, values)
-      
+
       let rawName = nameIndex >= 0 ? values[nameIndex] : ''
       let rawPhone = phoneIndex >= 0 ? values[phoneIndex] : ''
-      
+
       // إصلاح الاسم العربي
       let cleanName = cleanArabicText(rawName)
-      
+
       // إصلاح رقم الهاتف
       let cleanPhone = fixPhoneNumber(rawPhone)
 
@@ -1231,7 +1360,7 @@ function LeadsUltraSimple() {
           score: 0
           // Only send fields that backend expects and validates
         }
-        
+
         console.log('✅ عميل محتمل تم إنشاؤه:', lead)
         data.push(lead)
       } else {
@@ -1252,7 +1381,7 @@ function LeadsUltraSimple() {
     setIsImporting(true)
     try {
       let leadsData = []
-      
+
       // التحقق من نوع الملف
       const fileName = bulkImportFile.name.toLowerCase()
       const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls')
@@ -1261,9 +1390,9 @@ function LeadsUltraSimple() {
       if (isExcel) {
         // معالجة ملفات Excel
         console.log('🔍 معالجة ملف Excel...')
-        
+
         const XLSX = await import('xlsx')
-        
+
         const arrayBuffer = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = (e) => resolve(e.target.result)
@@ -1272,16 +1401,16 @@ function LeadsUltraSimple() {
         })
 
         // قراءة ملف Excel مع دعم الترميز العربي
-        const workbook = XLSX.read(arrayBuffer, { 
+        const workbook = XLSX.read(arrayBuffer, {
           type: 'array',
           codepage: 65001, // UTF-8
           cellText: true,
           cellDates: true
         })
-        
+
         const sheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[sheetName]
-        
+
         // تحويل إلى JSON مع الحفاظ على الترميز العربي
         const jsonData = XLSX.utils.sheet_to_json(worksheet, {
           header: 1,
@@ -1292,16 +1421,16 @@ function LeadsUltraSimple() {
 
         console.log('📊 بيانات Excel المستخرجة:', jsonData.slice(0, 3))
         leadsData = parseExcelData(jsonData)
-        
+
       } else if (isCsv) {
         // معالجة ملفات CSV مع إصلاح الترميز العربي
         console.log('🔍 معالجة ملف CSV...')
-        
+
         const fileText = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = (e) => {
             let result = e.target.result
-            
+
             // إصلاح مشاكل الترميز العربي الشائعة
             if (result.includes('Ø') || result.includes('Ù') || result.includes('Ú') || result.includes('Û')) {
               // محاولة إصلاح ترميز Windows-1256 إلى UTF-8
@@ -1315,19 +1444,19 @@ function LeadsUltraSimple() {
                 console.log('فشل في إصلاح الترميز، استخدام النص الأصلي')
               }
             }
-            
+
             resolve(result)
           }
           reader.onerror = reject
           reader.readAsText(bulkImportFile, 'UTF-8')
-      })
+        })
 
-      console.log('📄 محتوى الملف:', fileText.substring(0, 200) + '...')
+        console.log('📄 محتوى الملف:', fileText.substring(0, 200) + '...')
         leadsData = parseCSV(fileText)
       } else {
         throw new Error('نوع الملف غير مدعوم. يرجى استخدام ملفات CSV أو Excel فقط.')
       }
-      
+
       if (leadsData.length === 0) {
         toast.error('لم يتم العثور على بيانات صالحة في الملف')
         return
@@ -1343,9 +1472,9 @@ function LeadsUltraSimple() {
         try {
           console.log('➕ إضافة عميل محتمل:', leadData.name)
           const result = await api.addLead(leadData)
-          
+
           // المتابعات ستُنشأ تلقائياً في الباك إند
-          
+
           successCount++
         } catch (error) {
           console.error('خطأ في إضافة عميل محتمل:', error)
@@ -1392,12 +1521,12 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    
+
     toast.success('تم تحميل النموذج بنجاح - يدعم اللغة العربية والإنجليزية')
   }
 
   // === وظائف توزيع العملاء المحتملين ===
-  
+
   const handleAssignLeads = async (leadsToAssign, salesUserId, notes) => {
     try {
       // Assign leads to sales user via API
@@ -1408,7 +1537,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
       })
 
       // Update leads with new assignment
-      const updatePromises = leadsToAssign.map(lead => 
+      const updatePromises = leadsToAssign.map(lead =>
         api.updateLead(lead.id, {
           assignedTo: salesUserId,
           status: 'assigned',
@@ -1420,7 +1549,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
       // Clear selected leads after assignment
       setSelectedLeads([])
-      
+
       // Refresh data
       refetch()
     } catch (error) {
@@ -1448,19 +1577,19 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 <p className="text-orange-100 mt-1">تتبع وإدارة العملاء المحتملين ودورة المبيعات</p>
                 <div className="flex items-center gap-4 mt-3">
                   <span className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    📅 {new Date().toLocaleDateString('ar-EG', { 
+                    📅 {new Date().toLocaleDateString('ar-EG', {
                       timeZone: 'Africa/Cairo',
                       weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </span>
                   <span className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    🕐 {new Date().toLocaleTimeString('ar-EG', { 
+                    🕐 {new Date().toLocaleTimeString('ar-EG', {
                       timeZone: 'Africa/Cairo',
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </span>
                 </div>
@@ -1468,7 +1597,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {canCreateLead() && (
-                <Button 
+                <Button
                   onClick={() => setShowAddModal(true)}
                   className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold px-6 py-3 rounded-xl border-2 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
                 >
@@ -1480,9 +1609,9 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   </div>
                 </Button>
               )}
-              
+
               {canCreateLead() && checkPermission('import_leads') && (
-                <Button 
+                <Button
                   onClick={() => setShowBulkImportModal(true)}
                   className="bg-white bg-opacity-20 border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-30 backdrop-blur-sm transition-all duration-200"
                 >
@@ -1490,9 +1619,9 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   استيراد جماعي
                 </Button>
               )}
-              
+
               {(isAdmin() || isSalesManager()) && (
-                <Button 
+                <Button
                   onClick={() => setShowDistributeModal(true)}
                   className="bg-white bg-opacity-20 border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-30 backdrop-blur-sm transition-all duration-200"
                 >
@@ -1502,7 +1631,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
               )}
 
               {(isAdmin() || isSalesManager()) && (
-                <Button 
+                <Button
                   onClick={() => setShowAssignmentModal(true)}
                   disabled={selectedLeads.length === 0}
                   className="bg-white bg-opacity-20 border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-30 backdrop-blur-sm disabled:opacity-50 transition-all duration-200"
@@ -1650,28 +1779,28 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
       {/* جدول العملاء المحتملين */}
       <LeadsTable
-          leads={finalFilteredLeads}
-          onEdit={handleEditLead}
-          onDelete={handleDeleteLead}
-          onView={handleViewLead}
-          onReminder={handleReminder}
-          onViewRating={handleViewRating}
-          onUpdateRating={handleUpdateRating}
-          onConvertToClient={handleConvertToClient}
-          onUpdateScore={handleUpdateScore}
-          onAddNote={handleAddNote}
-          onAddInteraction={handleAddInteraction}
-          onBulkDelete={handleBulkDelete}
-          onBulkExport={handleBulkExport}
-          canEditLead={canEditLead}
-          canDeleteLead={canDeleteLead}
-          canConvertLead={canConvertLead}
-          onSelectedLeadsChange={setSelectedLeads}
-          selectedLeads={selectedLeads}
-          pageSize={pageSize}
-          onPageSizeChange={handlePageSizeChange}
-          leadsInteractions={leadsInteractions}
-        />
+        leads={finalFilteredLeads}
+        onEdit={handleEditLead}
+        onDelete={handleDeleteLead}
+        onView={handleViewLead}
+        onReminder={handleReminder}
+        onViewRating={handleViewRating}
+        onUpdateRating={handleUpdateRating}
+        onConvertToClient={handleConvertToClient}
+        onUpdateScore={handleUpdateScore}
+        onAddNote={handleAddNote}
+        onAddInteraction={handleAddInteraction}
+        onBulkDelete={handleBulkDelete}
+        onBulkExport={handleBulkExport}
+        canEditLead={canEditLead}
+        canDeleteLead={canDeleteLead}
+        canConvertLead={canConvertLead}
+        onSelectedLeadsChange={setSelectedLeads}
+        selectedLeads={selectedLeads}
+        pageSize={pageSize}
+        onPageSizeChange={handlePageSizeChange}
+        leadsInteractions={leadsInteractions}
+      />
 
       {/* منطقة الترقيم */}
       {pagination && pagination.totalPages > 1 && (
@@ -1686,12 +1815,12 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   الصفحة {pagination.currentPage} من {pagination.totalPages}
                 </Badge>
               </div>
-              
+
               {/* اختيار حجم الصفحة في الأسفل أيضاً */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">عرض:</span>
-                <select 
-                  value={pageSize} 
+                <select
+                  value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
                   className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -1707,7 +1836,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 <span className="text-sm text-gray-600">عميل</span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-center gap-2">
               <Button
                 onClick={prevPage}
@@ -1718,12 +1847,12 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
               >
                 السابق
               </Button>
-              
+
               <div className="flex items-center gap-1">
                 {[...Array(Math.min(pagination.totalPages, 5))].map((_, i) => {
                   const pageNum = Math.max(1, pagination.currentPage - 2) + i
                   if (pageNum > pagination.totalPages) return null
-                  
+
                   return (
                     <Button
                       key={pageNum}
@@ -1737,7 +1866,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   )
                 })}
               </div>
-              
+
               <Button
                 onClick={nextPage}
                 disabled={!pagination.hasNextPage}
@@ -1754,108 +1883,108 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
       {/* العرض القديم - مخفي */}
       <div className="hidden">
-      {finalFilteredLeads.length > 0 ? (
-        <div className="bizmax-grid-3">
-          {finalFilteredLeads.map((lead) => (
-            <Card key={lead.id} className="bizmax-card hover:shadow-medium transition-all duration-200">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {lead.name?.charAt(0) || 'ع'}
-                      </span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{lead.name}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={getStatusColor(lead.status)}>
-                          {getStatusText(lead.status)}
-                        </Badge>
-                        <span className={`text-sm font-medium ${getScoreColor(lead.score || 0)}`}>
-                          {lead.score || 0}/100
+        {finalFilteredLeads.length > 0 ? (
+          <div className="bizmax-grid-3">
+            {finalFilteredLeads.map((lead) => (
+              <Card key={lead.id} className="bizmax-card hover:shadow-medium transition-all duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium">
+                          {lead.name?.charAt(0) || 'ع'}
                         </span>
                       </div>
+                      <div>
+                        <CardTitle className="text-lg">{lead.name}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant={getStatusColor(lead.status)}>
+                            {getStatusText(lead.status)}
+                          </Badge>
+                          <span className={`text-sm font-medium ${getScoreColor(lead.score || 0)}`}>
+                            {lead.score || 0}/100
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="relative">
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+                  {lead.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Mail className="h-4 w-4" />
+                      <span className="truncate">{lead.email}</span>
+                    </div>
+                  )}
+
+                  {lead.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Phone className="h-4 w-4" />
+                      <span>{formatPhoneNumber(lead.phone)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>المصدر: {lead.source === 'website' ? 'الموقع' :
+                      lead.source === 'social' ? 'وسائل التواصل' :
+                        lead.source === 'referral' ? 'إحالة' : 'إعلان'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Calendar className="h-4 w-4" />
+                    <span>آخر تواصل: {formatDateArabic(lead.lastContact)}</span>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingLead(lead)}
+                    >
+                      <Edit className="h-3 w-3 ml-1" />
+                      تعديل
+                    </Button>
+                    <Button
+                      variant="success"
+                      size="sm"
+                      onClick={() => handleConvertToClient(lead)}
+                      disabled={lead.status === 'converted'}
+                    >
+                      <CheckCircle className="h-3 w-3 ml-1" />
+                      تحويل
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteLead(lead.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                {lead.email && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Mail className="h-4 w-4" />
-                    <span className="truncate">{lead.email}</span>
-                  </div>
-                )}
-                
-                {lead.phone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4" />
-                    <span>{formatPhoneNumber(lead.phone)}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>المصدر: {lead.source === 'website' ? 'الموقع' : 
-                                  lead.source === 'social' ? 'وسائل التواصل' :
-                                  lead.source === 'referral' ? 'إحالة' : 'إعلان'}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Calendar className="h-4 w-4" />
-                  <span>آخر تواصل: {formatDateArabic(lead.lastContact)}</span>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setEditingLead(lead)}
-                  >
-                    <Edit className="h-3 w-3 ml-1" />
-                    تعديل
-                  </Button>
-                  <Button 
-                    variant="success" 
-                    size="sm"
-                    onClick={() => handleConvertToClient(lead)}
-                    disabled={lead.status === 'converted'}
-                  >
-                    <CheckCircle className="h-3 w-3 ml-1" />
-                    تحويل
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeleteLead(lead.id)}
-                  >
-                    <Trash2 className="h-3 w-3 text-red-500" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card className="bizmax-card">
-          <div className="text-center py-12">
-            <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد عملاء محتملين</h3>
-            <p className="text-gray-500 mb-4">ابدأ بإضافة أول عميل محتمل</p>
-            <Button onClick={() => setShowAddModal(true)}>
-              <Plus className="h-4 w-4 ml-2" />
-              إضافة عميل محتمل
-            </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </Card>
-      )}
+        ) : (
+          <Card className="bizmax-card">
+            <div className="text-center py-12">
+              <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد عملاء محتملين</h3>
+              <p className="text-gray-500 mb-4">ابدأ بإضافة أول عميل محتمل</p>
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="h-4 w-4 ml-2" />
+                إضافة عميل محتمل
+              </Button>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Add Lead Modal */}
@@ -1889,169 +2018,173 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 </button>
               </div>
             </div>
-            
+
             <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
               <form onSubmit={handleAddLead} className="p-6 space-y-4">
-              {/* الصف الأول */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    الاسم الكامل <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="أدخل الاسم الكامل"
-                    value={newLead.name}
-                    onChange={(e) => setNewLead({...newLead, name: e.target.value})}
-                    required
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    رقم الموبايل <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                      <img src="https://flagcdn.com/w20/eg.png" alt="مصر" className="w-4 h-2.5" />
-                      <span className="text-xs text-gray-600">+20</span>
-                    </div>
+                {/* الصف الأول */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      الاسم الكامل <span className="text-red-500">*</span>
+                    </label>
                     <Input
-                      placeholder="أدخل رقم الموبايل"
-                      value={newLead.phone}
-                      onChange={(e) => setNewLead({...newLead, phone: e.target.value})}
-                      className="pr-16 h-9"
+                      placeholder="أدخل الاسم الكامل"
+                      value={newLead.name}
+                      onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
+                      required
+                      className="h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      رقم الموبايل <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/eg.png" alt="مصر" className="w-4 h-2.5" />
+                        <span className="text-xs text-gray-600">+20</span>
+                      </div>
+                      <Input
+                        placeholder="أدخل رقم الموبايل"
+                        value={newLead.phone}
+                        onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
+                        className="pr-16 h-9"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* الصف الثاني */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      البريد الإلكتروني
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="example@company.com"
+                      value={newLead.email}
+                      onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+                      className="h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      مورد البيانات <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="مثال: ماجد"
+                      value={newLead.source}
+                      onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
+                      className="h-9"
                       required
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* الصف الثاني */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    البريد الإلكتروني
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="example@company.com"
-                    value={newLead.email}
-                    onChange={(e) => setNewLead({...newLead, email: e.target.value})}
-                    className="h-9"
-                  />
+                {/* الصف الثالث */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      نوع العميل
+                    </label>
+                    <select
+                      value={newLead.clientType || 'فردي'}
+                      onChange={(e) => setNewLead({ ...newLead, clientType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="فردي">فردي</option>
+                      <option value="شركة">شركة</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      الأولوية
+                    </label>
+                    <select
+                      value={newLead.priority || 'متوسطة'}
+                      onChange={(e) => setNewLead({ ...newLead, priority: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="منخفضة">منخفضة</option>
+                      <option value="متوسطة">متوسطة</option>
+                      <option value="عالية">عالية</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      الحالة
+                    </label>
+                    <select
+                      value={newLead.status || 'بارد'}
+                      onChange={(e) => setNewLead({ ...newLead, status: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="بارد">بارد</option>
+                      <option value="دافئ">دافئ</option>
+                      <option value="ساخن">ساخن</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    مورد البيانات <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                                            placeholder="مثال: ماجد"
-                    value={newLead.source}
-                    onChange={(e) => setNewLead({...newLead, source: e.target.value})}
-                    className="h-9"
-                    required
-                  />
-                </div>
-              </div>
 
-              {/* الصف الثالث */}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    نوع العميل
-                  </label>
-                  <select
-                    value={newLead.clientType || 'فردي'}
-                    onChange={(e) => setNewLead({...newLead, clientType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="فردي">فردي</option>
-                    <option value="شركة">شركة</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    الأولوية
-                  </label>
-                  <select
-                    value={newLead.priority || 'متوسطة'}
-                    onChange={(e) => setNewLead({...newLead, priority: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="منخفضة">منخفضة</option>
-                    <option value="متوسطة">متوسطة</option>
-                    <option value="عالية">عالية</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    الحالة
-                  </label>
-                  <select
-                    value={newLead.status || 'بارد'}
-                    onChange={(e) => setNewLead({...newLead, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="بارد">بارد</option>
-                    <option value="دافئ">دافئ</option>
-                    <option value="ساخن">ساخن</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* الصف الرابع */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    الموظف المسؤول <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={newLead.assignedTo || ''}
-                    onChange={(e) => setNewLead({...newLead, assignedTo: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 h-9"
-                    required
-                  >
-                    <option value="">-- اختر الموظف المسؤول --</option>
-                    {salesUsers.map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} ({user.role === 'sales' ? 'مبيعات' : 'مندوب مبيعات'})
-                      </option>
-                    ))}
-                    {/* إضافة المستخدم الحالي كخيار افتراضي إذا كان admin أو sales_manager */}
-                    {(isAdmin() || isSalesManager()) && (
-                      <option value={currentUser?.id || userProfile?.id}>
-                        {userProfile?.displayName || userProfile?.email || 'أنا'} (مدير)
-                      </option>
+                {/* الصف الرابع */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      الموظف المسؤول <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={newLead.assignedTo || ''}
+                      onChange={(e) => setNewLead({ ...newLead, assignedTo: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 h-9 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      required
+                      disabled={!isAdmin() && !isSalesManager()}
+                    >
+                      <option value="">-- اختر الموظف المسؤول --</option>
+                      {salesUsers.map(user => (
+                        <option key={user.id} value={user.id}>
+                          {user.name} ({user.role === 'sales' ? 'مبيعات' : 'مندوب مبيعات'})
+                        </option>
+                      ))}
+                      {/* إضافة المستخدم الحالي كخيار افتراضي إذا كان admin أو sales_manager */}
+                      {(isAdmin() || isSalesManager()) && (
+                        <option value={currentUser?.id || userProfile?.id}>
+                          {userProfile?.displayName || userProfile?.email || 'أنا'} (مدير)
+                        </option>
+                      )}
+                    </select>
+                    {!isAdmin() && !isSalesManager() && (
+                      <p className="text-xs text-gray-500 mt-1">سيتم تعيينك تلقائياً كموظف مسؤول</p>
                     )}
-                  </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">
+                      ملاحظات
+                    </label>
+                    <textarea
+                      placeholder="ملاحظات إضافية..."
+                      value={newLead.notes || ''}
+                      onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                      rows={1}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">
-                    ملاحظات
-                  </label>
-                  <textarea
-                    placeholder="ملاحظات إضافية..."
-                    value={newLead.notes || ''}
-                    onChange={(e) => setNewLead({...newLead, notes: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                    rows={1}
-                  />
-                </div>
-              </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t bg-gray-50 -mx-6 -mb-6 px-6 py-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2"
-                >
-                  إلغاء
-                </Button>
-                <Button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                  حفظ
-                </Button>
-              </div>
+                <div className="flex justify-end gap-3 pt-6 border-t bg-gray-50 -mx-6 -mb-6 px-6 py-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2"
+                  >
+                    إلغاء
+                  </Button>
+                  <Button type="submit" className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    حفظ
+                  </Button>
+                </div>
               </form>
             </div>
           </div>
@@ -2075,13 +2208,13 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={handleUpdateLead} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
                 <Input
                   value={editingLead.name || ''}
-                  onChange={(e) => setEditingLead({...editingLead, name: e.target.value})}
+                  onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   required
                 />
@@ -2091,7 +2224,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 <Input
                   type="email"
                   value={editingLead.email || ''}
-                  onChange={(e) => setEditingLead({...editingLead, email: e.target.value})}
+                  onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
@@ -2099,7 +2232,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
                 <Input
                   value={editingLead.phone || ''}
-                  onChange={(e) => setEditingLead({...editingLead, phone: e.target.value})}
+                  onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
@@ -2107,7 +2240,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 <label className="block text-sm font-medium text-gray-700 mb-1">المصدر</label>
                 <select
                   value={editingLead.source || 'website'}
-                  onChange={(e) => setEditingLead({...editingLead, source: e.target.value})}
+                  onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="website">الموقع</option>
@@ -2120,7 +2253,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 <label className="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
                 <select
                   value={editingLead.status || 'بارد'}
-                  onChange={(e) => setEditingLead({...editingLead, status: e.target.value})}
+                  onChange={(e) => setEditingLead({ ...editingLead, status: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="بارد">بارد</option>
@@ -2136,10 +2269,10 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   min="0"
                   max="100"
                   value={editingLead.score || 0}
-                  onChange={(e) => setEditingLead({...editingLead, score: parseInt(e.target.value)})}
+                  onChange={(e) => setEditingLead({ ...editingLead, score: parseInt(e.target.value) })}
                 />
               </div>
-              
+
               <div className="flex justify-end gap-3 pt-6 border-t bg-gray-50 -mx-6 -mb-6 px-6 py-4">
                 <Button type="button" variant="outline" onClick={() => setEditingLead(null)} className="px-4 py-2">
                   إلغاء
@@ -2268,17 +2401,16 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
         message={
           <div className="space-y-4">
             <p>هل أنت متأكد من تحويل <strong>"{leadToConvert?.name}"</strong> إلى عميل فعلي؟</p>
-            
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-semibold text-blue-900 mb-2">تفاصيل التحويل:</h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-gray-600">Lead Score:</span>
-                  <span className={`font-bold ml-2 ${
-                    (leadToConvert?.score || 0) >= 80 ? 'text-green-600' :
+                  <span className={`font-bold ml-2 ${(leadToConvert?.score || 0) >= 80 ? 'text-green-600' :
                     (leadToConvert?.score || 0) >= 60 ? 'text-orange-600' :
-                    'text-blue-600'
-                  }`}>
+                      'text-blue-600'
+                    }`}>
                     {leadToConvert?.score || 0}/100
                   </span>
                 </div>
@@ -2298,7 +2430,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-yellow-800 text-sm">
                 ⚠️ سيتم حذف العميل من قائمة العملاء المحتملين وإضافته لقائمة العملاء الفعليين.
@@ -2440,7 +2572,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                     <p className="text-sm text-gray-600">
                       قم بتحميل النموذج لمعرفة التنسيق المطلوب لملف العملاء المحتملين
                     </p>
-                    
+
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="font-medium text-gray-900 mb-2">الحقول المطلوبة:</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
@@ -2498,8 +2630,8 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
               </Card>
 
               <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setShowBulkImportModal(false)
                     setBulkImportFile(null)
@@ -2560,6 +2692,16 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
         salesUsers={salesUsers}
         onAssignLeads={handleAssignLeads}
       />
+
+      {/* Duplicate Detection Modal */}
+      {showDuplicateModal && duplicateLeads.length > 0 && (
+        <DuplicateLeadModal
+          duplicates={duplicateLeads}
+          onContinue={handleContinueWithDuplicate}
+          onCancel={handleCancelDuplicate}
+          onViewDuplicate={handleViewDuplicateLead}
+        />
+      )}
 
       {/* مودال التذكير السريع */}
       <QuickReminderModal
