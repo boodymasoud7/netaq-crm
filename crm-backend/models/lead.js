@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
     }
   }
-  
+
   Lead.init({
     name: {
       type: DataTypes.STRING,
@@ -140,16 +140,31 @@ module.exports = (sequelize, DataTypes) => {
       }
     ]
   });
-  
+
   // Define associations
-  Lead.associate = function(models) {
+  Lead.associate = function (models) {
     // Association for the user who deleted this lead
     Lead.belongsTo(models.User, {
       foreignKey: 'deleted_by',
       as: 'deletedByUser',
       constraints: false
     });
+
+    // Association for the assigned user
+    Lead.belongsTo(models.User, {
+      foreignKey: 'assignedTo',
+      as: 'assignedToUser',
+      constraints: false
+    });
+
+    // Association for the user who created this lead
+    Lead.belongsTo(models.User, {
+      foreignKey: 'createdBy',
+      as: 'createdByUser',
+      constraints: false
+    });
   };
+
 
   return Lead;
 };
