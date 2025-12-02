@@ -852,20 +852,29 @@ exports.checkDuplicates = async (req, res) => {
       whereConditions.id = { [Op.ne]: excludeId };
     }
 
-    // Find duplicates with assigned user info
+    // Find duplicates (without JOIN due to type mismatch)
     const duplicates = await Lead.findAll({
       where: whereConditions,
       attributes: ['id', 'name', 'phone', 'email', 'status', 'source', 'createdAt', 'assignedTo', 'priority', 'score'],
-      include: [
-        {
-          model: User,
-          as: 'assignedToUser',
-          attributes: ['id', 'name', 'email'],
-          required: false
-        }
-      ],
       limit: 10,
       order: [['createdAt', 'DESC']]
+    });
+
+    // Get unique assignedTo IDs
+    const assignedToIds = [...new Set(duplicates.map(lead => lead.assignedTo).filter(id => id))];
+
+    // Fetch users for these IDs
+    const users = await User.findAll({
+      where: {
+        id: assignedToIds.map(id => parseInt(id)).filter(id => !isNaN(id))
+      },
+      attributes: ['id', 'name', 'email']
+    });
+
+    // Create a map of user ID to user name
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user.id] = user.name;
     });
 
     // Format response to include assignedToName
@@ -878,7 +887,7 @@ exports.checkDuplicates = async (req, res) => {
       source: lead.source,
       createdAt: lead.createdAt,
       assignedTo: lead.assignedTo,
-      assignedToName: lead.assignedToUser ? lead.assignedToUser.name : 'غير محدد',
+      assignedToName: lead.assignedTo ? (userMap[parseInt(lead.assignedTo)] || 'غير محدد') : 'غير محدد',
       priority: lead.priority,
       score: lead.score
     }));
@@ -900,6 +909,8 @@ exports.checkDuplicates = async (req, res) => {
     });
   }
 };
+
+
 
 
 
