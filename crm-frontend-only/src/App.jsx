@@ -40,6 +40,9 @@ import { PERMISSIONS } from './lib/roles'
 import './App.css'
 
 function App() {
+  // تفعيل الرسائل التحفيزية 🎉
+  useMotivationalMessages()
+
   return (
     <ApiErrorBoundary>
       <AuthProvider>
