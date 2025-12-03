@@ -49,6 +49,7 @@ import SimpleAddReminderModal from '../components/reminders/SimpleAddReminderMod
 import QuickReminderModal from '../components/reminders/QuickReminderModal'
 import RatingViewModal from '../components/modals/RatingViewModal'
 import RatingUpdateModal from '../components/modals/RatingUpdateModal'
+import BulkDuplicateReportModal from '../components/modals/BulkDuplicateReportModal'
 import LeadAssignmentModal from '../components/modals/LeadAssignmentModal'
 // تم حذف زر التذكير السريع مؤقتاً
 import { useAuth } from '../contexts/AuthContext'
@@ -343,6 +344,9 @@ function LeadsUltraSimple() {
 
   const [bulkImportFile, setBulkImportFile] = useState(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [showBulkDuplicateModal, setShowBulkDuplicateModal] = useState(false)
+  const [bulkDuplicateData, setBulkDuplicateData] = useState(null)
+  const [pendingBulkImportData, setPendingBulkImportData] = useState(null)
   const [bulkImportSource, setBulkImportSource] = useState('')
   const [bulkImportInterest, setBulkImportInterest] = useState('')
 
@@ -1463,6 +1467,28 @@ function LeadsUltraSimple() {
       }
 
       console.log('📊 البيانات المستخرجة:', leadsData)
+
+      // Check for duplicates before importing
+      try {
+        const phones = leadsData.map(lead => lead.phone).filter(Boolean)
+        const emails = leadsData.map(lead => lead.email).filter(Boolean)
+
+        if (phones.length > 0 || emails.length > 0) {
+          const duplicateCheck = await api.bulkCheckLeadDuplicates(phones, emails)
+
+          if (duplicateCheck.duplicateCount > 0) {
+            // Show bulk duplicate modal
+            setBulkDuplicateData(duplicateCheck)
+            setPendingBulkImportData(leadsData)
+            setShowBulkDuplicateModal(true)
+            setIsImporting(false)
+            return
+          }
+        }
+      } catch (error) {
+        console.error('خطأ في فحص التكرار:', error)
+        // Continue with import even if duplicate check fails
+      }
 
       // إضافة العملاء المحتملين إلى Firebase
       let successCount = 0
@@ -2711,6 +2737,85 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
         client={selectedLeadForReminder}
         onSuccess={handleReminderSuccess}
       />
+
+      {/* Bulk Duplicate Report Modal */}
+      {showBulkDuplicateModal && bulkDuplicateData && pendingBulkImportData && (
+        <BulkDuplicateReportModal
+          duplicates={bulkDuplicateData.duplicates || []}
+          duplicateCount={bulkDuplicateData.duplicateCount || 0}
+          newCount={bulkDuplicateData.newCount || 0}
+          totalCount={bulkDuplicateData.totalInputCount || pendingBulkImportData.length}
+          onSkipDuplicates={async () => {
+            // Filter out duplicates
+            const duplicatePhones = new Set(bulkDuplicateData.duplicates.map(d => d.phone))
+            const duplicateEmails = new Set(bulkDuplicateData.duplicates.map(d => d.email))
+            const newRecords = pendingBulkImportData.filter(lead => {
+              return !duplicatePhones.has(lead.phone) && !duplicateEmails.has(lead.email)
+            })
+
+            // Import only new records
+            let successCount = 0
+            let errorCount = 0
+            for (const leadData of newRecords) {
+              try {
+                await api.addLead(leadData)
+                successCount++
+              } catch (error) {
+                console.error('Error importing lead:', error)
+                errorCount++
+              }
+            }
+
+            if (successCount > 0) {
+              toast.success(`تم استيراد ${successCount} عميل محتمل جديد بنجاح`)
+              refetch()
+            }
+            if (errorCount > 0) {
+              toast.error(`فشل استيراد ${errorCount} سجل`)
+            }
+
+            setShowBulkDuplicateModal(false)
+            setBulkDuplicateData(null)
+            setPendingBulkImportData(null)
+            setBulkImportFile(null)
+            setShowBulkImportModal(false)
+          }}
+          onAddAll={async () => {
+            // Import all including duplicates
+            let successCount = 0
+            let errorCount = 0
+            for (const leadData of pendingBulkImportData) {
+              try {
+                await api.addLead(leadData)
+                successCount++
+              } catch (error) {
+                console.error('Error importing lead:', error)
+                errorCount++
+              }
+            }
+
+            if (successCount > 0) {
+              toast.success(`تم استيراد ${successCount} عميل محتمل بنجاح`)
+              refetch()
+            }
+            if (errorCount > 0) {
+              toast.error(`فشل استيراد ${errorCount} سجل`)
+            }
+
+            setShowBulkDuplicateModal(false)
+            setBulkDuplicateData(null)
+            setPendingBulkImportData(null)
+            setBulkImportFile(null)
+            setShowBulkImportModal(false)
+          }}
+          onCancel={() => {
+            setShowBulkDuplicateModal(false)
+            setBulkDuplicateData(null)
+            setPendingBulkImportData(null)
+          }}
+          isManager={isAdmin() || isSalesManager()}
+        />
+      )}
 
     </div>
   )

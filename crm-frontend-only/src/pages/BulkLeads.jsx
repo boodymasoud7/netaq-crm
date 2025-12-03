@@ -125,9 +125,46 @@ function BulkLeads() {
 
   const proceedWithImport = async (dataToImport) => {
     try {
-      // TODO: Implement actual import logic here
-      // For now, just show success message
-      toast.success(`تم استيراد ${dataToImport.length} عميل محتمل بنجاح`)
+      let successCount = 0
+      let errorCount = 0
+
+      // Import each lead
+      for (const row of dataToImport) {
+        try {
+          const leadData = {
+            name: row['الاسم'] || row.name || row.Name || '',
+            phone: row['رقم الهاتف'] || row.phone || row.Phone || '',
+            email: row['البريد الإلكتروني'] || row.email || row.Email || '',
+            company: row['الشركة'] || row.company || row.Company || '',
+            source: row['المصدر'] || row.source || row.Source || 'استيراد جماعي',
+            status: row['الحالة'] || row.status || row.Status || 'new',
+            notes: row['الملاحظات'] || row.notes || row.Notes || '',
+            interest: row['الاهتمام'] || row.interest || row.Interest || '',
+            priority: 'medium'
+          }
+
+          // Validate required fields
+          if (!leadData.name || !leadData.phone) {
+            errorCount++
+            continue
+          }
+
+          await api.addLead(leadData)
+          successCount++
+        } catch (error) {
+          console.error('Error importing lead:', error)
+          errorCount++
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast.success(`تم استيراد ${successCount} عميل محتمل بنجاح`)
+      }
+      if (errorCount > 0) {
+        toast.error(`فشل استيراد ${errorCount} سجل`)
+      }
+
       setFile(null)
       setParsedData(null)
       setShowDuplicateModal(false)
