@@ -849,6 +849,7 @@ exports.checkDuplicates = async (req, res) => {
 
     // If no search criteria, return no duplicates
     if (whereConditions[Op.or].length === 0) {
+      console.log('⚠️ No search criteria provided for duplicate check');
       return res.json({
         message: 'No search criteria provided',
         hasDuplicates: false,
@@ -862,6 +863,8 @@ exports.checkDuplicates = async (req, res) => {
       whereConditions.id = { [Op.ne]: excludeId };
     }
 
+    console.log('🔍 Searching for duplicates with conditions:', JSON.stringify(whereConditions, null, 2));
+
     // Find duplicates (without JOIN due to type mismatch)
     const duplicates = await Lead.findAll({
       where: whereConditions,
@@ -869,6 +872,8 @@ exports.checkDuplicates = async (req, res) => {
       limit: 10,
       order: [['createdAt', 'DESC']]
     });
+
+    console.log(`🔍 Found ${duplicates.length} duplicates for phone="${phone}", email="${email}"`);
 
     // Get unique assignedTo IDs
     const assignedToIds = [...new Set(duplicates.map(lead => lead.assignedTo).filter(id => id))];
