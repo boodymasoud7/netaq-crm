@@ -498,7 +498,9 @@ function LeadsUltraSimple() {
       }
 
       // Check for duplicates before adding
+      console.log('🔍 Checking for duplicates:', { phone: newLead.phone, email: newLead.email })
       const duplicateCheck = await api.checkLeadDuplicates(newLead.phone, newLead.email)
+      console.log('🔍 Duplicate check result:', duplicateCheck)
 
       if (duplicateCheck.hasDuplicates && duplicateCheck.duplicates.length > 0) {
         console.log('🔍 Duplicates found:', duplicateCheck.duplicates)
@@ -507,6 +509,9 @@ function LeadsUltraSimple() {
         setShowDuplicateModal(true)
         return // Stop here and show modal
       }
+
+      console.log('✅ No duplicates found, proceeding with add')
+
       if (!newLead.source) {
         newLead.source = 'website' // Default source
       }

@@ -847,6 +847,16 @@ exports.checkDuplicates = async (req, res) => {
       });
     }
 
+    // If no search criteria, return no duplicates
+    if (whereConditions[Op.or].length === 0) {
+      return res.json({
+        message: 'No search criteria provided',
+        hasDuplicates: false,
+        duplicates: [],
+        count: 0
+      });
+    }
+
     // Exclude current lead when editing
     if (excludeId) {
       whereConditions.id = { [Op.ne]: excludeId };
