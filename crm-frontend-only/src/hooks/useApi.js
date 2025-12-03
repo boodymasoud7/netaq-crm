@@ -218,7 +218,7 @@ export const useApi = () => {
     getActivityFeed: (params) => makeApiCall(dbAPI.getActivityFeed, params),
 
     // Bulk operations
-    bulkCheckLeadDuplicates: (phones, emails) => makeApiCall(dbAPI.bulkCheckLeadDuplicates, phones, emails)
+    bulkCheckLeadDuplicates: (phones, emails) => makeApiCall(() => dbAPI.bulkCheckLeadDuplicates(phones, emails))
   }
 }
 
