@@ -2700,6 +2700,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           onContinue={handleContinueWithDuplicate}
           onCancel={handleCancelDuplicate}
           onViewDuplicate={handleViewDuplicateLead}
+          isManager={isAdmin() || isSalesManager()}
         />
       )}
 

@@ -2,7 +2,7 @@ import { AlertTriangle, Users, Phone, Mail, Calendar, Eye } from 'lucide-react';
 import { Button } from '../ui/button';
 import { formatDateArabic } from '../../lib/utils';
 
-export default function DuplicateClientModal({ duplicates, onCancel, onViewDuplicate }) {
+export default function DuplicateClientModal({ duplicates, onContinue, onCancel, onViewDuplicate, isManager = false }) {
     if (!duplicates || duplicates.length === 0) {
         return null;
     }
@@ -27,7 +27,7 @@ export default function DuplicateClientModal({ duplicates, onCancel, onViewDupli
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200 bg-red-50">
+                <div className="p-6 border-t border-gray-200 bg-red-50">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-red-100 rounded-lg">
                             <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -43,9 +43,9 @@ export default function DuplicateClientModal({ duplicates, onCancel, onViewDupli
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800 font-medium">
-                            <strong>تنبيه:</strong> لا يمكن إضافة هذا العميل لأنه موجود مسبقاً في النظام. يرجى التواصل مع المدير لمزيد من المعلومات.
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                            <strong>تنبيه:</strong> يرجى مراجعة السجلات التالية قبل المتابعة. قد يكون هذا العميل موجود مسبقاً في النظام.
                         </p>
                     </div>
 
@@ -116,14 +116,27 @@ export default function DuplicateClientModal({ duplicates, onCancel, onViewDupli
 
                 {/* Footer */}
                 <div className="p-6 border-t border-gray-200 bg-gray-50">
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800 font-medium">
+                            <strong>تنبيه:</strong> {isManager ? 'يوجد عملاء مشابهين في النظام. يمكنك المتابعة أو مراجعة السجلات الموجودة.' : 'لا يمكن إضافة هذا العميل لأنه موجود مسبقاً في النظام. يرجى التواصل مع المدير.'}
+                        </p>
+                    </div>
                     <div className="flex gap-3 justify-end">
                         <Button
                             variant="outline"
                             onClick={onCancel}
                             className="min-w-[120px]"
                         >
-                            إغلاق
+                            {isManager ? 'إلغاء' : 'إغلاق'}
                         </Button>
+                        {isManager && (
+                            <Button
+                                onClick={onContinue}
+                                className="bg-amber-500 hover:bg-amber-600 text-white min-w-[120px]"
+                            >
+                                متابعة الإضافة
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

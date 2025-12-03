@@ -2,7 +2,7 @@ import { AlertTriangle, Users, Phone, Mail, Calendar, Eye } from 'lucide-react';
 import { Button } from '../ui/button';
 import { formatDateArabic } from '../../lib/utils';
 
-export default function DuplicateLeadModal({ duplicates, onContinue, onCancel, onViewDuplicate }) {
+export default function DuplicateLeadModal({ duplicates, onContinue, onCancel, onViewDuplicate, isManager = false }) {
     if (!duplicates || duplicates.length === 0) {
         return null;
     }
@@ -120,7 +120,7 @@ export default function DuplicateLeadModal({ duplicates, onContinue, onCancel, o
                 <div className="p-6 border-t border-gray-200 bg-gray-50">
                     <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <p className="text-sm text-red-800 font-medium">
-                            <strong>تنبيه:</strong> لا يمكن إضافة هذا العميل لأنه موجود مسبقاً في النظام. يرجى التواصل مع المدير لمزيد من المعلومات.
+                            <strong>تنبيه:</strong> {isManager ? 'يوجد عملاء محتملين مشابهين في النظام. يمكنك المتابعة أو مراجعة السجلات الموجودة.' : 'لا يمكن إضافة هذا العميل لأنه موجود مسبقاً في النظام. يرجى التواصل مع المدير.'}
                         </p>
                     </div>
                     <div className="flex gap-3 justify-end">
@@ -129,8 +129,16 @@ export default function DuplicateLeadModal({ duplicates, onContinue, onCancel, o
                             onClick={onCancel}
                             className="min-w-[120px]"
                         >
-                            إغلاق
+                            {isManager ? 'إلغاء' : 'إغلاق'}
                         </Button>
+                        {isManager && (
+                            <Button
+                                onClick={onContinue}
+                                className="bg-amber-500 hover:bg-amber-600 text-white min-w-[120px]"
+                            >
+                                متابعة الإضافة
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

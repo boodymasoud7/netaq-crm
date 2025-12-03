@@ -1603,6 +1603,33 @@ export default function ClientsSimple() {
       {showDuplicateModal && duplicateClients.length > 0 && (
         <DuplicateClientModal
           duplicates={duplicateClients}
+          onContinue={async () => {
+            // المدير يقدر يضيف رغم التكرار
+            setShowDuplicateModal(false)
+            try {
+              const clientData = {
+                name: newClient.name.trim(),
+                phone: newClient.phone.trim(),
+                status: newClient.status || 'active',
+                source: newClient.source || 'website'
+              }
+              if (newClient.email && newClient.email.trim()) clientData.email = newClient.email.trim()
+              if (newClient.address && newClient.address.trim()) clientData.address = newClient.address.trim()
+              if (newClient.notes && newClient.notes.trim()) clientData.notes = newClient.notes.trim()
+              if (newClient.budget && !isNaN(parseFloat(newClient.budget))) clientData.budget = parseFloat(newClient.budget)
+
+              await api.addClient(clientData)
+              refetch()
+              notifyNewClient(newClient.name)
+              await sendNewClientNotification(newClient.name, currentUser?.displayName || currentUser?.email || 'موظف')
+              setNewClient({ name: '', email: '', phone: '', address: '', notes: '', status: 'active', clientType: 'فردي', source: '', assignedTo: '' })
+              setShowAddModal(false)
+              toast.success('تم إضافة العميل بنجاح')
+            } catch (error) {
+              console.error('خطأ في إضافة العميل:', error)
+              toast.error('فشل في إضافة العميل')
+            }
+          }}
           onCancel={() => {
             setShowDuplicateModal(false)
             setDuplicateClients([])
@@ -1611,6 +1638,7 @@ export default function ClientsSimple() {
             setShowDuplicateModal(false)
             setViewingClient(client)
           }}
+          isManager={isAdmin() || isSalesManager()}
         />
       )}
     </div>
