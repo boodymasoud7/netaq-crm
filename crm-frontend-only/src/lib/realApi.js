@@ -1785,6 +1785,15 @@ const followUpsAPI = {
     return await apiCall(`/reminders/${id}/permanent`, {
       method: 'DELETE'
     })
+  },
+
+  // Bulk check for duplicate leads (for import)
+  bulkCheckLeadDuplicates: async (phones, emails) => {
+    console.log('🔍 Bulk checking for duplicate leads:', phones?.length, 'phones,', emails?.length, 'emails')
+    return await apiCall('/leads/bulk-check-duplicates', {
+      method: 'POST',
+      body: JSON.stringify({ phones, emails })
+    })
   }
 }
 
@@ -1802,15 +1811,6 @@ const dashboardAPI = {
   getQuickStats: async () => {
     console.log('⚡ Getting quick stats');
     return await apiCall('/dashboard/quick-stats');
-  },
-
-  // Bulk check for duplicate leads (for import)
-  bulkCheckLeadDuplicates: async (phones, emails) => {
-    console.log('🔍 Bulk checking for duplicate leads:', phones?.length, 'phones,', emails?.length, 'emails')
-    return await apiCall('/leads/bulk-check-duplicates', {
-      method: 'POST',
-      body: JSON.stringify({ phones, emails })
-    })
   }
 };
 
