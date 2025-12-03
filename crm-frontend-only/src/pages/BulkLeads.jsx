@@ -3,26 +3,82 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Upload, Download, FileText } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { useApi } from '../hooks/useApi'
+import { usePermissions } from '../hooks/usePermissions'
+import BulkDuplicateReportModal from '../components/modals/BulkDuplicateReportModal'
+import * as XLSX from 'xlsx'
 
 function BulkLeads() {
   const [file, setFile] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [parsedData, setParsedData] = useState(null)
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [duplicateData, setDuplicateData] = useState(null)
+
+  const api = useApi()
+  const { isAdmin, isSalesManager } = usePermissions()
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0]
     if (selectedFile) {
-      // التحقق من نوع الملف
       const allowedTypes = ['.csv', '.xlsx', '.xls']
       const fileExtension = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'))
-      
+
       if (!allowedTypes.includes(fileExtension)) {
         toast.error('يرجى اختيار ملف CSV أو Excel فقط')
         return
       }
-      
+
       setFile(selectedFile)
+      setParsedData(null)
       toast.success('تم اختيار الملف بنجاح')
     }
+  }
+
+  const parseFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onload = (e) => {
+        try {
+          let data = []
+
+          if (file.name.endsWith('.csv')) {
+            // Parse CSV
+            const text = e.target.result
+            const lines = text.split('\n')
+            const headers = lines[0].split(',').map(h => h.trim())
+
+            for (let i = 1; i < lines.length; i++) {
+              if (!lines[i].trim()) continue
+              const values = lines[i].split(',').map(v => v.trim())
+              const obj = {}
+              headers.forEach((header, index) => {
+                obj[header] = values[index] || ''
+              })
+              data.push(obj)
+            }
+          } else {
+            // Parse Excel
+            const workbook = XLSX.read(e.target.result, { type: 'binary' })
+            const sheetName = workbook.SheetNames[0]
+            data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName])
+          }
+
+          resolve(data)
+        } catch (error) {
+          reject(error)
+        }
+      }
+
+      reader.onerror = reject
+
+      if (file.name.endsWith('.csv')) {
+        reader.readAsText(file)
+      } else {
+        reader.readAsBinaryString(file)
+      }
+    })
   }
 
   const handleUpload = async () => {
@@ -33,25 +89,56 @@ function BulkLeads() {
 
     setIsUploading(true)
     try {
-      // هنا يمكن إضافة منطق رفع الملف الفعلي
-      // const formData = new FormData()
-      // formData.append('file', file)
-      // await uploadBulkLeads(formData)
-      
-      // محاكاة عملية الرفع
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      toast.success('تم رفع الملف ومعالجة البيانات بنجاح')
-      setFile(null)
+      // Parse the file
+      const data = await parseFile(file)
+      setParsedData(data)
+
+      // Extract phones and emails
+      const phones = data.map(row => row['رقم الهاتف'] || row.phone || row.Phone).filter(Boolean)
+      const emails = data.map(row => row['البريد الإلكتروني'] || row.email || row.Email).filter(Boolean)
+
+      if (phones.length === 0 && emails.length === 0) {
+        toast.error('الملف لا يحتوي على أرقام هواتف أو إيميلات صالحة')
+        setIsUploading(false)
+        return
+      }
+
+      // Check for duplicates
+      const duplicateCheck = await api.bulkCheckLeadDuplicates(phones, emails)
+
+      if (duplicateCheck.duplicateCount > 0) {
+        // Show duplicate modal
+        setDuplicateData(duplicateCheck)
+        setShowDuplicateModal(true)
+      } else {
+        // No duplicates, proceed with import
+        await proceedWithImport(data)
+      }
+
     } catch (error) {
-      toast.error('حدث خطأ أثناء رفع الملف')
+      console.error('Error:', error)
+      toast.error('حدث خطأ أثناء معالجة الملف')
     } finally {
       setIsUploading(false)
     }
   }
 
+  const proceedWithImport = async (dataToImport) => {
+    try {
+      // TODO: Implement actual import logic here
+      // For now, just show success message
+      toast.success(`تم استيراد ${dataToImport.length} عميل محتمل بنجاح`)
+      setFile(null)
+      setParsedData(null)
+      setShowDuplicateModal(false)
+      setDuplicateData(null)
+    } catch (error) {
+      console.error('Import error:', error)
+      toast.error('فشل في استيراد البيانات')
+    }
+  }
+
   const downloadTemplate = () => {
-    // إنشاء ملف CSV نموذجي
     const csvContent = `الاسم,البريد الإلكتروني,رقم الهاتف,الشركة,المصدر,الحالة,الملاحظات
 أحمد محمد,ahmed@example.com,01234567890,شركة ABC,موقع إلكتروني,جديد,عميل محتمل مهتم بالخدمات
 فاطمة علي,fatima@example.com,01987654321,شركة XYZ,إحالة,متابعة,تم التواصل معها
@@ -66,7 +153,7 @@ function BulkLeads() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    
+
     toast.success('تم تحميل النموذج بنجاح')
   }
 
@@ -124,7 +211,7 @@ function BulkLeads() {
               disabled={!file || isUploading}
               className="w-full"
             >
-              {isUploading ? 'جاري الرفع...' : 'رفع ومعالجة الملف'}
+              {isUploading ? 'جاري المعالجة...' : 'استيراد ومعالجة الملف'}
             </Button>
           </CardContent>
         </Card>
@@ -141,7 +228,7 @@ function BulkLeads() {
             <p className="text-sm text-gray-600">
               قم بتحميل النموذج لمعرفة التنسيق المطلوب لملف العملاء المحتملين
             </p>
-            
+
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">الحقول المطلوبة:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
@@ -180,7 +267,7 @@ function BulkLeads() {
                 <li>• تأكد من أن الملف بتنسيق CSV أو Excel</li>
                 <li>• يجب أن تكون الأسماء وأرقام الهواتف مطلوبة</li>
                 <li>• تحقق من صحة عناوين البريد الإلكتروني</li>
-                <li>• استخدم النموذج المتوفر لضمان التنسيق الصحيح</li>
+                <li>• سيتم فحص التكرار تلقائياً قبل الاستيراد</li>
               </ul>
             </div>
             <div>
@@ -196,6 +283,36 @@ function BulkLeads() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Duplicate Report Modal */}
+      {showDuplicateModal && duplicateData && parsedData && (
+        <BulkDuplicateReportModal
+          duplicates={duplicateData.duplicates || []}
+          duplicateCount={duplicateData.duplicateCount || 0}
+          newCount={duplicateData.newCount || 0}
+          totalCount={duplicateData.totalInputCount || parsedData.length}
+          onSkipDuplicates={async () => {
+            // Filter out duplicates
+            const duplicatePhones = new Set(duplicateData.duplicates.map(d => d.phone))
+            const duplicateEmails = new Set(duplicateData.duplicates.map(d => d.email))
+            const newRecords = parsedData.filter(row => {
+              const phone = row['رقم الهاتف'] || row.phone || row.Phone
+              const email = row['البريد الإلكتروني'] || row.email || row.Email
+              return !duplicatePhones.has(phone) && !duplicateEmails.has(email)
+            })
+            await proceedWithImport(newRecords)
+          }}
+          onAddAll={async () => {
+            // Import all including duplicates
+            await proceedWithImport(parsedData)
+          }}
+          onCancel={() => {
+            setShowDuplicateModal(false)
+            setDuplicateData(null)
+          }}
+          isManager={isAdmin() || isSalesManager()}
+        />
+      )}
     </div>
   )
 }

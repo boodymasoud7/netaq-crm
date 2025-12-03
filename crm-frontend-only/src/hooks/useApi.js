@@ -215,7 +215,10 @@ export const useApi = () => {
     // Combined stats
     getStats: () => makeApiCall(dbAPI.getStats),
     getManagerStats: () => makeApiCall(dbAPI.getManagerStats),
-    getActivityFeed: (params) => makeApiCall(dbAPI.getActivityFeed, params)
+    getActivityFeed: (params) => makeApiCall(dbAPI.getActivityFeed, params),
+
+    // Bulk operations
+    bulkCheckLeadDuplicates: (phones, emails) => makeApiCall(dbAPI.bulkCheckLeadDuplicates, phones, emails)
   }
 }
 

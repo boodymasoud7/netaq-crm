@@ -914,6 +914,66 @@ exports.checkDuplicates = async (req, res) => {
 
 
 
+// Bulk check for duplicate leads (for import)
+exports.bulkCheckDuplicates = async (req, res) => {
+  try {
+    const { phones, emails } = req.body;
+
+    if ((!phones || phones.length === 0) && (!emails || emails.length === 0)) {
+      return res.status(400).json({ message: 'Phones or emails required', code: 'MISSING_PARAMS' });
+    }
+
+    const whereConditions = { [Op.or]: [] };
+
+    if (phones && phones.length > 0) {
+      const cleanPhones = phones.filter(p => p && p.trim()).map(p => p.trim());
+      if (cleanPhones.length > 0) whereConditions[Op.or].push({ phone: { [Op.in]: cleanPhones } });
+    }
+
+    if (emails && emails.length > 0) {
+      const cleanEmails = emails.filter(e => e && e.trim()).map(e => e.trim());
+      if (cleanEmails.length > 0) whereConditions[Op.or].push({ email: { [Op.in]: cleanEmails } });
+    }
+
+    if (whereConditions[Op.or].length === 0) {
+      return res.json({ duplicates: [], duplicateCount: 0, newCount: (phones?.length || 0) });
+    }
+
+    const duplicates = await Lead.findAll({
+      where: whereConditions,
+      attributes: ['id', 'name', 'phone', 'email', 'status', 'source', 'createdAt', 'assignedTo'],
+      limit: 1000
+    });
+
+    const assignedToIds = [...new Set(duplicates.map(l => l.assignedTo).filter(id => id))];
+    const users = await User.findAll({
+      where: { id: assignedToIds.map(id => parseInt(id)).filter(id => !isNaN(id)) },
+      attributes: ['id', 'name']
+    });
+
+    const userMap = {};
+    users.forEach(u => { userMap[u.id] = u.name; });
+
+    const formattedDuplicates = duplicates.map(lead => ({
+      ...lead.toJSON(),
+      assignedToName: lead.assignedTo ? (userMap[parseInt(lead.assignedTo)] || 'غير محدد') : 'غير محدد'
+    }));
+
+    const totalInputCount = (phones?.length || 0) + (emails?.length || 0);
+
+    res.json({
+      duplicates: formattedDuplicates,
+      duplicateCount: formattedDuplicates.length,
+      newCount: Math.max(0, totalInputCount - formattedDuplicates.length),
+      totalInputCount
+    });
+
+  } catch (error) {
+    console.error('Bulk check error:', error);
+    res.status(500).json({ message: 'Server error', code: 'SERVER_ERROR' });
+  }
+};
+
 // Delete all archived leads permanently
 exports.permanentDeleteAllLeads = async (req, res) => {
   try {

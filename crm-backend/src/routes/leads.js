@@ -17,6 +17,9 @@ router.get('/', requirePermission('view_leads'), leadController.getAllLeads);
 // Check for duplicates (must be before /:id route)
 router.get('/check-duplicates', requirePermission('view_leads'), leadController.checkDuplicates);
 
+// Bulk check for duplicates (for import)
+router.post('/bulk-check-duplicates', requirePermission('view_leads'), leadController.bulkCheckDuplicates);
+
 // @route   GET /api/leads/stats
 // @desc    Get lead statistics
 // @access  Private (view_leads permission)

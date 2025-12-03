@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { 
-  Download, 
-  Upload, 
-  FileText, 
-  FileSpreadsheet, 
+import {
+  Download,
+  Upload,
+  FileText,
+  FileSpreadsheet,
   Database,
   Check,
   X,
@@ -16,6 +16,7 @@ import { Badge } from '../ui/badge'
 import { formatDateArabic } from '../../lib/utils'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
+import BulkDuplicateReportModal from '../modals/BulkDuplicateReportModal'
 
 const EXPORT_FORMATS = {
   csv: {
@@ -45,11 +46,13 @@ const DATA_TYPES = {
   projects: { name: 'المشاريع', fields: ['name', 'location', 'developer', 'status'] }
 }
 
-export default function ExportImportManager({ 
-  data = [], 
+export default function ExportImportManager({
+  data = [],
   dataType = 'clients',
   onImport,
-  className = "" 
+  api,
+  isManager = false,
+  className = ""
 }) {
   const [selectedFormat, setSelectedFormat] = useState('excel')
   const [selectedFields, setSelectedFields] = useState(DATA_TYPES[dataType]?.fields || [])
@@ -59,6 +62,9 @@ export default function ExportImportManager({
   const [importFile, setImportFile] = useState(null)
   const [importPreview, setImportPreview] = useState(null)
   const [importErrors, setImportErrors] = useState([])
+  const [showBulkDuplicateModal, setShowBulkDuplicateModal] = useState(false)
+  const [bulkDuplicateData, setBulkDuplicateData] = useState(null)
+  const [pendingImportData, setPendingImportData] = useState(null)
 
   // تصدير البيانات
   const handleExport = async () => {
@@ -149,7 +155,7 @@ export default function ExportImportManager({
     reader.onload = (e) => {
       try {
         let parsedData = []
-        
+
         if (file.name.endsWith('.csv')) {
           parsedData = parseCSV(e.target.result)
         } else if (file.name.endsWith('.xlsx')) {
@@ -183,7 +189,7 @@ export default function ExportImportManager({
   const parseCSV = (csvText) => {
     const lines = csvText.split('\n')
     const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
-    
+
     return lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.replace(/"/g, '').trim())
       const obj = {}
@@ -202,7 +208,7 @@ export default function ExportImportManager({
 
     data.forEach((item, index) => {
       const rowErrors = []
-      
+
       // التحقق من الحقول المطلوبة
       requiredFields.forEach(field => {
         const fieldLabel = getFieldLabel(field)
@@ -236,15 +242,45 @@ export default function ExportImportManager({
       return
     }
 
+    // Check for duplicates if dataType is leads and api is provided
+    if (dataType === 'leads' && api && api.bulkCheckLeadDuplicates) {
+      try {
+        const phones = importPreview.map(item => item.phone || item['رقم الهاتف']).filter(Boolean)
+        const emails = importPreview.map(item => item.email || item['البريد الإلكتروني']).filter(Boolean)
+
+        const duplicateCheck = await api.bulkCheckLeadDuplicates(phones, emails)
+
+        if (duplicateCheck.duplicateCount > 0) {
+          // Show bulk duplicate modal
+          setBulkDuplicateData(duplicateCheck)
+          setPendingImportData(importPreview)
+          setShowBulkDuplicateModal(true)
+          return
+        }
+      } catch (error) {
+        console.error('خطأ في فحص التكرار:', error)
+        // Continue with import even if duplicate check fails
+      }
+    }
+
+    // Proceed with import
+    await proceedWithImport(importPreview)
+  }
+
+  // Proceed with import (called after duplicate check or directly)
+  const proceedWithImport = async (dataToImport) => {
     setIsImporting(true)
 
     try {
       if (onImport) {
-        await onImport(importPreview)
-        toast.success(`تم استيراد ${importPreview.length} عنصر بنجاح`)
+        await onImport(dataToImport)
+        toast.success(`تم استيراد ${dataToImport.length} عنصر بنجاح`)
         setImportFile(null)
         setImportPreview(null)
         setImportErrors([])
+        setShowBulkDuplicateModal(false)
+        setBulkDuplicateData(null)
+        setPendingImportData(null)
       }
     } catch (error) {
       console.error('خطأ في الاستيراد:', error)
@@ -276,15 +312,15 @@ export default function ExportImportManager({
   // تنسيق قيمة الحقل
   const formatFieldValue = (value, field) => {
     if (!value) return ''
-    
+
     if (field.includes('Date') || field.includes('At')) {
       return formatDateArabic(value)
     }
-    
+
     if (field.includes('Amount') || field.includes('Price')) {
       return `${value.toLocaleString()} جنيه`
     }
-    
+
     return value
   }
 
@@ -317,11 +353,10 @@ export default function ExportImportManager({
                 <button
                   key={key}
                   onClick={() => setSelectedFormat(key)}
-                  className={`p-3 border rounded-lg transition-colors ${
-                    selectedFormat === key
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`p-3 border rounded-lg transition-colors ${selectedFormat === key
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
                   <Icon className="h-6 w-6 mx-auto mb-2" />
                   <div className="text-sm font-medium">{format.name}</div>
@@ -495,6 +530,37 @@ export default function ExportImportManager({
           </div>
         )}
       </Card>
+
+      {/* Bulk Duplicate Report Modal */}
+      {showBulkDuplicateModal && bulkDuplicateData && (
+        <BulkDuplicateReportModal
+          duplicates={bulkDuplicateData.duplicates || []}
+          duplicateCount={bulkDuplicateData.duplicateCount || 0}
+          newCount={bulkDuplicateData.newCount || 0}
+          totalCount={bulkDuplicateData.totalInputCount || 0}
+          onSkipDuplicates={async () => {
+            // Filter out duplicates and import only new records
+            const duplicatePhones = new Set(bulkDuplicateData.duplicates.map(d => d.phone))
+            const duplicateEmails = new Set(bulkDuplicateData.duplicates.map(d => d.email))
+            const newRecords = pendingImportData.filter(item => {
+              const phone = item.phone || item['رقم الهاتف']
+              const email = item.email || item['البريد الإلكتروني']
+              return !duplicatePhones.has(phone) && !duplicateEmails.has(email)
+            })
+            await proceedWithImport(newRecords)
+          }}
+          onAddAll={async () => {
+            // Import all records including duplicates (manager only)
+            await proceedWithImport(pendingImportData)
+          }}
+          onCancel={() => {
+            setShowBulkDuplicateModal(false)
+            setBulkDuplicateData(null)
+            setPendingImportData(null)
+          }}
+          isManager={isManager}
+        />
+      )}
     </div>
   )
 }

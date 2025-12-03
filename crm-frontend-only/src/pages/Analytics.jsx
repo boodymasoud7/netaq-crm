@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Download, 
+import {
+  BarChart3,
+  TrendingUp,
+  Download,
   Calendar,
   Filter,
   RefreshCw
@@ -10,19 +10,23 @@ import {
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { useClients } from '../hooks/useClients'
-import { useLeads } from '../hooks/useLeads' 
+import { useLeads } from '../hooks/useLeads'
 import { useSales } from '../hooks/useSales'
 import { useProjects } from '../hooks/useProjects'
 import { LoadingPage } from '../components/ui/loading'
 import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics'
 import ExportImportManager from '../components/export/ExportImportManager'
+import { useApi } from '../hooks/useApi'
+import { usePermissions } from '../hooks/usePermissions'
 
 export default function Analytics() {
   const { clients, loading: clientsLoading } = useClients()
   const { leads, loading: leadsLoading } = useLeads()
   const { sales, loading: salesLoading } = useSales()
   const { projects, loading: projectsLoading } = useProjects()
-  
+  const api = useApi()
+  const { isAdmin, isSalesManager } = usePermissions()
+
   const [activeTab, setActiveTab] = useState('overview')
   const [refreshing, setRefreshing] = useState(false)
 
@@ -54,7 +58,7 @@ export default function Analytics() {
           <h1 className="text-2xl font-bold text-gray-900">التحليلات والتقارير</h1>
           <p className="text-gray-600 mt-1">رؤى شاملة حول أداء الأعمال والمبيعات</p>
         </div>
-        
+
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -64,12 +68,12 @@ export default function Analytics() {
             <RefreshCw className={`h-4 w-4 ml-2 ${refreshing ? 'animate-spin' : ''}`} />
             تحديث البيانات
           </Button>
-          
+
           <Button variant="outline">
             <Calendar className="h-4 w-4 ml-2" />
             تخصيص الفترة
           </Button>
-          
+
           <Button variant="outline">
             <Filter className="h-4 w-4 ml-2" />
             الفلاتر
@@ -83,17 +87,17 @@ export default function Analytics() {
           <div className="text-2xl font-bold text-blue-600">{clients?.length || 0}</div>
           <div className="text-sm text-gray-600">إجمالي العملاء</div>
         </Card>
-        
+
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-orange-600">{leads?.length || 0}</div>
           <div className="text-sm text-gray-600">العملاء المحتملين</div>
         </Card>
-        
+
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{sales?.length || 0}</div>
           <div className="text-sm text-gray-600">إجمالي المبيعات</div>
         </Card>
-        
+
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-purple-600">{projects?.length || 0}</div>
           <div className="text-sm text-gray-600">المشاريع النشطة</div>
@@ -109,11 +113,10 @@ export default function Analytics() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`${
-                  activeTab === tab.id
+                className={`${activeTab === tab.id
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                  } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.name}
@@ -155,21 +158,23 @@ export default function Analytics() {
                 dataType="clients"
                 onImport={(data) => console.log('Import clients:', data)}
               />
-              
+
               <ExportImportManager
                 data={leads}
                 dataType="leads"
                 onImport={(data) => console.log('Import leads:', data)}
+                api={api}
+                isManager={isAdmin() || isSalesManager()}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <ExportImportManager
                 data={sales}
                 dataType="sales"
                 onImport={(data) => console.log('Import sales:', data)}
               />
-              
+
               <ExportImportManager
                 data={projects}
                 dataType="projects"
