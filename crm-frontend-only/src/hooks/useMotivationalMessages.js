@@ -48,10 +48,10 @@ export const useMotivationalMessages = () => {
             })
         }
 
-        // عرض أول رسالة بعد دقيقة من فتح الصفحة
+        // عرض أول رسالة بعد 5 ثواني من فتح الصفحة (للاختبار)
         const initialTimeout = setTimeout(() => {
             showMotivationalMessage()
-        }, 60000) // دقيقة واحدة
+        }, 5000) // 5 ثواني
 
         // عرض رسالة كل 30 دقيقة
         const interval = setInterval(() => {
