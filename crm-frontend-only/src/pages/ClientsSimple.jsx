@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Phone, 
-  Mail, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
   MapPin,
   Eye,
   MoreHorizontal,
@@ -43,6 +43,7 @@ import { useAdvancedSearch } from '../hooks/useAdvancedSearch'
 import ClientsTable from '../components/tables/ClientsTable'
 import ViewDetailsModal from '../components/modals/ViewDetailsModal'
 import ClientDetailsModal from '../components/modals/ClientDetailsModal'
+import DuplicateClientModal from '../components/modals/DuplicateClientModal'
 import SimpleAddReminderModal from '../components/reminders/SimpleAddReminderModal'
 import QuickReminderModal from '../components/reminders/QuickReminderModal'
 import CreateFollowUpModal from '../components/modals/CreateFollowUpModal'
@@ -58,16 +59,16 @@ export default function ClientsSimple() {
   const { notifyNewClient, notifySuccess, notifyError } = useNotifications()
   const { sendNewClientNotification, sendInteractionAddedNotification, sendNoteAddedNotification } = useSSENotificationSender()
   const api = useApi()
-  
+
   // تم حذف إعدادات الإشعارات مؤقتاً
-  const { 
-    isAdmin, 
-    isSalesManager, 
-    isSales, 
+  const {
+    isAdmin,
+    isSalesManager,
+    isSales,
     checkPermission,
-    filterByRole 
+    filterByRole
   } = usePermissions()
-  
+
   const {
     data: clients,
     pagination,
@@ -104,19 +105,19 @@ export default function ClientsSimple() {
       const userId = currentUser?.id || currentUser?.uid || userProfile?.id
       const userName = currentUser?.name || currentUser?.username || userProfile?.name || userProfile?.displayName
       const userEmail = currentUser?.email || userProfile?.email
-      
+
       // في صفحة العملاء: assignedTo = المستخدم الذي أنشأ العميل
       hasPermission = (
         client.assignedTo == userId ||
-        client.assignedTo == userName || 
+        client.assignedTo == userName ||
         client.assignedTo == userEmail
       )
-      
+
       if (hasPermission) {
         console.log(`✅ Client ${client.id} (${client.firstName || 'No name'}) - belongs to user ${userId}`)
       }
     }
-    
+
     return hasPermission
   }
 
@@ -126,14 +127,14 @@ export default function ClientsSimple() {
   // دوال التحقق من الصلاحيات
   const canEditClient = (client) => {
     // تم إزالة console.log للإنتاج
-    
+
     if (isAdmin()) return true
     if (isSalesManager()) return checkPermission('manage_clients')
     if (isSales()) {
       // موظف المبيعات يتحقق من الصلاحية أولاً ثم من التخصيص
       const hasPermission = checkPermission('manage_clients')
       if (!hasPermission || !client) return false
-      
+
       const userId = currentUser?.id || currentUser?.uid || userProfile?.id
       const canEdit = client.assignedTo == userId || client.createdBy == userId
       // تم إزالة console.log للإنتاج
@@ -149,7 +150,7 @@ export default function ClientsSimple() {
       // موظف المبيعات يتحقق من الصلاحية أولاً ثم من التخصيص
       const hasPermission = checkPermission('manage_clients')
       if (!hasPermission || !client) return false
-      
+
       const userId = currentUser?.id || currentUser?.uid || userProfile?.id
       const canDelete = client.assignedTo == userId || client.createdBy == userId
       return canDelete
@@ -174,7 +175,7 @@ export default function ClientsSimple() {
 
   // دالة لاستخراج اسم مفهوم من البيانات
   const getDisplayName = (client) => {
-    
+
     // أولوية للاسم المحفوظ في Firebase
     if (client.assignedToName && client.assignedToName !== 'مستخدم غير معروف' && !client.assignedToName.includes('undefined')) {
       return client.assignedToName
@@ -182,7 +183,7 @@ export default function ClientsSimple() {
     if (client.createdByName && client.createdByName !== 'مستخدم غير معروف' && !client.createdByName.includes('undefined')) {
       return client.createdByName
     }
-    
+
     // backup من userNames - تم تعطيله مؤقتاً
     // if (client.assignedTo && userNames[client.assignedTo]) {
     //   return userNames[client.assignedTo]
@@ -190,7 +191,7 @@ export default function ClientsSimple() {
     // if (client.createdBy && userNames[client.createdBy]) {
     //   return userNames[client.createdBy]
     // }
-    
+
     // fallback نهائي
     return 'موظف مبيعات'
   }
@@ -202,12 +203,16 @@ export default function ClientsSimple() {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
   const [quickSearchTerm, setQuickSearchTerm] = useState('')
   const [showWhatsAppSender, setShowWhatsAppSender] = useState(false)
-  
+
   // مودال التذكير السريع
   const [showQuickReminderModal, setShowQuickReminderModal] = useState(false)
   const [selectedClientForReminder, setSelectedClientForReminder] = useState(null)
   const [selectedClients, setSelectedClients] = useState([])
-  
+
+  // Duplicate detection state
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [duplicateClients, setDuplicateClients] = useState([])
+
   // مودال إنشاء المتابعة
   const [showCreateFollowUpModal, setShowCreateFollowUpModal] = useState(false)
   const [selectedClientForFollowUp, setSelectedClientForFollowUp] = useState(null)
@@ -225,10 +230,10 @@ export default function ClientsSimple() {
   // إعداد البحث المتقدم بعد تحميل البيانات مع تطبيق فلترة الصلاحيات
   console.log('🔍 Raw clients from API:', clients?.length || 0, 'clients')
   console.log('🔍 Current user:', currentUser?.id, currentUser?.role)
-  
+
   const searchData = (clients || []).filter(customFilter)
   console.log('🔍 Filtered clients after customFilter:', searchData?.length || 0, 'clients')
-  
+
   const {
     results: filteredClients,
     totalCount,
@@ -326,7 +331,7 @@ export default function ClientsSimple() {
         status: newClient.status || 'active',
         source: newClient.source || 'website'
       }
-      
+
       // Add optional fields only if they have values
       if (newClient.email && newClient.email.trim()) {
         clientData.email = newClient.email.trim()
@@ -340,24 +345,34 @@ export default function ClientsSimple() {
       if (newClient.budget && !isNaN(parseFloat(newClient.budget))) {
         clientData.budget = parseFloat(newClient.budget)
       }
-      
+
+      // Check for duplicates before adding
+      const duplicateCheck = await api.checkClientDuplicates(newClient.phone, newClient.email)
+
+      if (duplicateCheck.hasDuplicates && duplicateCheck.duplicates.length > 0) {
+        console.log('🔍 Duplicates found:', duplicateCheck.duplicates)
+        setDuplicateClients(duplicateCheck.duplicates)
+        setShowDuplicateModal(true)
+        return // Stop here and show modal
+      }
+
       const result = await api.addClient(clientData)
-      
+
       // Refresh the clients list
       refetch()
-      
+
       // إشعار نجاح الإضافة للموظف الحالي
       notifyNewClient(newClient.name)
-      
+
       // إرسال إشعار فوري للمديرين عبر SSE مع اسم الموظف
       await sendNewClientNotification(newClient.name, currentUser?.displayName || currentUser?.email || 'موظف')
-      
-      setNewClient({ 
-        name: '', 
-        email: '', 
-        phone: '', 
-        address: '', 
-        notes: '', 
+
+      setNewClient({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        notes: '',
         status: 'active',
         clientType: 'فردي',
         source: '',
@@ -383,7 +398,7 @@ export default function ClientsSimple() {
         status: editingClient.status || 'active',
         source: editingClient.source?.trim() || 'website'
       }
-      
+
       // Add optional fields only if they have valid values
       if (editingClient.email && editingClient.email.trim() && editingClient.email !== 'null') {
         cleanData.email = editingClient.email.trim()
@@ -418,7 +433,7 @@ export default function ClientsSimple() {
 
   const confirmDeleteClient = async () => {
     if (!clientToDelete) return
-    
+
     try {
       // تحديث حالة العميل للأرشفة بدلاً من الحذف النهائي
       await api.deleteClient(clientToDelete.id)
@@ -503,16 +518,16 @@ export default function ClientsSimple() {
       }
 
       const result = await api.addNote(noteData)
-      
+
       console.log('تم إضافة ملاحظة:', result)
       toast.success('تم إضافة الملاحظة بنجاح')
-      
+
       // إرسال إشعار للمديرين عن الملاحظة الجديدة
       await sendNoteAddedNotification(client.name, 'عميل', note.content)
-      
+
       // إعادة تحميل التفاصيل إذا كان العميل معروضاً
       if (viewingClient && note?.itemId === viewingClient.id) {
-        setViewingClient({...viewingClient, updatedAt: new Date()})
+        setViewingClient({ ...viewingClient, updatedAt: new Date() })
       }
     } catch (error) {
       console.error('خطأ في حفظ الملاحظة:', error)
@@ -527,16 +542,16 @@ export default function ClientsSimple() {
       await api.addInteraction(interactionData)
       console.log('✅ Interaction added successfully')
       toast.success('تم إضافة التفاعل بنجاح')
-      
+
       // البحث عن العميل لإرسال الإشعار
       const client = clients?.find(c => c.id === interactionData.itemId)
       if (client) {
         await sendInteractionAddedNotification(client.name, 'عميل', interactionData.type || 'تفاعل')
       }
-      
+
       // إعادة تحميل التفاصيل إذا كان العميل معروضاً
       if (viewingClient && interactionData?.itemId === viewingClient.id) {
-        setViewingClient({...viewingClient, updatedAt: new Date()})
+        setViewingClient({ ...viewingClient, updatedAt: new Date() })
       }
     } catch (error) {
       console.error('❌ Error adding interaction:', error)
@@ -547,7 +562,7 @@ export default function ClientsSimple() {
 
 
   // === الإجراءات الجماعية ===
-  
+
   const handleBulkDelete = async (clientIds) => {
     try {
       // نقل العملاء للأرشيف بدلاً من الحذف النهائي
@@ -578,18 +593,18 @@ export default function ClientsSimple() {
         client.status || '',
         client.source || ''
       ])
-      
+
       const csvContent = [csvHeaders, ...csvData]
         .map(row => row.join(','))
         .join('\n')
-      
+
       // تنزيل الملف
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
       link.download = `clients_export_${new Date().toISOString().split('T')[0]}.csv`
       link.click()
-      
+
       toast.success(`تم تصدير ${selectedClientsData.length} عميل بنجاح`)
     } catch (error) {
       console.error('خطأ في التصدير:', error)
@@ -629,38 +644,38 @@ export default function ClientsSimple() {
               <div className="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
                 <Users className="h-8 w-8 text-white" />
               </div>
-        <div>
+              <div>
                 <h1 className="text-3xl font-bold text-white">
                   إدارة العملاء
                 </h1>
                 <p className="text-blue-100 mt-1">
-                  {isSales() ? 
+                  {isSales() ?
                     'العملاء الذين قمت بإضافتهم للنظام' :
                     'إدارة قاعدة بيانات العملاء والمعلومات الخاصة بهم'
                   }
                 </p>
                 <div className="flex items-center gap-4 mt-3">
                   <span className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    📅 {new Date().toLocaleDateString('ar-EG', { 
+                    📅 {new Date().toLocaleDateString('ar-EG', {
                       timeZone: 'Africa/Cairo',
                       weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </span>
                   <span className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    🕐 {new Date().toLocaleTimeString('ar-EG', { 
+                    🕐 {new Date().toLocaleTimeString('ar-EG', {
                       timeZone: 'Africa/Cairo',
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </span>
-        </div>
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
+              <Button
                 onClick={() => setShowAddModal(true)}
                 className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg font-semibold px-6 py-3 rounded-xl border-2 border-blue-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
               >
@@ -671,16 +686,16 @@ export default function ClientsSimple() {
                   <span className="font-bold">إضافة عميل جديد</span>
                 </div>
               </Button>
-              
-              <Button 
+
+              <Button
                 variant="outline"
                 className="bg-white bg-opacity-20 border-white border-opacity-30 text-white hover:bg-white hover:bg-opacity-30 backdrop-blur-sm"
               >
                 <Filter className="h-4 w-4 ml-2" />
                 تصفية متقدمة
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={() => setShowWhatsAppSender(true)}
                 variant="outline"
                 className="bg-green-600 bg-opacity-90 border-green-500 text-white hover:bg-green-700 backdrop-blur-sm"
@@ -821,28 +836,28 @@ export default function ClientsSimple() {
           </div>
         </Card>
       )}
-      
+
       <ClientsTable
-          clients={filteredClients}
-          onEdit={handleEditClient}
-          onDelete={handleDeleteClient}
-          onView={handleViewClient}
-          onReminder={handleReminder}
-          onConvertToLead={handleConvertToLead}
-          onCreateFollowUp={handleCreateFollowUp}
-          onAddNote={handleAddNote}
-          onAddInteraction={handleAddInteraction}
-          onBulkDelete={handleBulkDelete}
-          onBulkExport={handleBulkExport}
-          canEditClient={canEditClient}
-          canDeleteClient={canDeleteClient}
-          canBulkEditClients={canBulkEditClients}
-          canBulkDeleteClients={canBulkDeleteClients}
-          selectedClients={selectedClients}
-          onSelectedClientsChange={setSelectedClients}
-          pageSize={pageSize}
-          onPageSizeChange={handlePageSizeChange}
-        />
+        clients={filteredClients}
+        onEdit={handleEditClient}
+        onDelete={handleDeleteClient}
+        onView={handleViewClient}
+        onReminder={handleReminder}
+        onConvertToLead={handleConvertToLead}
+        onCreateFollowUp={handleCreateFollowUp}
+        onAddNote={handleAddNote}
+        onAddInteraction={handleAddInteraction}
+        onBulkDelete={handleBulkDelete}
+        onBulkExport={handleBulkExport}
+        canEditClient={canEditClient}
+        canDeleteClient={canDeleteClient}
+        canBulkEditClients={canBulkEditClients}
+        canBulkDeleteClients={canBulkDeleteClients}
+        selectedClients={selectedClients}
+        onSelectedClientsChange={setSelectedClients}
+        pageSize={pageSize}
+        onPageSizeChange={handlePageSizeChange}
+      />
 
       {/* منطقة الترقيم المدمجة */}
       {totalCount > searchOptions.itemsPerPage && (
@@ -856,13 +871,13 @@ export default function ClientsSimple() {
                 {currentPage} / {Math.ceil(totalCount / searchOptions.itemsPerPage)}
               </Badge>
             </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalCount / searchOptions.itemsPerPage)}
-          onPageChange={handlePageChange}
-          totalItems={totalCount}
-          itemsPerPage={searchOptions.itemsPerPage}
-        />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(totalCount / searchOptions.itemsPerPage)}
+              onPageChange={handlePageChange}
+              totalItems={totalCount}
+              itemsPerPage={searchOptions.itemsPerPage}
+            />
           </div>
         </Card>
       )}
@@ -871,241 +886,235 @@ export default function ClientsSimple() {
 
       {/* نتائج البحث القديمة - مخفية */}
       <div className="hidden">
-      <SearchResults
-        results={filterByRole(filteredClients || [], 'clients')}
-        loading={loading}
-        totalCount={totalCount}
-        currentPage={currentPage}
-        itemsPerPage={searchOptions.itemsPerPage}
-        onSort={handleSort}
-        onViewChange={setViewMode}
-        onExport={exportResults}
-        viewMode={viewMode}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        searchQuery={searchTerm}
-        renderItem={(client) => (
-          <Card key={client.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            {/* Header with gradient */}
-            <div className={`relative overflow-hidden bg-gradient-to-br ${
-              client.status === 'active' ? 'from-green-50 to-emerald-50 border-green-100' :
-              client.status === 'inactive' ? 'from-gray-50 to-slate-50 border-gray-100' :
-              client.status === 'potential' ? 'from-orange-50 to-red-50 border-orange-100' :
-              'from-blue-50 to-indigo-50 border-blue-100'
-            } border rounded-t-xl p-4`}>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 bg-gradient-to-r ${
-                    client.status === 'active' ? 'from-green-500 to-green-600' :
-                    client.status === 'inactive' ? 'from-gray-500 to-gray-600' :
-                    client.status === 'potential' ? 'from-orange-500 to-orange-600' :
-                    'from-blue-500 to-blue-600'
-                  } rounded-full flex items-center justify-center shadow-lg`}>
-                    <span className="text-white font-bold text-lg">
-                      {client.name?.charAt(0) || 'ع'}
-                    </span>
+        <SearchResults
+          results={filterByRole(filteredClients || [], 'clients')}
+          loading={loading}
+          totalCount={totalCount}
+          currentPage={currentPage}
+          itemsPerPage={searchOptions.itemsPerPage}
+          onSort={handleSort}
+          onViewChange={setViewMode}
+          onExport={exportResults}
+          viewMode={viewMode}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          searchQuery={searchTerm}
+          renderItem={(client) => (
+            <Card key={client.id} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              {/* Header with gradient */}
+              <div className={`relative overflow-hidden bg-gradient-to-br ${client.status === 'active' ? 'from-green-50 to-emerald-50 border-green-100' :
+                client.status === 'inactive' ? 'from-gray-50 to-slate-50 border-gray-100' :
+                  client.status === 'potential' ? 'from-orange-50 to-red-50 border-orange-100' :
+                    'from-blue-50 to-indigo-50 border-blue-100'
+                } border rounded-t-xl p-4`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 bg-gradient-to-r ${client.status === 'active' ? 'from-green-500 to-green-600' :
+                      client.status === 'inactive' ? 'from-gray-500 to-gray-600' :
+                        client.status === 'potential' ? 'from-orange-500 to-orange-600' :
+                          'from-blue-500 to-blue-600'
+                      } rounded-full flex items-center justify-center shadow-lg`}>
+                      <span className="text-white font-bold text-lg">
+                        {client.name?.charAt(0) || 'ع'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{client.name}</h3>
+                      <Badge className={`${client.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
+                        client.status === 'inactive' ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                          client.status === 'potential' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                            'bg-blue-100 text-blue-800 border-blue-200'
+                        } font-medium`}>
+                        {getStatusText(client.status)}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{client.name}</h3>
-                    <Badge className={`${
-                      client.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
+                  <div className="relative">
+                    <Button variant="ghost" size="sm" className="hover:bg-white hover:bg-opacity-50">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {/* Decorative element */}
+                <div className="absolute top-2 right-2 opacity-20">
+                  <User className={`h-6 w-6 ${client.status === 'active' ? 'text-green-600' :
+                    client.status === 'inactive' ? 'text-gray-600' :
+                      client.status === 'potential' ? 'text-orange-600' :
+                        'text-blue-600'
+                    }`} />
+                </div>
+              </div>
+
+              {/* Content */}
+              <CardContent className="p-4 space-y-3">
+                {client.email && (
+                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Mail className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm text-gray-700 truncate">{client.email}</span>
+                  </div>
+                )}
+
+                {client.phone && (
+                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Phone className="h-4 w-4 text-green-600" />
+                    </div>
+                    <span className="text-sm text-gray-700">{formatPhoneNumber(client.phone)}</span>
+                  </div>
+                )}
+
+                {client.address && (
+                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <span className="text-sm text-gray-700 truncate">{client.address}</span>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <span className="text-sm text-gray-700">آخر تواصل: {formatDateArabic(client.lastContact)}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm text-gray-700">تاريخ الإضافة: {formatDateArabic(client.createdAt)}</span>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 pt-4 border-t border-gray-100">
+                  {canEditClient(client) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      onClick={() => setEditingClient(client)}
+                    >
+                      <Edit className="h-3 w-3 ml-1" />
+                      تعديل
+                    </Button>
+                  )}
+                  {canDeleteClient(client) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                      onClick={() => handleDeleteClient(client)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                  >
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          renderListItem={(client) => (
+            <Card key={client.id} className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center gap-4 p-4">
+                <div className={`w-12 h-12 bg-gradient-to-r ${client.status === 'active' ? 'from-green-500 to-green-600' :
+                  client.status === 'inactive' ? 'from-gray-500 to-gray-600' :
+                    client.status === 'potential' ? 'from-orange-500 to-orange-600' :
+                      'from-blue-500 to-blue-600'
+                  } rounded-full flex items-center justify-center shadow-lg`}>
+                  <span className="text-white font-bold">
+                    {client.name?.charAt(0) || 'ع'}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-semibold text-gray-900">{client.name}</h3>
+                    <Badge className={`${client.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
                       client.status === 'inactive' ? 'bg-gray-100 text-gray-800 border-gray-200' :
-                      client.status === 'potential' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                      'bg-blue-100 text-blue-800 border-blue-200'
-                    } font-medium`}>
+                        client.status === 'potential' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                          'bg-blue-100 text-blue-800 border-blue-200'
+                      } font-medium`}>
                       {getStatusText(client.status)}
                     </Badge>
                   </div>
+                  <div className="flex items-center gap-6 text-sm text-gray-600">
+                    {client.email && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Mail className="h-3 w-3 text-blue-600" />
+                        </div>
+                        <span>{client.email}</span>
+                      </div>
+                    )}
+                    {client.phone && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                          <Phone className="h-3 w-3 text-green-600" />
+                        </div>
+                        <span>{formatPhoneNumber(client.phone)}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* عرض اسم الموظف المسؤول للمدير */}
+                  {(userProfile?.role === 'admin' || userProfile?.role === 'sales_manager') && (
+                    <div className="flex items-center gap-2 text-xs text-purple-600 mt-2">
+                      <div className="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center">
+                        <UserCheck className="h-2 w-2" />
+                      </div>
+                      <span>بواسطة: {getDisplayName(client)}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="relative">
-                  <Button variant="ghost" size="sm" className="hover:bg-white hover:bg-opacity-50">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
+                <div className="flex gap-2">
+                  {canEditClient(client) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingClient(client)}
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {canDeleteClient(client) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteClient(client)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  )}
                 </div>
               </div>
-              {/* Decorative element */}
-              <div className="absolute top-2 right-2 opacity-20">
-                <User className={`h-6 w-6 ${
-                  client.status === 'active' ? 'text-green-600' :
-                  client.status === 'inactive' ? 'text-gray-600' :
-                  client.status === 'potential' ? 'text-orange-600' :
-                  'text-blue-600'
-                }`} />
-              </div>
-            </div>
-            
-            {/* Content */}
-            <CardContent className="p-4 space-y-3">
-              {client.email && (
-                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Mail className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm text-gray-700 truncate">{client.email}</span>
-                </div>
-              )}
-              
-              {client.phone && (
-                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <Phone className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm text-gray-700">{formatPhoneNumber(client.phone)}</span>
-                </div>
-              )}
-              
-              {client.address && (
-                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <MapPin className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="text-sm text-gray-700 truncate">{client.address}</span>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-orange-600" />
-                  </div>
-                  <span className="text-sm text-gray-700">آخر تواصل: {formatDateArabic(client.lastContact)}</span>
-                </div>
-                <div className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm text-gray-700">تاريخ الإضافة: {formatDateArabic(client.createdAt)}</span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-2 pt-4 border-t border-gray-100">
-                {canEditClient(client) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                    onClick={() => setEditingClient(client)}
-                  >
-                    <Edit className="h-3 w-3 ml-1" />
-                    تعديل
-                  </Button>
-                )}
-                {canDeleteClient(client) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-                    onClick={() => handleDeleteClient(client)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                >
-                  <Eye className="h-3 w-3" />
+            </Card>
+          )}
+          emptyState={(
+            <Card className="bizmax-card">
+              <div className="text-center py-12">
+                <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد عملاء</h3>
+                <p className="text-gray-500 mb-4">
+                  {isSales() ? (
+                    'لم تقم بإضافة أي عملاء بعد. ابدأ بإضافة عميلك الأول.'
+                  ) : hasFilters ? 'لم يتم العثور على عملاء تطابق معايير البحث' : 'ابدأ بإضافة عميلك الأول'}
+                </p>
+                <Button onClick={() => setShowAddModal(true)}>
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة عميل جديد
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
-        renderListItem={(client) => (
-          <Card key={client.id} className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center gap-4 p-4">
-              <div className={`w-12 h-12 bg-gradient-to-r ${
-                client.status === 'active' ? 'from-green-500 to-green-600' :
-                client.status === 'inactive' ? 'from-gray-500 to-gray-600' :
-                client.status === 'potential' ? 'from-orange-500 to-orange-600' :
-                'from-blue-500 to-blue-600'
-              } rounded-full flex items-center justify-center shadow-lg`}>
-                <span className="text-white font-bold">
-                  {client.name?.charAt(0) || 'ع'}
-                </span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold text-gray-900">{client.name}</h3>
-                  <Badge className={`${
-                    client.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
-                    client.status === 'inactive' ? 'bg-gray-100 text-gray-800 border-gray-200' :
-                    client.status === 'potential' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                    'bg-blue-100 text-blue-800 border-blue-200'
-                  } font-medium`}>
-                    {getStatusText(client.status)}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-gray-600">
-                  {client.email && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Mail className="h-3 w-3 text-blue-600" />
-                      </div>
-                      <span>{client.email}</span>
-                    </div>
-                  )}
-                  {client.phone && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <Phone className="h-3 w-3 text-green-600" />
-                      </div>
-                      <span>{formatPhoneNumber(client.phone)}</span>
-                    </div>
-                  )}
-                </div>
-                {/* عرض اسم الموظف المسؤول للمدير */}
-                {(userProfile?.role === 'admin' || userProfile?.role === 'sales_manager') && (
-                  <div className="flex items-center gap-2 text-xs text-purple-600 mt-2">
-                    <div className="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center">
-                      <UserCheck className="h-2 w-2" />
-                    </div>
-                    <span>بواسطة: {getDisplayName(client)}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {canEditClient(client) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setEditingClient(client)}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                )}
-                {canDeleteClient(client) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeleteClient(client)}
-                  >
-                    <Trash2 className="h-3 w-3 text-red-500" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
-        emptyState={(
-          <Card className="bizmax-card">
-            <div className="text-center py-12">
-              <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد عملاء</h3>
-              <p className="text-gray-500 mb-4">
-                {isSales() ? (
-                  'لم تقم بإضافة أي عملاء بعد. ابدأ بإضافة عميلك الأول.'
-                ) : hasFilters ? 'لم يتم العثور على عملاء تطابق معايير البحث' : 'ابدأ بإضافة عميلك الأول'}
-              </p>
-              <Button onClick={() => setShowAddModal(true)}>
-                <Plus className="h-4 w-4 ml-2" />
-                إضافة عميل جديد
-              </Button>
-            </div>
-          </Card>
-        )}
-      />
+            </Card>
+          )}
+        />
       </div>
 
       {/* Add Client Modal - Enhanced */}
@@ -1132,205 +1141,205 @@ export default function ClientsSimple() {
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={handleAddClient} className="flex flex-col flex-1 min-h-0">
               {/* محتوى النموذج القابل للتمرير */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                
 
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    👤 الاسم <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                      placeholder="أدخل اسم العميل الكامل"
-                    value={newClient.name}
-                    onChange={(e) => setNewClient({...newClient, name: e.target.value})}
-                    required
-                      className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    📧 البريد الإلكتروني
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    type="email"
-                    placeholder="example@company.com"
-                    value={newClient.email}
-                    onChange={(e) => setNewClient({...newClient, email: e.target.value})}
-                      className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    📱 رقم الهاتف <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                      <img src="https://flagcdn.com/w20/eg.png" alt="مصر" className="w-4 h-2.5" />
-                      <span className="text-xs text-gray-600">+20</span>
-                    </div>
-                    <Input
-                      placeholder="أدخل رقم الهاتف"
-                      value={newClient.phone}
-                      onChange={(e) => setNewClient({...newClient, phone: e.target.value})}
-                      className="pl-10 pr-16 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    📍 الموقع <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="أدخل موقع العميل"
-                    value={newClient.address}
-                    onChange={(e) => setNewClient({...newClient, address: e.target.value})}
-                    required
-                      className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    👥 نوع العميل
-                  </label>
-                  <div className="relative">
-                  <select
-                    value={newClient.clientType || 'فردي'}
-                    onChange={(e) => setNewClient({...newClient, clientType: e.target.value})}
-                      className="w-full py-2 px-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                  >
-                      <option value="فردي">👤 فردي</option>
-                      <option value="شركة">🏢 شركة</option>
-                  </select>
-                    <div className="absolute right-3 top-3 pointer-events-none">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      👤 الاسم <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="أدخل اسم العميل الكامل"
+                        value={newClient.name}
+                        onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                        required
+                        className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
                     </div>
                   </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    🌐 مصدر العميل
-                  </label>
-                  <div className="relative">
-                  <select
-                    value={newClient.source || ''}
-                    onChange={(e) => setNewClient({...newClient, source: e.target.value})}
-                      className="w-full py-2 px-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                  >
-                    <option value="">اختر المصدر</option>
-                      <option value="website">🌐 الموقع الإلكتروني</option>
-                      <option value="social">📱 وسائل التواصل</option>
-                      <option value="referral">🤝 إحالة من عميل</option>
-                      <option value="advertising">📢 إعلان</option>
-                      <option value="phone">📞 مكالمة هاتفية</option>
-                      <option value="visit">🏢 زيارة المكتب</option>
-                  </select>
-                    <div className="absolute right-3 top-3 pointer-events-none">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📧 البريد الإلكتروني
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="email"
+                        placeholder="example@company.com"
+                        value={newClient.email}
+                        onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                        className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📱 رقم الهاتف <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/eg.png" alt="مصر" className="w-4 h-2.5" />
+                        <span className="text-xs text-gray-600">+20</span>
+                      </div>
+                      <Input
+                        placeholder="أدخل رقم الهاتف"
+                        value={newClient.phone}
+                        onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                        className="pl-10 pr-16 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📍 الموقع <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="أدخل موقع العميل"
+                        value={newClient.address}
+                        onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
+                        required
+                        className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      👥 نوع العميل
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={newClient.clientType || 'فردي'}
+                        onChange={(e) => setNewClient({ ...newClient, clientType: e.target.value })}
+                        className="w-full py-2 px-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                      >
+                        <option value="فردي">👤 فردي</option>
+                        <option value="شركة">🏢 شركة</option>
+                      </select>
+                      <div className="absolute right-3 top-3 pointer-events-none">
+                        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      🌐 مصدر العميل
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={newClient.source || ''}
+                        onChange={(e) => setNewClient({ ...newClient, source: e.target.value })}
+                        className="w-full py-2 px-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                      >
+                        <option value="">اختر المصدر</option>
+                        <option value="website">🌐 الموقع الإلكتروني</option>
+                        <option value="social">📱 وسائل التواصل</option>
+                        <option value="referral">🤝 إحالة من عميل</option>
+                        <option value="advertising">📢 إعلان</option>
+                        <option value="phone">📞 مكالمة هاتفية</option>
+                        <option value="visit">🏢 زيارة المكتب</option>
+                      </select>
+                      <div className="absolute right-3 top-3 pointer-events-none">
+                        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📊 الحالة
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={newClient.status || 'active'}
+                        onChange={(e) => setNewClient({ ...newClient, status: e.target.value })}
+                        className="w-full py-2 px-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                      >
+                        <option value="نشط">🟢 نشط</option>
+                        <option value="potential">🟡 محتمل</option>
+                        <option value="inactive">🔴 غير نشط</option>
+                      </select>
+                      <div className="absolute right-3 top-3 pointer-events-none">
+                        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      💰 الميزانية المتوقعة
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-3 text-gray-400 text-sm">ج.م</span>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={newClient.budget || ''}
+                        onChange={(e) => setNewClient({ ...newClient, budget: e.target.value })}
+                        className="pl-12 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📝 ملاحظات
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        placeholder="اكتب أي ملاحظات إضافية عن العميل..."
+                        value={newClient.notes || ''}
+                        onChange={(e) => setNewClient({ ...newClient, notes: e.target.value })}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        rows={3}
+                      />
+                      <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+                        {(newClient.notes || '').length}/500
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    📊 الحالة
-                  </label>
-                  <div className="relative">
-                  <select
-                    value={newClient.status || 'active'}
-                    onChange={(e) => setNewClient({...newClient, status: e.target.value})}
-                      className="w-full py-2 px-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                    >
-                      <option value="نشط">🟢 نشط</option>
-                      <option value="potential">🟡 محتمل</option>
-                      <option value="inactive">🔴 غير نشط</option>
-                  </select>
-                    <div className="absolute right-3 top-3 pointer-events-none">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    💰 الميزانية المتوقعة
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400 text-sm">ج.م</span>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={newClient.budget || ''}
-                      onChange={(e) => setNewClient({...newClient, budget: e.target.value})}
-                      className="pl-12 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    📝 ملاحظات
-                  </label>
-                  <div className="relative">
-                  <textarea
-                      placeholder="اكتب أي ملاحظات إضافية عن العميل..."
-                    value={newClient.notes || ''}
-                    onChange={(e) => setNewClient({...newClient, notes: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows={3}
-                  />
-                    <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                      {(newClient.notes || '').length}/500
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               </div>
 
               {/* أزرار الحفظ والإلغاء - ثابتة في الأسفل */}
               <div className="flex-shrink-0 p-4 border-t bg-gray-50 rounded-b-xl">
                 <div className="flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowAddModal(false)}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddModal(false)}
                     className="px-6 py-2"
-                >
-                  إلغاء
-                </Button>
-                  <Button 
-                    type="submit" 
+                  >
+                    إلغاء
+                  </Button>
+                  <Button
+                    type="submit"
                     className="flex-1 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white py-2 font-medium"
                   >
                     <UserPlus className="h-4 w-4 ml-2" />
-                  إضافة العميل
-                </Button>
+                    إضافة العميل
+                  </Button>
                 </div>
               </div>
             </form>
@@ -1366,7 +1375,7 @@ export default function ClientsSimple() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
             </div>
-            
+
             {/* Content */}
             <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
               <form onSubmit={handleUpdateClient} className="p-8">
@@ -1382,7 +1391,7 @@ export default function ClientsSimple() {
                       <div className="relative">
                         <Input
                           value={editingClient.name || ''}
-                          onChange={(e) => setEditingClient({...editingClient, name: e.target.value})}
+                          onChange={(e) => setEditingClient({ ...editingClient, name: e.target.value })}
                           className="w-full pl-10 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                           placeholder="أدخل اسم العميل"
                           required
@@ -1390,13 +1399,13 @@ export default function ClientsSimple() {
                         <User className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">رقم الهاتف *</label>
                       <div className="relative">
                         <Input
                           value={editingClient.phone || ''}
-                          onChange={(e) => setEditingClient({...editingClient, phone: e.target.value})}
+                          onChange={(e) => setEditingClient({ ...editingClient, phone: e.target.value })}
                           className="w-full pl-10 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all"
                           placeholder="رقم الهاتف"
                           required
@@ -1404,27 +1413,27 @@ export default function ClientsSimple() {
                         <Phone className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">البريد الإلكتروني</label>
                       <div className="relative">
                         <Input
                           type="email"
                           value={editingClient.email || ''}
-                          onChange={(e) => setEditingClient({...editingClient, email: e.target.value})}
+                          onChange={(e) => setEditingClient({ ...editingClient, email: e.target.value })}
                           className="w-full pl-10 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
                           placeholder="البريد الإلكتروني (اختياري)"
                         />
                         <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">حالة العميل</label>
                       <div className="relative">
                         <select
                           value={editingClient.status || 'active'}
-                          onChange={(e) => setEditingClient({...editingClient, status: e.target.value})}
+                          onChange={(e) => setEditingClient({ ...editingClient, status: e.target.value })}
                           className="w-full pl-10 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all appearance-none bg-white"
                         >
                           <option value="active">✅ نشط</option>
@@ -1436,7 +1445,7 @@ export default function ClientsSimple() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Additional Information */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 mb-6 border border-green-100">
                   <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -1448,50 +1457,50 @@ export default function ClientsSimple() {
                       <label className="block text-sm font-semibold text-gray-700">العنوان</label>
                       <Input
                         value={editingClient.address || ''}
-                        onChange={(e) => setEditingClient({...editingClient, address: e.target.value})}
+                        onChange={(e) => setEditingClient({ ...editingClient, address: e.target.value })}
                         className="w-full py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all"
                         placeholder="عنوان العميل (اختياري)"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700">الميزانية المقدرة</label>
                       <Input
                         type="number"
                         value={editingClient.budget || ''}
-                        onChange={(e) => setEditingClient({...editingClient, budget: e.target.value})}
+                        onChange={(e) => setEditingClient({ ...editingClient, budget: e.target.value })}
                         className="w-full py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all"
                         placeholder="0"
                         min="0"
                       />
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">ملاحظات</label>
                     <textarea
                       value={editingClient.notes || ''}
-                      onChange={(e) => setEditingClient({...editingClient, notes: e.target.value})}
+                      onChange={(e) => setEditingClient({ ...editingClient, notes: e.target.value })}
                       className="w-full py-3 px-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all resize-none"
                       rows="3"
                       placeholder="أي ملاحظات إضافية عن العميل..."
                     />
                   </div>
                 </div>
-                
+
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setEditingClient(null)} 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingClient(null)}
                     className="px-6 py-3 text-gray-700 border-gray-300 hover:bg-gray-50 rounded-xl transition-all"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     إلغاء
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-lg hover:shadow-xl"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
@@ -1566,7 +1575,7 @@ export default function ClientsSimple() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-hidden p-6">
               <WhatsAppSender
                 contacts={filteredClients?.filter(client => client.phone) || []}
@@ -1589,6 +1598,21 @@ export default function ClientsSimple() {
         onFollowUpCreated={handleFollowUpCreated}
         api={api}
       />
+
+      {/* Duplicate Client Modal */}
+      {showDuplicateModal && duplicateClients.length > 0 && (
+        <DuplicateClientModal
+          duplicates={duplicateClients}
+          onCancel={() => {
+            setShowDuplicateModal(false)
+            setDuplicateClients([])
+          }}
+          onViewDuplicate={(client) => {
+            setShowDuplicateModal(false)
+            setViewingClient(client)
+          }}
+        />
+      )}
     </div>
   )
 }
