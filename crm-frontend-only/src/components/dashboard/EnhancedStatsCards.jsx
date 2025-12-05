@@ -156,12 +156,12 @@ export default function EnhancedStatsCards({
 
         return (
           <Card
-            key={`stat - ${animationKey} -${stat.id} `}
+            key={`stat-${animationKey}-${stat.id}`}
             className="relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-pointer"
-            style={{ animation: `slideInUp 0.8s ease - out ${delay}s both` }}
+            style={{ animation: `slideInUp 0.8s ease-out ${delay}s both` }}
           >
             {/* Background Gradient */}
-            <div className={`absolute inset - 0 bg - gradient - to - br ${stat.bgGradient} opacity - 30 group - hover: opacity - 50 transition - opacity duration - 300`}></div>
+            <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-30 group-hover:opacity-50 transition-opacity duration-300`}></div>
 
             {/* Floating Elements */}
             <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
@@ -180,8 +180,8 @@ export default function EnhancedStatsCards({
 
                 {/* Trend Indicator */}
                 <div className={`flex items - center gap - 1 px - 3 py - 1.5 rounded - full ${stat.trend === 'up'
-                    ? 'bg-green-100 text-green-700 border border-green-200'
-                    : 'bg-red-100 text-red-700 border border-red-200'
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-red-100 text-red-700 border border-red-200'
                   } shadow - sm`}>
                   <TrendIcon className="h-4 w-4" />
                   <span className="text-sm font-bold">{stat.change}</span>
