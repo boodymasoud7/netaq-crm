@@ -1,0 +1,85 @@
+{
+    "name": "نظام نطاق لإدارة علاقات العملاء",
+    "short_name": "نطاق CRM",
+    "description": "نظام CRM متكامل لإدارة العقارات والعملاء",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "display_override": [
+        "window-controls-overlay",
+        "standalone"
+    ],
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "any",
+    "dir": "rtl",
+    "lang": "ar",
+    "categories": [
+        "business",
+        "productivity"
+    ],
+    "icons": [
+        {
+            "src": "/icons/android/android-launchericon-48-48.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/android/android-launchericon-72-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/android/android-launchericon-96-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/android/android-launchericon-144-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/android/android-launchericon-192-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/android/android-launchericon-512-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "العملاء المحتملين",
+            "short_name": "Leads",
+            "description": "عرض وإدارة العملاء المحتملين",
+            "url": "/leads"
+        },
+        {
+            "name": "المبيعات",
+            "short_name": "Sales",
+            "description": "عرض وإدارة المبيعات",
+            "url": "/sales"
+        },
+        {
+            "name": "المتابعات",
+            "short_name": "Follow-ups",
+            "description": "عرض وإدارة المتابعات",
+            "url": "/followups"
+        },
+        {
+            "name": "لوحة التحكم",
+            "short_name": "Dashboard",
+            "description": "لوحة التحكم الرئيسية",
+            "url": "/dashboard"
+        }
+    ]
+}

@@ -6,8 +6,11 @@ import { NotificationProvider } from './contexts/NotificationContext'
 import { ReminderPopupProvider } from './contexts/ReminderPopupContext'
 import ApiErrorBoundary from './components/ui/ApiErrorBoundary'
 
-// نظام التذكيرات المتقدم - جديد
+// نظام التذكيرات المتقدم
 import ReminderPopupManager from './components/reminders/ReminderPopupManager'
+
+// PWA Manager
+import PWAManager from './components/pwa/PWAManager'
 
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -33,14 +36,13 @@ import BackupManagement from './pages/BackupManagement'
 import SimpleReminders from './pages/SimpleReminders'
 import FollowUps from './pages/FollowUps'
 import Settings from './pages/Settings'
-// ManagerDashboard تم استرجاعها
 import NotFound from './components/ui/NotFound'
 
 import { PERMISSIONS } from './lib/roles'
 import './App.css'
 
 function App() {
-  // تفعيل الرسائل التحفيزية 🎉
+  // تفعيل الرسائل التحفيزية
   useMotivationalMessages()
 
   return (
@@ -49,6 +51,12 @@ function App() {
         <NotificationProvider>
           <ReminderPopupProvider>
             <Router>
+              {/* PWA Manager */}
+              <PWAManager />
+
+              {/* Reminder Popup Manager */}
+              <ReminderPopupManager />
+
               <div className="min-h-screen bg-gray-50 text-gray-900 font-arabic">
                 <Routes>
                   <Route path="/login" element={<Login />} />
@@ -108,6 +116,16 @@ function App() {
                                 <Developers />
                               </ProtectedRoute>
                             } />
+                            <Route path="/analytics" element={
+                              <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_ANALYTICS]}>
+                                <Analytics />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/bulk-leads" element={
+                              <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_LEADS]}>
+                                <BulkLeads />
+                              </ProtectedRoute>
+                            } />
                             <Route path="/units" element={
                               <ProtectedRoute requiredPermissions={[PERMISSIONS.VIEW_UNITS]}>
                                 <Units />
@@ -159,13 +177,9 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="*" element={<NotFound />} />
                 </Routes>
                 <EnhancedToaster />
               </div>
-
-              {/* مدير popup التذكيرات - يعمل في جميع أنحاء التطبيق */}
-              <ReminderPopupManager />
             </Router>
           </ReminderPopupProvider>
         </NotificationProvider>
