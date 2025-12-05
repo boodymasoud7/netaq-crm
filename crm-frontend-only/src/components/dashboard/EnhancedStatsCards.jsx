@@ -194,22 +194,6 @@ export default function EnhancedStatsCards({
                         stat.value
                       }
                     </p>
-                    {/* Sparkline Chart */}
-                    {statChartData.length > 0 && (
-                      <div className="flex-1">
-                        <ResponsiveContainer width="100%" height={40}>
-                          <LineChart data={statChartData}>
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke={stat.trend === 'up' ? '#10b981' : '#ef4444'}
-                              strokeWidth={2}
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
                   </div>
                   <p className="text-xs text-gray-600 mt-1">{stat.description}</p>
                 </div>
