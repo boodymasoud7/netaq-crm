@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
+import usePerformanceMonitor from '../hooks/usePerformanceMonitor'
 import {
   Users,
   UserPlus,
@@ -47,13 +48,14 @@ import toast from 'react-hot-toast'
 
 // تم حذف قائمة التذكيرات مؤقتاً
 
-export default function Dashboard() {
+const Dashboard = () => {
   const navigate = useNavigate()
-  const { currentUser, userProfile } = useAuth()
+  const { currentUser, isAdmin, isSales, isManager } = useAuth()
+
+  // Performance monitoring
+  usePerformanceMonitor('Dashboard')
   const {
-    isAdmin,
     isSalesManager,
-    isSales,
     checkPermission,
     filterByRole
   } = usePermissions()

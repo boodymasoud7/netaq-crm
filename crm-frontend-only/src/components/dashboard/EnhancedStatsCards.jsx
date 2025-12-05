@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { 
-  Users, 
-  UserPlus, 
-  Building2, 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  ArrowUpRight, 
+import {
+  Users,
+  UserPlus,
+  Building2,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
   ArrowDownRight,
   Sparkles,
   Target,
@@ -17,10 +17,10 @@ import {
 import { Card } from '../ui/card'
 import { formatCurrency } from '../../lib/utils'
 
-export default function EnhancedStatsCards({ 
-  personalStats, 
-  isAdmin, 
-  isSales, 
+export default function EnhancedStatsCards({
+  personalStats,
+  isAdmin,
+  isSales,
   loading = false,
   teamPerformance = [],
   currentUserPerformance = null,
@@ -135,22 +135,25 @@ export default function EnhancedStatsCards({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {statsData.map((stat, index) => {
         const Icon = stat.icon
         const TrendIcon = stat.trend === 'up' ? TrendingUp : TrendingDown
         const delay = index * 0.1
         const progress = typeof stat.value === 'number' ? Math.min((stat.value / stat.target) * 100, 100) : 0
-        
+
         return (
-          <Card 
-            key={`stat-${animationKey}-${stat.id}`} 
+          <Card
+            key={`stat-${animationKey}-${stat.id}`}
             className="relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-pointer"
             style={{ animation: `slideInUp 0.8s ease-out ${delay}s both` }}
+            role="article"
+            aria-label={`${stat.title}: ${stat.value}`}
+            tabIndex={0}
           >
             {/* Background Gradient */}
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-30 group-hover:opacity-50 transition-opacity duration-300`}></div>
-            
+
             {/* Floating Elements */}
             <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
               <Sparkles className="h-8 w-8 text-gray-400" />
@@ -159,32 +162,31 @@ export default function EnhancedStatsCards({
               <div className="w-16 h-16 rounded-full bg-white"></div>
             </div>
 
-            <div className="relative p-6 z-10">
+            <div className="relative p-4 md:p-6 z-10">
               {/* Header */}
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between mb-4 md:mb-6">
                 <div className={`p-4 rounded-2xl bg-gradient-to-br ${stat.gradient} shadow-xl group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="h-7 w-7 text-white" />
                 </div>
-                
+
                 {/* Trend Indicator */}
-                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${
-                  stat.trend === 'up' 
-                    ? 'bg-green-100 text-green-700 border border-green-200' 
-                    : 'bg-red-100 text-red-700 border border-red-200'
-                } shadow-sm`}>
+                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${stat.trend === 'up'
+                  ? 'bg-green-100 text-green-700 border border-green-200'
+                  : 'bg-red-100 text-red-700 border border-red-200'
+                  } shadow-sm`}>
                   <TrendIcon className="h-4 w-4" />
                   <span className="text-sm font-bold">{stat.change}</span>
                 </div>
               </div>
-              
+
               {/* Main Content */}
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-1">{stat.title}</h3>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-3xl font-bold text-gray-900 group-hover:scale-105 transition-transform duration-300">
-                      {typeof stat.value === 'number' ? 
-                        (animatedValues[stat.id] || 0) : 
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900 group-hover:scale-105 transition-transform duration-300">
+                      {typeof stat.value === 'number' ?
+                        (animatedValues[stat.id] || 0) :
                         stat.value
                       }
                     </p>
@@ -200,7 +202,7 @@ export default function EnhancedStatsCards({
                       <span>{progress.toFixed(0)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                      <div 
+                      <div
                         className={`h-2.5 rounded-full bg-gradient-to-r ${stat.gradient} transition-all duration-1000 ease-out relative overflow-hidden`}
                         style={{ width: `${progress}%` }}
                       >
