@@ -621,41 +621,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* 🏆 لوحة الشرف - مدمجة في Hero Section */}
-              {teamPerformance.length > 0 && (
-                <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-xl p-3 border border-white border-opacity-30">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-white font-bold text-sm flex items-center gap-2">
-                      <Zap className="h-4 w-4" />
-                      🏆 لوحة الشرف
-                    </h3>
-                    <span className="text-white text-xs opacity-80">{teamPerformance.length} موظف</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {teamPerformance.slice(0, 6).map((member, index) => (
-                      <div
-                        key={member.userId}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all ${member.userId === currentUser?.id
-                          ? 'bg-white bg-opacity-40 border border-white shadow-md'
-                          : 'bg-white bg-opacity-10 hover:bg-opacity-20'
-                          }`}
-                      >
-                        <div className="text-base">
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-xs text-white truncate`}>
-                            {member.name}
-                          </p>
-                        </div>
-                        <span className={`font-bold text-xs text-white opacity-90`}>
-                          {member.totalPoints}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
           {/* Decorative Elements */}
