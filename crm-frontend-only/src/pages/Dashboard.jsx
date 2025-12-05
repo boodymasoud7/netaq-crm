@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Users, 
-  UserPlus, 
-  Building2, 
-  TrendingUp, 
+import {
+  Users,
+  UserPlus,
+  Building2,
+  TrendingUp,
   DollarSign,
   Phone,
   Mail,
@@ -50,14 +50,14 @@ import toast from 'react-hot-toast'
 export default function Dashboard() {
   const navigate = useNavigate()
   const { currentUser, userProfile } = useAuth()
-  const { 
-    isAdmin, 
-    isSalesManager, 
-    isSales, 
+  const {
+    isAdmin,
+    isSalesManager,
+    isSales,
     checkPermission,
-    filterByRole 
+    filterByRole
   } = usePermissions()
-  
+
   // Use real API data - fetch based on user role
   const { data: clientsData, loading: clientsLoading } = useApiData(() => dbAPI.getClients({ limit: 1000 }))
   const { data: leadsData, loading: leadsLoading } = useApiData(() => dbAPI.getLeads({ limit: 1000 }))
@@ -65,7 +65,7 @@ export default function Dashboard() {
   const { data: usersData, loading: usersLoading } = useApiData(() => dbAPI.getUsers())
   const { data: interactionsData, loading: interactionsLoading } = useApiData(() => dbAPI.getInteractions({ limit: 10000 }))
   const { data: followUpsData, loading: followUpsLoading } = useApiData(() => dbAPI.getFollowUps({ limit: 10000 }))
-  
+
   // Real Tasks and Reminders Data
   const {
     tasks: realTasks,
@@ -84,7 +84,7 @@ export default function Dashboard() {
     updateReminder,
     deleteReminder
   } = useReminders()
-  
+
   // Extract and filter data based on user role
   const allClients = clientsData?.data || []
   const allLeads = leadsData?.data || []
@@ -92,12 +92,12 @@ export default function Dashboard() {
   const users = usersData?.data || []
   const interactions = interactionsData?.data || []
   const followUps = followUpsData?.data || []
-  
+
   // Apply role-based filtering
   const clients = filterByRole(allClients, 'clients')
   const allFilteredLeads = filterByRole(allLeads, 'leads')
   // Exclude converted leads from Dashboard display
-  const leads = allFilteredLeads.filter(lead => 
+  const leads = allFilteredLeads.filter(lead =>
     lead.status !== 'converted' && lead.status !== 'محول'
   )
   const sales = filterByRole(allSales, 'sales')
@@ -113,30 +113,30 @@ export default function Dashboard() {
         return !excludedRoles.some(excludedRole => role.includes(excludedRole.toLowerCase()));
       })
       .map(user => {
-        const userClients = allClients.filter(client => 
+        const userClients = allClients.filter(client =>
           parseInt(client.assignedTo) === user.id || parseInt(client.createdBy) === user.id
         );
-        const userLeads = allLeads.filter(lead => 
+        const userLeads = allLeads.filter(lead =>
           parseInt(lead.assignedTo) === user.id || parseInt(lead.createdBy) === user.id
         );
-        const userSales = allSales.filter(sale => 
+        const userSales = allSales.filter(sale =>
           parseInt(sale.assignedTo) === user.id || parseInt(sale.createdBy) === user.id
         );
-        const userInteractions = interactions.filter(i => 
+        const userInteractions = interactions.filter(i =>
           parseInt(i.createdBy) === user.id || parseInt(i.assignedTo) === user.id
         );
-        const userFollowUps = followUps.filter(f => 
+        const userFollowUps = followUps.filter(f =>
           parseInt(f.assignedTo) === user.id || parseInt(f.createdBy) === user.id
         );
         const userCompletedFollowUps = userFollowUps.filter(f => f.status === 'done' || f.status === 'completed');
 
         // حساب التحويلات
-        const convertedLeads = userLeads.filter(lead => 
+        const convertedLeads = userLeads.filter(lead =>
           lead.status === 'converted' || lead.convertedAt
         );
 
         // تفاعلات إيجابية
-        const positiveInteractions = userInteractions.filter(i => 
+        const positiveInteractions = userInteractions.filter(i =>
           i.outcome && (
             i.outcome.toLowerCase().includes('interest') ||
             i.outcome.toLowerCase().includes('agreed') ||
@@ -156,7 +156,7 @@ export default function Dashboard() {
         const fiveStarRatings = userClients.filter(c => c.rating && parseFloat(c.rating) >= 5);
 
         // إجمالي النقاط
-        const totalPoints = 
+        const totalPoints =
           userSales.length +
           convertedLeads.length +
           positiveInteractions.length +
@@ -179,7 +179,11 @@ export default function Dashboard() {
       .sort((a, b) => b.totalPoints - a.totalPoints);
   };
 
-  const teamPerformance = calculateTeamPerformance();
+  // Use useMemo to avoid expensive recalculation on every render
+  const teamPerformance = useMemo(() => {
+    return calculateTeamPerformance();
+  }, [users, allClients, allLeads, allSales, interactions, followUps]);
+
   const currentUserPerformance = teamPerformance.find(p => p.userId === currentUser?.id);
   const currentUserRank = teamPerformance.findIndex(p => p.userId === currentUser?.id) + 1;
 
@@ -187,16 +191,16 @@ export default function Dashboard() {
   const getRecentActivities = () => {
     const activities = []
     const now = new Date()
-    
+
     // فترات البحث (نبدأ بالحديثة ونوسع تدريجياً)
     const timeRanges = [
       24 * 60 * 60 * 1000,    // آخر 24 ساعة
       7 * 24 * 60 * 60 * 1000, // آخر أسبوع
       30 * 24 * 60 * 60 * 1000 // آخر شهر
     ]
-    
+
     let allActivities = []
-    
+
     // جرب كل فترة زمنية حتى نجد نشاطات
     for (const timeRange of timeRanges) {
       // إضافة العملاء الجدد
@@ -207,7 +211,7 @@ export default function Dashboard() {
       }).map(client => {
         // تحسين وصف العميل
         let description = client.name
-        
+
         if (client.phone) {
           description += ` - ${client.phone}`
         } else if (client.email) {
@@ -219,7 +223,7 @@ export default function Dashboard() {
         } else {
           description += ' - عميل جديد'
         }
-        
+
         return {
           type: 'client',
           title: 'عميل جديد مضاف',
@@ -238,7 +242,7 @@ export default function Dashboard() {
       }).map(lead => {
         // تحسين وصف العميل المحتمل
         let description = lead.name
-        
+
         if (lead.phone) {
           description += ` - ${lead.phone}`
         } else if (lead.source) {
@@ -259,7 +263,7 @@ export default function Dashboard() {
         } else {
           description += ' - عميل محتمل جديد'
         }
-        
+
         return {
           type: 'lead',
           title: 'عميل محتمل جديد',
@@ -283,7 +287,7 @@ export default function Dashboard() {
         } else if (sale.projectName) {
           clientInfo += ` - ${sale.projectName}`
         }
-        
+
         return {
           type: 'sale',
           title: 'مبيعة جديدة مكتملة',
@@ -303,7 +307,7 @@ export default function Dashboard() {
       }).map(task => {
         // تحسين وصف المهمة
         let description = task.title
-        
+
         if (task.assignedToName) {
           description += ` - ${task.assignedToName}`
         } else if (task.clientName) {
@@ -313,14 +317,14 @@ export default function Dashboard() {
         } else if (task.priority) {
           const priorityText = {
             'high': 'أولوية عالية',
-            'medium': 'أولوية متوسطة', 
+            'medium': 'أولوية متوسطة',
             'low': 'أولوية منخفضة'
           }[task.priority] || 'مهمة عادية'
           description += ` - ${priorityText}`
         } else {
           description += ' - مهمة مكتملة'
         }
-        
+
         return {
           type: 'task',
           title: 'مهمة مكتملة',
@@ -339,7 +343,7 @@ export default function Dashboard() {
       }).map(reminder => {
         // تحسين وصف التذكير
         let description = reminder.title
-        
+
         if (reminder.clientName) {
           description = `${reminder.title} - ${reminder.clientName}`
         } else if (reminder.phone) {
@@ -352,21 +356,21 @@ export default function Dashboard() {
           // إذا لم توجد معلومات إضافية، اعرض نوع التذكير والوقت
           const reminderTypeArabic = {
             'call': 'اتصال',
-            'visit': 'زيارة', 
+            'visit': 'زيارة',
             'meeting': 'اجتماع',
             'follow-up': 'متابعة',
             'task': 'مهمة'
           }[reminder.type] || 'تذكير'
-          
+
           const dueDate = new Date(reminder.dueDate)
           const isToday = dueDate.toDateString() === now.toDateString()
-          const timeStr = isToday ? 
+          const timeStr = isToday ?
             dueDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true }) :
             dueDate.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })
-          
+
           description = `${reminderTypeArabic} مجدول - ${timeStr}`
         }
-        
+
         return {
           type: 'reminder',
           title: 'تذكير جديد مجدول',
@@ -378,11 +382,11 @@ export default function Dashboard() {
       }) || []
 
       allActivities = [...recentClients, ...recentLeads, ...recentSales, ...recentTasks, ...recentReminders]
-      
+
       // إذا وجدنا نشاطات، توقف عن البحث
       if (allActivities.length >= 4) break
     }
-    
+
     // إذا لم نجد نشاطات حديثة، أضف آخر البيانات المحدثة
     if (allActivities.length === 0) {
       // آخر العملاء المحدثين
@@ -394,7 +398,7 @@ export default function Dashboard() {
           if (client.phone) updateInfo = `هاتف: ${client.phone}`
           else if (client.email) updateInfo = `إيميل: ${client.email}`
           else if (client.address) updateInfo = `عنوان: ${client.address.substring(0, 25)}...`
-          
+
           return {
             type: 'client_update',
             title: 'تحديث بيانات عميل',
@@ -423,7 +427,7 @@ export default function Dashboard() {
           } else if (lead.phone) {
             updateInfo = `هاتف: ${lead.phone}`
           }
-          
+
           return {
             type: 'lead_update',
             title: 'تحديث عميل محتمل',
@@ -433,7 +437,7 @@ export default function Dashboard() {
             color: 'purple'
           }
         }) || []
-      
+
       allActivities = [...recentUpdatedClients, ...recentUpdatedLeads]
     }
 
@@ -443,44 +447,28 @@ export default function Dashboard() {
       .slice(0, 4) // أحدث 4 نشاطات
   }
 
-  const recentActivities = getRecentActivities()
+  // Use useMemo to avoid expensive filtering on every render
+  const recentActivities = useMemo(() => {
+    return getRecentActivities();
+  }, [clients, leads, sales, tasks, reminders])
 
-  // إضافة تشخيص للنشاطات الأخيرة
-  console.log('🔍 تشخيص النشاطات الأخيرة:', {
-    clientsCount: clients?.length || 0,
-    leadsCount: leads?.length || 0, 
-    salesCount: sales?.length || 0,
-    tasksCount: tasks?.length || 0,
-    remindersCount: reminders?.length || 0,
-    recentActivitiesCount: recentActivities.length,
-    recentActivities: recentActivities,
-    // تشخيص مفصل للتذكيرات
-    remindersDetails: reminders?.slice(0, 3)?.map(r => ({
-      title: r.title,
-      clientName: r.clientName,
-      phone: r.phone,
-      description: r.description,
-      location: r.location,
-      type: r.type,
-      dueDate: r.dueDate
-    }))
-  })
+  // Debug logging removed for production performance
 
   // دالة لحساب الوقت المنقضي باللغة العربية
   const getTimeAgo = (date) => {
     const now = new Date()
     const diffInMinutes = Math.floor((now - new Date(date)) / (1000 * 60))
-    
+
     if (diffInMinutes < 1) return 'منذ لحظات'
     if (diffInMinutes < 60) return `منذ ${diffInMinutes} دقيقة`
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60)
     if (diffInHours < 24) return `منذ ${diffInHours} ساعة`
-    
+
     const diffInDays = Math.floor(diffInHours / 24)
     if (diffInDays === 1) return 'منذ يوم واحد'
     if (diffInDays < 7) return `منذ ${diffInDays} أيام`
-    
+
     return new Date(date).toLocaleDateString('ar-EG')
   }
 
@@ -488,7 +476,7 @@ export default function Dashboard() {
   const getActivityColor = (color) => {
     const colors = {
       'green': 'bg-green-50 hover:bg-green-100',
-      'blue': 'bg-blue-50 hover:bg-blue-100', 
+      'blue': 'bg-blue-50 hover:bg-blue-100',
       'purple': 'bg-purple-50 hover:bg-purple-100',
       'orange': 'bg-orange-50 hover:bg-orange-100',
       'red': 'bg-red-50 hover:bg-red-100'
@@ -501,7 +489,7 @@ export default function Dashboard() {
     const colors = {
       'green': 'bg-green-500',
       'blue': 'bg-blue-500',
-      'purple': 'bg-purple-500', 
+      'purple': 'bg-purple-500',
       'orange': 'bg-orange-500',
       'red': 'bg-red-500'
     }
@@ -531,7 +519,7 @@ export default function Dashboard() {
   const personalSalesCount = sales.length
   const personalLeadsCount = leads.length
   const personalClientsCount = clients.length
-  
+
   // Calculate conversion rate from personal data
   const totalPersonalLeads = allFilteredLeads.length // Include converted leads for rate calculation
   const convertedLeads = allFilteredLeads.filter(lead => lead.status === 'converted' || lead.status === 'محول').length
@@ -615,24 +603,24 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-4 mt-3">
                   <span className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    📅 {new Date().toLocaleDateString('ar-EG', { 
+                    📅 {new Date().toLocaleDateString('ar-EG', {
                       timeZone: 'Africa/Cairo',
                       weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </span>
                   <span className="text-white text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                    🕐 {new Date().toLocaleTimeString('ar-EG', { 
+                    🕐 {new Date().toLocaleTimeString('ar-EG', {
                       timeZone: 'Africa/Cairo',
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </span>
                 </div>
               </div>
-              
+
               {/* 🏆 لوحة الشرف - مدمجة في Hero Section */}
               {teamPerformance.length > 0 && (
                 <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-xl p-3 border border-white border-opacity-30">
@@ -645,13 +633,12 @@ export default function Dashboard() {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {teamPerformance.slice(0, 6).map((member, index) => (
-                      <div 
+                      <div
                         key={member.userId}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all ${
-                          member.userId === currentUser?.id 
-                            ? 'bg-white bg-opacity-40 border border-white shadow-md' 
-                            : 'bg-white bg-opacity-10 hover:bg-opacity-20'
-                        }`}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all ${member.userId === currentUser?.id
+                          ? 'bg-white bg-opacity-40 border border-white shadow-md'
+                          : 'bg-white bg-opacity-10 hover:bg-opacity-20'
+                          }`}
                       >
                         <div className="text-base">
                           {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🎯'}
@@ -677,7 +664,7 @@ export default function Dashboard() {
         </div>
 
         {/* Enhanced Stats Cards */}
-        <EnhancedStatsCards 
+        <EnhancedStatsCards
           personalStats={personalStats}
           isAdmin={isAdmin}
           isSales={isSales}
@@ -688,7 +675,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
           {/* Real Task Management */}
           <div className="h-full">
-            <CompactTaskWidget 
+            <CompactTaskWidget
               tasksData={tasks}
               onAddTask={handleAddTask}
               onCompleteTask={handleCompleteTask}
@@ -698,7 +685,7 @@ export default function Dashboard() {
 
           {/* Real Reminders Widget */}
           <div className="h-full">
-            <CompactRemindersWidget 
+            <CompactRemindersWidget
               remindersData={reminders}
               onAddReminder={handleAddReminder}
               onCompleteReminder={handleCompleteReminder}
@@ -733,7 +720,7 @@ export default function Dashboard() {
                   <div className="text-blue-100 text-sm">عميل نشط</div>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-blue-100 text-sm">عملاء جدد هذا الشهر</span>
@@ -747,7 +734,7 @@ export default function Dashboard() {
                   <div className="bg-white h-2 rounded-full transition-all duration-1000" style={{ width: '75%' }}></div>
                 </div>
               </div>
-              
+
               <div className="absolute -top-4 -right-4 w-20 h-20 bg-white bg-opacity-10 rounded-full"></div>
               <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white bg-opacity-5 rounded-full"></div>
             </div>
@@ -771,7 +758,7 @@ export default function Dashboard() {
                   <div className="text-orange-100 text-sm">فرصة</div>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-orange-100 text-sm">معدل التحويل</span>
@@ -785,7 +772,7 @@ export default function Dashboard() {
                   <div className="bg-white h-2 rounded-full transition-all duration-1000" style={{ width: `${personalConversionRate || 0}%` }}></div>
                 </div>
               </div>
-              
+
               <div className="absolute -top-4 -right-4 w-20 h-20 bg-white bg-opacity-10 rounded-full"></div>
               <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white bg-opacity-5 rounded-full"></div>
             </div>
@@ -809,7 +796,7 @@ export default function Dashboard() {
                   <div className="text-green-100 text-sm">إجمالي الإيرادات</div>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-green-100 text-sm">عدد المبيعات</span>
@@ -823,7 +810,7 @@ export default function Dashboard() {
                   <div className="bg-white h-2 rounded-full transition-all duration-1000" style={{ width: '85%' }}></div>
                 </div>
               </div>
-              
+
               <div className="absolute -top-4 -right-4 w-20 h-20 bg-white bg-opacity-10 rounded-full"></div>
               <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white bg-opacity-5 rounded-full"></div>
             </div>
@@ -848,7 +835,7 @@ export default function Dashboard() {
                     <h4 className="text-base font-medium text-gray-800 mb-2">لا توجد أنشطة حديثة</h4>
                     <p className="text-gray-500 text-sm mb-3">سيظهر هنا آخر النشاطات عند إضافة عملاء أو مبيعات جديدة</p>
                     <div className="flex justify-center gap-2">
-                      <Button 
+                      <Button
                         onClick={() => navigate('/clients')}
                         size="sm"
                         variant="outline"
@@ -857,7 +844,7 @@ export default function Dashboard() {
                         <Users className="h-3 w-3 ml-1" />
                         إضافة عميل
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => navigate('/leads')}
                         size="sm"
                         variant="outline"
@@ -872,7 +859,7 @@ export default function Dashboard() {
                   recentActivities.map((activity, index) => {
                     const Icon = activity.icon
                     return (
-                      <div 
+                      <div
                         key={index}
                         className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${getActivityColor(activity.color)}`}
                       >
@@ -900,8 +887,8 @@ export default function Dashboard() {
                 إجراءات سريعة
               </h3>
               <div className="space-y-3">
-                <Button 
-                  onClick={() => navigate('/clients/new')} 
+                <Button
+                  onClick={() => navigate('/clients')}
                   className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100 border-0 h-12"
                 >
                   <UserPlus className="h-4 w-4 ml-2" />
@@ -910,9 +897,9 @@ export default function Dashboard() {
                     <div className="text-xs opacity-75">إضافة عميل للنظام</div>
                   </div>
                 </Button>
-                
-                <Button 
-                  onClick={() => navigate('/sales/new')} 
+
+                <Button
+                  onClick={() => navigate('/sales')}
                   className="w-full justify-start bg-green-50 text-green-700 hover:bg-green-100 border-0 h-12"
                 >
                   <DollarSign className="h-4 w-4 ml-2" />
@@ -921,9 +908,9 @@ export default function Dashboard() {
                     <div className="text-xs opacity-75">عملية بيع جديدة</div>
                   </div>
                 </Button>
-                
-                <Button 
-                  onClick={() => navigate('/reminders/new')} 
+
+                <Button
+                  onClick={() => navigate('/reminders')}
                   className="w-full justify-start bg-orange-50 text-orange-700 hover:bg-orange-100 border-0 h-12"
                 >
                   <Calendar className="h-4 w-4 ml-2" />
@@ -932,9 +919,9 @@ export default function Dashboard() {
                     <div className="text-xs opacity-75">تذكير أو موعد</div>
                   </div>
                 </Button>
-                
-                <Button 
-                  onClick={() => navigate('/projects/new')} 
+
+                <Button
+                  onClick={() => navigate('/projects')}
                   className="w-full justify-start bg-purple-50 text-purple-700 hover:bg-purple-100 border-0 h-12"
                 >
                   <Building2 className="h-4 w-4 ml-2" />
@@ -955,7 +942,7 @@ export default function Dashboard() {
               <BarChart3 className="h-5 w-5 text-indigo-600" />
               نظرة عامة على الأداء
             </h3>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* Today's Stats */}
               <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
@@ -963,19 +950,19 @@ export default function Dashboard() {
                 <div className="text-sm text-blue-600">عملاء اليوم</div>
                 <div className="text-xs text-blue-500 mt-1">+{Math.floor(personalClientsCount * 0.1)} عن أمس</div>
               </div>
-              
+
               <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
                 <div className="text-2xl font-bold text-green-700">{personalSalesCount}</div>
                 <div className="text-sm text-green-600">مبيعات اليوم</div>
                 <div className="text-xs text-green-500 mt-1">+{Math.floor(personalSalesCount * 0.2)} عن أمس</div>
               </div>
-              
+
               <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
                 <div className="text-2xl font-bold text-orange-700">{personalLeadsCount}</div>
                 <div className="text-sm text-orange-600">فرص جديدة</div>
                 <div className="text-xs text-orange-500 mt-1">+{Math.floor(personalLeadsCount * 0.15)} عن أمس</div>
               </div>
-              
+
               <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
                 <div className="text-2xl font-bold text-purple-700">{Math.floor((personalRevenue || 0) / 1000)}K</div>
                 <div className="text-sm text-purple-600">إيرادات اليوم</div>

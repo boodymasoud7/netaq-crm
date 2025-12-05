@@ -16,4 +16,14 @@ router.get('/manager', dashboardController.getManagerDashboard);
 // @access  Private
 router.get('/quick-stats', dashboardController.getQuickStats);
 
+// @route   GET /api/dashboard/summary
+// @desc    Get dashboard summary with trends (optimized for Dashboard page)
+// @access  Private
+router.get('/summary', dashboardController.getDashboardSummary);
+
+// @route   GET /api/dashboard/last-7-days
+// @desc    Get last 7 days stats for sparkline charts
+// @access  Private
+router.get('/last-7-days', dashboardController.getLast7DaysStats);
+
 module.exports = router;
