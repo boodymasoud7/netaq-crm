@@ -186,7 +186,7 @@ export default function EnhancedStatsCards({
                   <div className="flex items-baseline gap-2">
                     <p className="text-2xl md:text-3xl font-bold text-gray-900 group-hover:scale-105 transition-transform duration-300">
                       {typeof stat.value === 'number' ?
-                        (animatedValues[stat.id] || 0) :
+                        (animatedValues[stat.id] || 0).toLocaleString('ar-EG') :
                         stat.value
                       }
                     </p>
