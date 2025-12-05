@@ -669,6 +669,9 @@ export default function Dashboard() {
           isAdmin={isAdmin}
           isSales={isSales}
           loading={loading}
+          teamPerformance={teamPerformance}
+          currentUserPerformance={currentUserPerformance}
+          currentUserRank={currentUserRank}
         />
 
         {/* Compact Interactive Widgets Section */}
