@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { formatCurrency } from '../../lib/utils'
-import { LineChart, Line, ResponsiveContainer } from 'recharts'
+
 
 export default function EnhancedStatsCards({
   personalStats,
@@ -149,11 +149,6 @@ export default function EnhancedStatsCards({
         const delay = index * 0.1
         const progress = typeof stat.value === 'number' ? Math.min((stat.value / stat.target) * 100, 100) : 0
 
-        // Get chart data for this stat
-        const statChartData = chartData.map(day => ({
-          value: day[stat.chartKey] || 0
-        }))
-
         return (
           <Card
             key={`stat-${animationKey}-${stat.id}`}
@@ -173,7 +168,7 @@ export default function EnhancedStatsCards({
 
             <div className="relative p-6 z-10">
               {/* Header */}
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-6">
                 <div className={`p - 4 rounded - 2xl bg - gradient - to - br ${stat.gradient} shadow - xl group - hover: scale - 110 transition - transform duration - 300`}>
                   <Icon className="h-7 w-7 text-white" />
                 </div>
