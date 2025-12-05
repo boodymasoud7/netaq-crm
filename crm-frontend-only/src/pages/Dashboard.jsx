@@ -600,7 +600,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold text-white">لوحة التحكم</h1>
-                    <p className="text-blue-100 text-lg">مرحباً بك {userProfile?.displayName || 'في نظام إدارة العقارات'}</p>
+                    <p className="text-blue-100 text-lg">مرحباً بك {currentUser?.name || 'في نظام إدارة العقارات'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 mt-3">
