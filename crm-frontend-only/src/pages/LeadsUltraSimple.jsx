@@ -482,7 +482,7 @@ function LeadsUltraSimple() {
   )
 
   // Auto-expand pageSize when searching to show all results
-  const displayedLeads = searchTerm || statusFilter !== 'all' || sourceFilter !== 'all' || employeeFilter !== 'all'
+  const displayedLeads = searchTerm || selectedStatus !== 'all' || selectedSource !== 'all' || selectedEmployee !== 'all'
     ? finalFilteredLeads // Show all search results
     : finalFilteredLeads.slice(0, pageSize) // Limit to pageSize when not searching
 
