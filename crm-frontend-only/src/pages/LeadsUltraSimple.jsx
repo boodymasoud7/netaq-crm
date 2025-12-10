@@ -2778,20 +2778,29 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
             if (successCount > 0) {
               toast.success(`تم استيراد ${successCount} عميل محتمل جديد بنجاح`)
-              // Update limit to show new leads
-              updateParams({ page: 1, limit: Math.max(100, pageSize) })
-              refetch()
+
+              // Close modal first
+              setShowBulkDuplicateModal(false)
+              setBulkDuplicateData(null)
+              setPendingBulkImportData(null)
+              setBulkImportFile(null)
+              setShowBulkImportModal(false)
+              setIsImporting(false)
+
+              // Reload page to show new data
+              setTimeout(() => {
+                window.location.reload()
+              }, 500)
             }
             if (errorCount > 0) {
               toast.error(`فشل استيراد ${errorCount} سجل`)
+              setShowBulkDuplicateModal(false)
+              setBulkDuplicateData(null)
+              setPendingBulkImportData(null)
+              setBulkImportFile(null)
+              setShowBulkImportModal(false)
+              setIsImporting(false)
             }
-
-            setShowBulkDuplicateModal(false)
-            setBulkDuplicateData(null)
-            setPendingBulkImportData(null)
-            setBulkImportFile(null)
-            setShowBulkImportModal(false)
-            setIsImporting(false)
           }}
           onAddAll={async () => {
             // Import all including duplicates
