@@ -2789,6 +2789,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
             setPendingBulkImportData(null)
             setBulkImportFile(null)
             setShowBulkImportModal(false)
+            setIsImporting(false)
           }}
           onAddAll={async () => {
             // Import all including duplicates
