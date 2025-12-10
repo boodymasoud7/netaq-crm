@@ -2761,10 +2761,25 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
             try {
               // Filter out duplicates
+              console.log('📊 Duplicate data:', bulkDuplicateData)
+              console.log('📊 Pending import data:', pendingBulkImportData.length)
+
               const duplicatePhones = new Set(bulkDuplicateData.duplicates.map(d => d.phone))
               const duplicateEmails = new Set(bulkDuplicateData.duplicates.map(d => d.email))
+
+              console.log('📊 Duplicate phones:', duplicatePhones.size)
+              console.log('📊 Duplicate emails:', duplicateEmails.size)
+
               const newRecords = pendingBulkImportData.filter(lead => {
-                return !duplicatePhones.has(lead.phone) && !duplicateEmails.has(lead.email)
+                const phoneMatch = duplicatePhones.has(lead.phone)
+                const emailMatch = lead.email && duplicateEmails.has(lead.email)
+                const isDuplicate = phoneMatch || emailMatch
+
+                if (isDuplicate) {
+                  console.log(`⏭️ Skipping duplicate: ${lead.name} - ${lead.phone}`)
+                }
+
+                return !isDuplicate
               })
 
               console.log(`📊 Importing ${newRecords.length} new records...`)
