@@ -2756,49 +2756,60 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
           newCount={bulkDuplicateData.newCount || 0}
           totalCount={bulkDuplicateData.totalInputCount || pendingBulkImportData.length}
           onSkipDuplicates={async () => {
-            // Filter out duplicates
-            const duplicatePhones = new Set(bulkDuplicateData.duplicates.map(d => d.phone))
-            const duplicateEmails = new Set(bulkDuplicateData.duplicates.map(d => d.email))
-            const newRecords = pendingBulkImportData.filter(lead => {
-              return !duplicatePhones.has(lead.phone) && !duplicateEmails.has(lead.email)
-            })
+            console.log('🔄 Starting skip duplicates...')
+            setIsImporting(true)
 
-            // Import only new records
-            let successCount = 0
-            let errorCount = 0
-            for (const leadData of newRecords) {
-              try {
-                await api.addLead(leadData)
-                successCount++
-              } catch (error) {
-                console.error('Error importing lead:', error)
-                errorCount++
+            try {
+              // Filter out duplicates
+              const duplicatePhones = new Set(bulkDuplicateData.duplicates.map(d => d.phone))
+              const duplicateEmails = new Set(bulkDuplicateData.duplicates.map(d => d.email))
+              const newRecords = pendingBulkImportData.filter(lead => {
+                return !duplicatePhones.has(lead.phone) && !duplicateEmails.has(lead.email)
+              })
+
+              console.log(`📊 Importing ${newRecords.length} new records...`)
+
+              // Import only new records
+              let successCount = 0
+              let errorCount = 0
+              for (const leadData of newRecords) {
+                try {
+                  await api.addLead(leadData)
+                  successCount++
+                } catch (error) {
+                  console.error('Error importing lead:', error)
+                  errorCount++
+                }
               }
-            }
 
-            if (successCount > 0) {
-              toast.success(`تم استيراد ${successCount} عميل محتمل جديد بنجاح`)
+              if (successCount > 0) {
+                toast.success(`تم استيراد ${successCount} عميل محتمل جديد بنجاح`)
 
-              // Close modal first
-              setShowBulkDuplicateModal(false)
-              setBulkDuplicateData(null)
-              setPendingBulkImportData(null)
-              setBulkImportFile(null)
-              setShowBulkImportModal(false)
-              setIsImporting(false)
+                // Close modal first
+                setShowBulkDuplicateModal(false)
+                setBulkDuplicateData(null)
+                setPendingBulkImportData(null)
+                setBulkImportFile(null)
+                setShowBulkImportModal(false)
+                setIsImporting(false)
 
-              // Reload page to show new data
-              setTimeout(() => {
-                window.location.reload()
-              }, 500)
-            }
-            if (errorCount > 0) {
-              toast.error(`فشل استيراد ${errorCount} سجل`)
-              setShowBulkDuplicateModal(false)
-              setBulkDuplicateData(null)
-              setPendingBulkImportData(null)
-              setBulkImportFile(null)
-              setShowBulkImportModal(false)
+                // Reload page to show new data
+                setTimeout(() => {
+                  window.location.reload()
+                }, 500)
+              }
+              if (errorCount > 0) {
+                toast.error(`فشل استيراد ${errorCount} سجل`)
+                setShowBulkDuplicateModal(false)
+                setBulkDuplicateData(null)
+                setPendingBulkImportData(null)
+                setBulkImportFile(null)
+                setShowBulkImportModal(false)
+                setIsImporting(false)
+              }
+            } catch (error) {
+              console.error('❌ Error in skip duplicates:', error)
+              toast.error('حدث خطأ أثناء الاستيراد')
               setIsImporting(false)
             }
           }}
