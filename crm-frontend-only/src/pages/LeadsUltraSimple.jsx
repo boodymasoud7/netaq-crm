@@ -42,7 +42,7 @@ import { usePermissions } from '../hooks/usePermissions'
 import { formatDateArabic, formatPhoneNumber } from '../lib/utils'
 import LoadingPage from '../components/ui/loading'
 import { autoFollowUpService } from '../services/autoFollowUpService'
-import VirtualizedLeadsTable from '../components/tables/VirtualizedLeadsTable'
+import LeadsTable from '../components/tables/LeadsTable'
 import LeadsDetailsModal from '../components/modals/LeadsDetailsModal'
 import DuplicateLeadModal from '../components/modals/DuplicateLeadModal'
 import SimpleAddReminderModal from '../components/reminders/SimpleAddReminderModal'
@@ -1810,12 +1810,28 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
 
       {/* جدول العملاء المحتملين */}
-      <VirtualizedLeadsTable
+      <LeadsTable
         leads={finalFilteredLeads}
         onEdit={handleEditLead}
         onDelete={handleDeleteLead}
         onView={handleViewLead}
-        loading={loading}
+        onReminder={handleReminder}
+        onViewRating={handleViewRating}
+        onUpdateRating={handleUpdateRating}
+        onConvertToClient={handleConvertToClient}
+        onUpdateScore={handleUpdateScore}
+        onAddNote={handleAddNote}
+        onAddInteraction={handleAddInteraction}
+        onBulkDelete={handleBulkDelete}
+        onBulkExport={handleBulkExport}
+        canEditLead={canEditLead}
+        canDeleteLead={canDeleteLead}
+        canConvertLead={canConvertLead}
+        onSelectedLeadsChange={setSelectedLeads}
+        selectedLeads={selectedLeads}
+        pageSize={pageSize}
+        onPageSizeChange={handlePageSizeChange}
+        leadsInteractions={leadsInteractions}
       />
 
       {/* منطقة الترقيم */}
@@ -1843,11 +1859,7 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                   <option value={200}>200</option>
-                  <option value={500}>500</option>
-                  <option value={1000}>1000</option>
-                  <option value={2000}>2000</option>
-                  <option value={5000}>5000</option>
-                  <option value={10000}>الكل (10000)</option>
+                  <option value={500}>500 (الحد الأقصى)</option>
                 </select>
                 <span className="text-sm text-gray-600">عميل</span>
               </div>
