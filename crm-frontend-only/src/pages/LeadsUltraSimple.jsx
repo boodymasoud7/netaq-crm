@@ -481,6 +481,11 @@ function LeadsUltraSimple() {
     lead.status !== 'converted' && lead.status !== 'محول'
   )
 
+  // Auto-expand pageSize when searching to show all results
+  const displayedLeads = searchTerm || statusFilter !== 'all' || sourceFilter !== 'all' || employeeFilter !== 'all'
+    ? finalFilteredLeads // Show all search results
+    : finalFilteredLeads.slice(0, pageSize) // Limit to pageSize when not searching
+
 
 
 
@@ -1808,10 +1813,9 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
         </Card>
       </div>
 
-
       {/* جدول العملاء المحتملين */}
       <LeadsTable
-        leads={finalFilteredLeads}
+        leads={displayedLeads}
         onEdit={handleEditLead}
         onDelete={handleDeleteLead}
         onView={handleViewLead}
@@ -1859,7 +1863,11 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                   <option value={200}>200</option>
-                  <option value={500}>500 (الحد الأقصى)</option>
+                  <option value={500}>500</option>
+                  <option value={1000}>1000</option>
+                  <option value={2000}>2000</option>
+                  <option value={5000}>5000</option>
+                  <option value={10000}>الكل (10000)</option>
                 </select>
                 <span className="text-sm text-gray-600">عميل</span>
               </div>
