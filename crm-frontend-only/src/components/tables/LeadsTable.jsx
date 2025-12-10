@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   WhatsAppButton,
   InteractionsButton,
@@ -329,15 +328,6 @@ export default function LeadsTable({
     })
   }, [leads, searchTerm, filterStatus, filterSource, filterEmployee, filterInteractions, filterInterest, leadsInteractions])
 
-  // Virtual Scrolling
-  const tableContainerRef = useRef(null)
-  const rowVirtualizer = useVirtualizer({
-    count: filteredLeads.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 72,
-    overscan: 5
-  })
-
   // حفظ البحث
   const handleSaveSearch = () => {
     const searchCriteria = {
@@ -628,13 +618,9 @@ export default function LeadsTable({
           </p>
         </div>
       ) : (
-        <div
-          ref={tableContainerRef}
-          className="overflow-x-auto overflow-y-auto"
-          style={{ maxHeight: '600px' }}
-        >
+        <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full min-w-[1200px]">
-            <thead className="bg-gradient-to-r from-orange-50 to-red-50 sticky top-0 z-10">
+            <thead className="bg-gradient-to-r from-orange-50 to-red-50">
               <tr>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
@@ -680,211 +666,209 @@ export default function LeadsTable({
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white" style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const lead = filteredLeads[virtualRow.index]
-                return (
-                  <tr
-                    key={virtualRow.key}
-                    data-index={virtualRow.index}
-                    ref={rowVirtualizer.measureElement}
-                    className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-orange-25 hover:to-red-25 transition-all duration-200 cursor-pointer absolute w-full"
-                    style={{ transform: `translateY(${virtualRow.start}px)` }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'linear-gradient(to right, rgb(255 247 237), rgb(254 226 226))';
-                      e.currentTarget.style.borderLeftColor = 'rgb(249 115 22)';
-                      e.currentTarget.style.borderLeftWidth = '4px';
-                      e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(249, 115, 22, 0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '';
-                      e.currentTarget.style.borderLeftColor = 'transparent';
-                      e.currentTarget.style.borderLeftWidth = '0px';
-                      e.currentTarget.style.boxShadow = '';
-                    }}
-                  >
-                    {/* تحديد */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedLeads.includes(lead.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedLeads([...selectedLeads, lead.id])
-                          } else {
-                            setSelectedLeads(selectedLeads.filter(id => id !== lead.id))
-                          }
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                    </td>
+            <tbody className="bg-white">
+              {filteredLeads.map((lead) => (
+                <tr
+                  key={lead.id}
+                  className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-orange-25 hover:to-red-25 transition-all duration-200 cursor-pointer"
+                  style={{
+                    contentVisibility: 'auto',
+                    containIntrinsicSize: 'auto 72px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(to right, rgb(255 247 237), rgb(254 226 226))'; // orange-50 to red-100
+                    e.currentTarget.style.borderLeftColor = 'rgb(249 115 22)'; // orange-500
+                    e.currentTarget.style.borderLeftWidth = '4px';
+                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(249, 115, 22, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '';
+                    e.currentTarget.style.borderLeftColor = 'transparent';
+                    e.currentTarget.style.borderLeftWidth = '0px';
+                    e.currentTarget.style.boxShadow = '';
+                  }}
+                >
+                  {/* تحديد */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedLeads.includes(lead.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLeads([...selectedLeads, lead.id])
+                        } else {
+                          setSelectedLeads(selectedLeads.filter(id => id !== lead.id))
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                  </td>
 
-                    {/* العميل المحتمل */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-sm">
-                          <Target className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900">{lead.name}</span>
-                            {/* Indicators للتفاعلات والملاحظات */}
-                            <div className="flex items-center gap-1">
-                              {getInteractionsCount(lead) > 0 && (
-                                <Badge
-                                  onClick={(e) => handleShowInteractions(lead, e)}
-                                  className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-all hover:scale-105"
-                                  title="اضغط لعرض التفاعلات"
-                                >
-                                  <MessageCircle className="h-3 w-3" />
-                                  <span>{getInteractionsCount(lead)}</span>
-                                </Badge>
-                              )}
-                              {getNotesCount(lead) > 0 && (
-                                <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
-                                  <FileText className="h-3 w-3" />
-                                  <span>{getNotesCount(lead)}</span>
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                  {/* العميل المحتمل */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-sm">
+                        <Target className="h-5 w-5 text-white" />
                       </div>
-                    </td>
-
-                    {/* معلومات التواصل */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <div className="space-y-1">
-                        {lead.phone && (
-                          <div className="flex items-center text-sm text-gray-900">
-                            <Phone className="h-3 w-3 text-gray-400 ml-1" />
-                            {formatPhoneNumber(lead.phone)}
-                          </div>
-                        )}
-                        {lead.email && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Mail className="h-3 w-3 text-gray-400 ml-1" />
-                            {lead.email}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* الحالة */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <Badge
-                        variant="secondary"
-                        className={getStatusColor(lead.status)}
-                      >
-                        {translateStatus(lead.status)}
-                      </Badge>
-                    </td>
-
-                    {/* المسؤول */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      {editingAssignee === lead.id && canChangeAssignee(lead) ? (
+                      <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <select
-                            className="text-sm border border-gray-300 rounded px-2 py-1 w-32"
-                            defaultValue={lead.assignedTo?.toString() || ''}
-                            onChange={(e) => handleUpdateAssignee(lead.id, e.target.value)}
-                          >
-                            <option value="">غير محدد</option>
-                            {salesStaff.map(staff => (
-                              <option key={staff.id} value={staff.id}>
-                                {staff.name || staff.email}
-                              </option>
-                            ))}
-                          </select>
+                          <span className="text-sm font-medium text-gray-900">{lead.name}</span>
+                          {/* Indicators للتفاعلات والملاحظات */}
+                          <div className="flex items-center gap-1">
+                            {getInteractionsCount(lead) > 0 && (
+                              <Badge
+                                onClick={(e) => handleShowInteractions(lead, e)}
+                                className="bg-blue-100 text-blue-700 hover:bg-blue-200 px-1.5 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-all hover:scale-105"
+                                title="اضغط لعرض التفاعلات"
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                                <span>{getInteractionsCount(lead)}</span>
+                              </Badge>
+                            )}
+                            {getNotesCount(lead) > 0 && (
+                              <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-1.5 py-0.5 text-xs flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                <span>{getNotesCount(lead)}</span>
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* معلومات التواصل */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <div className="space-y-1">
+                      {lead.phone && (
+                        <div className="flex items-center text-sm text-gray-900">
+                          <Phone className="h-3 w-3 text-gray-400 ml-1" />
+                          {formatPhoneNumber(lead.phone)}
+                        </div>
+                      )}
+                      {lead.email && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Mail className="h-3 w-3 text-gray-400 ml-1" />
+                          {lead.email}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* الحالة */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <Badge
+                      variant="secondary"
+                      className={getStatusColor(lead.status)}
+                    >
+                      {translateStatus(lead.status)}
+                    </Badge>
+                  </td>
+
+                  {/* المسؤول */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    {editingAssignee === lead.id && canChangeAssignee(lead) ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="text-sm border border-gray-300 rounded px-2 py-1 w-32"
+                          defaultValue={lead.assignedTo?.toString() || ''}
+                          onChange={(e) => handleUpdateAssignee(lead.id, e.target.value)}
+                        >
+                          <option value="">غير محدد</option>
+                          {salesStaff.map(staff => (
+                            <option key={staff.id} value={staff.id}>
+                              {staff.name || staff.email}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingAssignee(null)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 group">
+                        <span className="text-sm text-gray-900">
+                          {lead.assignedToName || lead.createdByName || 'غير محدد'}
+                        </span>
+                        {canChangeAssignee(lead) && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setEditingAssignee(null)}
-                            className="h-6 w-6 p-0"
+                            onClick={() => setEditingAssignee(lead.id)}
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="تغيير المسؤول (المدير فقط)"
                           >
-                            <X className="h-3 w-3" />
+                            <Edit3 className="h-3 w-3" />
                           </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 group">
-                          <span className="text-sm text-gray-900">
-                            {lead.assignedToName || lead.createdByName || 'غير محدد'}
-                          </span>
-                          {canChangeAssignee(lead) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingAssignee(lead.id)}
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="تغيير المسؤول (المدير فقط)"
-                            >
-                              <Edit3 className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* مورد البيانات */}
-                    {(isAdmin() || isSalesManager()) && (
-                      <td className="px-3 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {lead.source || 'غير محدد'}
-                        </div>
-                      </td>
+                        )}
+                      </div>
                     )}
+                  </td>
 
-                    {/* الاهتمام */}
+                  {/* مورد البيانات */}
+                  {(isAdmin() || isSalesManager()) && (
                     <td className="px-3 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {lead.interest || 'غير محدد'}
+                        {lead.source || 'غير محدد'}
                       </div>
                     </td>
+                  )}
 
-                    {/* تاريخ الإضافة */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-3 w-3 text-gray-400 ml-1" />
-                        {formatDateArabic(lead.createdAt)}
-                      </div>
-                    </td>
+                  {/* الاهتمام */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {lead.interest || 'غير محدد'}
+                    </div>
+                  </td>
 
-                    {/* إجراءات سريعة */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1 p-1 bg-gray-50 rounded-lg shadow-sm">
-                        <WhatsAppButton
-                          phone={lead.phone}
-                          name={lead.name}
-                          message={`مرحباً ${lead.name}، نود مناقشة اهتمامك بخدماتنا العقارية وتقديم أفضل العروض.`}
-                        />
-                        <InteractionsButton
-                          onAddInteraction={onAddInteraction}
-                          itemId={lead.id}
-                          itemName={lead.name}
-                          itemType="lead"
-                        />
-                        <NotesButton
-                          onAddNote={onAddNote}
-                          itemId={lead.id}
-                          itemName={lead.name}
-                        />
-                      </div>
-                    </td>
+                  {/* تاريخ الإضافة */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Calendar className="h-3 w-3 text-gray-400 ml-1" />
+                      {formatDateArabic(lead.createdAt)}
+                    </div>
+                  </td>
 
-                    {/* المزيد من الإجراءات */}
-                    <td className="px-3 py-4 whitespace-nowrap">
-                      <ActionDropdown
-                        item={lead}
-                        onEdit={checkEditPermission(lead) ? onEdit : null}
-                        onDelete={checkDeletePermission(lead) ? onDelete : null}
-                        onView={onView}
-                        onReminder={onReminder}
-                        additionalActions={getAdditionalActions(lead)}
+                  {/* إجراءات سريعة */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-1 p-1 bg-gray-50 rounded-lg shadow-sm">
+                      <WhatsAppButton
+                        phone={lead.phone}
+                        name={lead.name}
+                        message={`مرحباً ${lead.name}، نود مناقشة اهتمامك بخدماتنا العقارية وتقديم أفضل العروض.`}
                       />
-                    </td>
-                  </tr>
-                )
-              })}
+                      <InteractionsButton
+                        onAddInteraction={onAddInteraction}
+                        itemId={lead.id}
+                        itemName={lead.name}
+                        itemType="lead"
+                      />
+                      <NotesButton
+                        onAddNote={onAddNote}
+                        itemId={lead.id}
+                        itemName={lead.name}
+                      />
+                    </div>
+                  </td>
+
+                  {/* المزيد من الإجراءات */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <ActionDropdown
+                      item={lead}
+                      onEdit={checkEditPermission(lead) ? onEdit : null}
+                      onDelete={checkDeletePermission(lead) ? onDelete : null}
+                      onView={onView}
+                      onReminder={onReminder}
+                      additionalActions={getAdditionalActions(lead)}
+                    />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
@@ -1134,9 +1118,9 @@ export default function LeadsTable({
                             </div>
                           </div>
                           <Badge className={`${interaction.outcome === 'positive' ? 'bg-green-200 text-green-800' :
-                            interaction.outcome === 'neutral' ? 'bg-yellow-200 text-yellow-800' :
-                              interaction.outcome === 'negative' ? 'bg-red-200 text-red-800' :
-                                'bg-gray-200 text-gray-800'
+                              interaction.outcome === 'neutral' ? 'bg-yellow-200 text-yellow-800' :
+                                interaction.outcome === 'negative' ? 'bg-red-200 text-red-800' :
+                                  'bg-gray-200 text-gray-800'
                             }`}>
                             {outcomeTexts[interaction.outcome] || interaction.outcome}
                           </Badge>
