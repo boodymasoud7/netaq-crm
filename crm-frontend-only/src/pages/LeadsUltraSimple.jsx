@@ -2778,6 +2778,8 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
 
             if (successCount > 0) {
               toast.success(`تم استيراد ${successCount} عميل محتمل جديد بنجاح`)
+              // Update limit to show new leads
+              updateParams({ page: 1, limit: Math.max(100, pageSize) })
               refetch()
             }
             if (errorCount > 0) {
