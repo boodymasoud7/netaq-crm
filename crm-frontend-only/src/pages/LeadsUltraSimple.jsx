@@ -42,7 +42,7 @@ import { usePermissions } from '../hooks/usePermissions'
 import { formatDateArabic, formatPhoneNumber } from '../lib/utils'
 import LoadingPage from '../components/ui/loading'
 import { autoFollowUpService } from '../services/autoFollowUpService'
-import LeadsTable from '../components/tables/LeadsTable'
+import VirtualizedLeadsTable from '../components/tables/VirtualizedLeadsTable'
 import LeadsDetailsModal from '../components/modals/LeadsDetailsModal'
 import DuplicateLeadModal from '../components/modals/DuplicateLeadModal'
 import SimpleAddReminderModal from '../components/reminders/SimpleAddReminderModal'
@@ -1808,29 +1808,14 @@ Sarah Ahmed,sarah@example.com,01555666777,Tech Solutions,social media,interested
         </Card>
       </div>
 
+
       {/* جدول العملاء المحتملين */}
-      <LeadsTable
+      <VirtualizedLeadsTable
         leads={finalFilteredLeads}
         onEdit={handleEditLead}
         onDelete={handleDeleteLead}
         onView={handleViewLead}
-        onReminder={handleReminder}
-        onViewRating={handleViewRating}
-        onUpdateRating={handleUpdateRating}
-        onConvertToClient={handleConvertToClient}
-        onUpdateScore={handleUpdateScore}
-        onAddNote={handleAddNote}
-        onAddInteraction={handleAddInteraction}
-        onBulkDelete={handleBulkDelete}
-        onBulkExport={handleBulkExport}
-        canEditLead={canEditLead}
-        canDeleteLead={canDeleteLead}
-        canConvertLead={canConvertLead}
-        onSelectedLeadsChange={setSelectedLeads}
-        selectedLeads={selectedLeads}
-        pageSize={pageSize}
-        onPageSizeChange={handlePageSizeChange}
-        leadsInteractions={leadsInteractions}
+        loading={loading}
       />
 
       {/* منطقة الترقيم */}
